@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Walltone
+Comment=Wallpaper and theme management application
+Exec=walltone
+Icon=walltone
+Terminal=false
+Categories=Utility;DesktopSettings;
