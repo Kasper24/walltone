@@ -65,7 +65,9 @@ const createWindow = () => {
 };
 
 const createTray = (mainWindow: BrowserWindow) => {
-  const icon = nativeImage.createFromPath("assets/icon-monochrome.png");
+  const icon = nativeImage.createFromPath(
+    path.join(__dirname, "..", "..", "assets", "icon-monochrome.png")
+  );
   const tray = new Tray(icon);
   const contextMenu = Menu.buildFromTemplate([
     {
