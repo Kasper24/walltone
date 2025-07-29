@@ -71,6 +71,8 @@ const LibraryVideoTab = () => {
       onWallpaperApply={async (wallpaper, screens, controlValues) => {
         await client.wallpaper.setWallpaper.mutate({
           type: "video",
+          id: wallpaper.id,
+          name: wallpaper.name,
           path: wallpaper.path,
           screens,
           videoOptions: controlValues,

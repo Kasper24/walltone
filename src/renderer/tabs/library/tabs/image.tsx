@@ -62,6 +62,8 @@ const LibraryImageTab = () => {
       onWallpaperApply={async (wallpaper, screens) => {
         await client.wallpaper.setWallpaper.mutate({
           type: "image",
+          id: wallpaper.id,
+          name: wallpaper.name,
           path: wallpaper.path,
           screens,
         });

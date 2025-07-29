@@ -1,5 +1,5 @@
 import React from "react";
-import { Palette, Save, Wallpaper, Copy, X } from "lucide-react";
+import { Palette, Save, Wallpaper, Copy, X, PaletteIcon } from "lucide-react";
 import { Slider } from "@uiw/react-color";
 import {
   DialogContent,
@@ -357,19 +357,19 @@ const WallpaperActions = ({
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
 }) => {
-  const { downloadMutation, saveThemeMutation } = useWallpaperActions(wallpaper);
+  const { downloadMutation, setThemeMutation } = useWallpaperActions(wallpaper);
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
       <LoadingButton
-        isLoading={saveThemeMutation.isPending}
-        onClick={() => saveThemeMutation.mutate(theme)}
+        isLoading={setThemeMutation.isPending}
+        onClick={() => setThemeMutation.mutate(theme)}
         className="flex-1 text-sm"
         disabled={!theme}
         variant="outline"
       >
-        <Save className="mr-2 h-4 w-4" />
-        Save Theme
+        <PaletteIcon className="mr-2 h-4 w-4" />
+        Set Theme
       </LoadingButton>
 
       {onDownload && (
@@ -379,7 +379,7 @@ const WallpaperActions = ({
           className="flex-1 text-sm"
         >
           <Save className="mr-2 h-4 w-4" />
-          Download
+          Download Wallpaper
         </LoadingButton>
       )}
 
@@ -388,7 +388,7 @@ const WallpaperActions = ({
           <DialogTrigger asChild>
             <Button className="flex-1 text-sm">
               <Wallpaper className="mr-2 h-4 w-4" />
-              Apply
+              Set Wallpaper
             </Button>
           </DialogTrigger>
           <ApplyWallpaperDialog

@@ -152,6 +152,8 @@ const LibraryWallpaperEngineTab = () => {
       onWallpaperApply={async (wallpaper, screens, controlValues) => {
         await client.wallpaper.setWallpaper.mutate({
           type: "wallpaper-engine",
+          id: wallpaper.id,
+          name: wallpaper.name,
           path: wallpaper.path,
           screens,
           wallpaperEngineOptions: controlValues,

@@ -184,9 +184,9 @@ export const useWallpaperActions = (wallpaper: BaseWallpaper) => {
     },
   });
 
-  const saveThemeMutation = useMutation({
+  const setThemeMutation = useMutation({
     mutationFn: async (theme: any) => {
-      await client.wallpaper.saveTheme.mutate({
+      await client.wallpaper.setTheme.mutate({
         wallpaper: wallpaper,
         theme: theme,
       });
@@ -221,7 +221,7 @@ export const useWallpaperActions = (wallpaper: BaseWallpaper) => {
 
   return {
     downloadMutation,
-    saveThemeMutation,
+    setThemeMutation,
     applyMutation,
   };
 };

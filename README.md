@@ -51,6 +51,8 @@ A modern wallpaper manager for Linux that supports static images, videos, and dy
   - [`swaybg`](https://github.com/swaywm/swaybg) - for static images
   - [`mpvpaper`](https://github.com/GhostNaN/mpvpaper) - for video wallpapers
   - [`linux-wallpaperengine`](https://github.com/catsout/wallpaper-engine-kde-plugin) - for Wallpaper Engine
+  - [`cage`](https://github.com/cage-kiosk/cage) -  runs wallpapers in an isolated, invisible Wayland session specifically so we can screenshot them without affecting the user’s desktop
+  - [`grim`](https://github.com/emersion/grim) - takes a screenshot of the wallpaper running inside cage
 
 ### Installation
 

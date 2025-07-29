@@ -88,6 +88,8 @@ export const wallpaperRouter = router({
     .input(
       z.object({
         type: z.enum(["image", "video", "wallpaper-engine"]),
+        id: z.string().min(1),
+        name: z.string().min(1),
         path: z.string().min(1),
         screens: z
           .array(
@@ -124,15 +126,21 @@ export const wallpaperRouter = router({
       // Wait for processes to terminate
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      // Ensure the directory for the wallpaper exists
+      const outputPath = await getOutputPath(input.name, input.id);
+      const wallpaperOutputPath = path.join(outputPath, "wallpaper.png");
+      await fs.mkdir(outputPath, { recursive: true });
+
       switch (input.type) {
         case "image":
-          await setImageWallpaper(input.path, input.screens);
+          await setImageWallpaper(wallpaperOutputPath, input.path, input.screens);
           break;
         case "video":
           await setVideoWallpaper(input.path, input.screens, input.videoOptions);
           break;
         case "wallpaper-engine":
           await setWallpaperEngineWallpaper(
+            wallpaperOutputPath,
             input.path,
             input.screens,
             input.wallpaperEngineOptions
@@ -141,7 +149,7 @@ export const wallpaperRouter = router({
       }
     }),
 
-  saveTheme: publicProcedure
+  setTheme: publicProcedure
     .input(
       z.object({
         wallpaper: z.any(),
@@ -149,29 +157,17 @@ export const wallpaperRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const outputPath = (await caller.settings.get({
-        key: "theme:output-path",
-      })) as string;
-      if (!outputPath) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Theme output path is not set.",
-        });
-      }
-
-      const name = santize(`${input.wallpaper.name}-${input.wallpaper.id}`);
-      const folderPath = path.join(outputPath, name);
+      const folderPath = await getOutputPath(input.wallpaper.name, input.wallpaper.id);
       const themePath = path.join(folderPath, "theme.json");
-      const wallpaperPath = path.join(folderPath, "wallpaper.png");
 
       try {
-        // Ensure the directory exists
-        await fs.mkdir(dirname(themePath), { recursive: true });
+        // Ensure the directory for the theme exists
+        await fs.mkdir(folderPath, { recursive: true });
         await fs.writeFile(
           themePath,
           JSON.stringify(
             {
-              name: name,
+              name: santize(input.wallpaper.name),
               wallpaper: {
                 path: "wallpaper.png",
                 backend: input.wallpaper.type,
@@ -188,11 +184,6 @@ export const wallpaperRouter = router({
           ),
           "utf8"
         );
-
-        if (input.wallpaper.type === "image")
-          await fs.copyFile(input.wallpaper.path, wallpaperPath);
-        else if (input.wallpaper.type === "wallpaper-engine")
-          screenshotWallpaperEngine(input.wallpaper.path, wallpaperPath);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
         throw new TRPCError({
@@ -222,6 +213,21 @@ const paginateData = (
     prevPage: currentPage > 1 ? currentPage - 1 : null,
     nextPage: currentPage < numberOfPages ? currentPage + 1 : null,
   };
+};
+
+const getOutputPath = async (name: string, id: string) => {
+  const outputPath = (await caller.settings.get({
+    key: "theme:output-path",
+  })) as string;
+  if (!outputPath) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Theme output path is not set.",
+    });
+  }
+
+  const sanitized = santize(`${name}-${id}`);
+  return path.join(outputPath, sanitized);
 };
 
 const generateVideoThumbnail = async (videoPath: string, outputPath: string): Promise<void> => {
@@ -438,9 +444,12 @@ const sortWallpapers = (wallpapers: LibraryWallpaper[], sorting: string) => {
 };
 
 const setImageWallpaper = async (
+  wallpaperOutputPath: string,
   imagePath: string,
   screens: { name: string; scalingMethod?: string }[]
 ) => {
+  await fs.copyFile(imagePath, wallpaperOutputPath);
+
   await Promise.all(
     screens.map(async (screen) => {
       const args = [
@@ -457,6 +466,7 @@ const setImageWallpaper = async (
 };
 
 const setVideoWallpaper = async (
+  wallpaperOutputPath: string,
   videoPath: string,
   screens: { name: string; scalingMethod?: string }[],
   options?: {
@@ -472,6 +482,7 @@ const setVideoWallpaper = async (
   }
 
   // Add scaling options for each screen
+  console.log(screens);
   screens.forEach((screen) => {
     if (screen.scalingMethod) {
       switch (screen.scalingMethod) {
@@ -509,12 +520,12 @@ const setVideoWallpaper = async (
   // Add video path
   args.push(videoPath);
 
-  console.log("Executing mpvpaper with args:", args);
-
+  await screenshotWallpaperInCage(["mpv", "ALL", videoPath], wallpaperOutputPath);
   await execute("mpvpaper", args);
 };
 
 const setWallpaperEngineWallpaper = async (
+  wallpaperOutputPath: string,
   wallpaperPath: string,
   screens: { name: string; scalingMethod?: string }[],
   options?: {
@@ -588,37 +599,22 @@ const setWallpaperEngineWallpaper = async (
     args.push("--no-fullscreen-pause");
   }
 
+  await screenshotWallpaperInCage(
+    ["linux-wallpaperengine", "--silent", "--fps", "1", "--assets-dir", assetsPath, wallpaperPath],
+    wallpaperOutputPath
+  );
   await execute("linux-wallpaperengine", args);
 };
 
-const screenshotWallpaperEngine = async (wallpaperPath: string, screenshotPath: string) => {
-  const assetsPath = await caller.settings.get({
-    key: "wallpaper-engine:assets-folder",
-  });
-  if (!assetsPath)
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Wallpaper Engine assets folder is not set.",
-    });
-
+const screenshotWallpaperInCage = async (cmd: string[], wallpaperOutputPath: string) => {
+  const INIT_TIME = 3;
   const args = [
-    "--window",
-    "0x0x1920x1080",
-    "--assets-dir",
-    assetsPath,
-    "--screenshot",
-    screenshotPath,
-    wallpaperPath,
+    "--",
+    "sh",
+    "-c",
+    `${cmd.join(" ")} & pid=$!; sleep ${INIT_TIME} && grim ${wallpaperOutputPath} && kill $pid`,
   ];
-
-  await execute("linux-wallpaperengine", args);
-
-  // Kill the process after 2 seconds
-  setTimeout(async () => {
-    try {
-      await killProcess("linux-wallpaperengine");
-    } catch (error) {
-      console.log("Failed to kill linux-wallpaperengine after screenshot");
-    }
-  }, 2000);
+  await execute("cage", args, {
+    WLR_BACKENDS: "headless",
+  });
 };

@@ -52,6 +52,8 @@ pkgs.buildNpmPackage rec {
           pkgs.ffmpeg
           pkgs.mpvpaper
           pkgs.linux-wallpaperengine
+          pkgs.cage
+          pkgs.grim
         ]
       }
 

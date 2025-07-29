@@ -1,10 +1,19 @@
 import { spawn } from "child_process";
 
-const execute = (command: string, args: string[] = []): Promise<void> => {
+const execute = (
+  command: string,
+  args: string[] = [],
+  env: NodeJS.ProcessEnv = {}
+): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
     console.log(`Executing: ${command} ${args.join(" ")}`);
 
-    const child = spawn(command, args);
+    const child = spawn(command, args, {
+      env: {
+        ...process.env,
+        ...env,
+      },
+    });
 
     child.stdout.on("data", (data) => {
       console.log(`[${command}] STDOUT:`, data.toString().trim());
@@ -42,7 +51,7 @@ const killProcess = async (processName: string) => {
 };
 
 const santize = (str: string) => {
-  return str.replace(/[^a-z0-9-/]/gi, "-").toLowerCase();
+  return str.replace(/[^a-z0-9-]/gi, "").toLowerCase();
 };
 
 export { execute, killProcess, santize };
