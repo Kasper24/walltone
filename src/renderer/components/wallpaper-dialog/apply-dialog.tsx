@@ -226,11 +226,22 @@ const ApplyDialogError = ({ onRetry }: { onRetry: () => void }) => {
 const WallpaperPreview = ({ wallpaper }: { wallpaper: BaseWallpaper }) => {
   return (
     <div className="flex justify-center">
-      <img
-        src={wallpaper.previewPath}
-        alt={wallpaper.name}
-        className="h-20 w-32 rounded-md object-cover"
-      />
+      {wallpaper.type !== "video" ? (
+        <img
+          className="h-20 w-32 rounded-md object-cover"
+          src={wallpaper.previewPath}
+          alt={wallpaper.name}
+        />
+      ) : (
+        <video
+          className="h-20 w-32 rounded-md object-fill"
+          src={wallpaper.previewPath}
+          autoPlay
+          loop
+          muted
+          playsInline
+        ></video>
+      )}
     </div>
   );
 };

@@ -9,10 +9,13 @@ import { OnWallpaperApply, OnWallpaperDownload } from "../wallpapers-grid/types"
 export const useThemeGeneration = () => {
   const [theme, setTheme] = React.useState<any>();
 
-  const generateThemeFromImage = React.useCallback(async (imageElement: HTMLImageElement) => {
-    const generatedTheme = await generateThemes(imageElement);
-    setTheme(generatedTheme);
-  }, []);
+  const generateThemeFromImage = React.useCallback(
+    async (element: HTMLImageElement | HTMLVideoElement) => {
+      const generatedTheme = await generateThemes(element);
+      setTheme(generatedTheme);
+    },
+    []
+  );
 
   return {
     theme,

@@ -1,4 +1,5 @@
 import path from "path";
+import { statSync, createReadStream } from "node:fs";
 import {
   app,
   protocol,
@@ -15,12 +16,26 @@ import { appRouter } from "@electron/trpc/router/base";
 let isQuitting = false;
 let mainWindow: BrowserWindow;
 
-const createWindow = () => {
-  console.log(__dirname);
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "video",
+    privileges: {
+      bypassCSP: true,
+      standard: true,
+      stream: true,
+    },
+  },
+]);
 
-  protocol.handle("walltone-file", async (request) => {
-    const filePath = request.url.replace(`walltone-file://`, "file://");
+const createWindow = () => {
+  protocol.handle("image", async (request) => {
+    const filePath = request.url.replace(`image://`, "file://");
     return await net.fetch(filePath);
+  });
+
+  protocol.registerFileProtocol("video", (req, callback) => {
+    const pathToMedia = decodeURI(req.url.replace("video://", ""));
+    callback(pathToMedia);
   });
 
   mainWindow = new BrowserWindow({

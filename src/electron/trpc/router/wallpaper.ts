@@ -230,56 +230,6 @@ const getOutputPath = async (name: string, id: string) => {
   return path.join(outputPath, sanitized);
 };
 
-const generateVideoThumbnail = async (videoPath: string, outputPath: string): Promise<void> => {
-  try {
-    // Create thumbnail directory if it doesn't exist
-    await fs.mkdir(path.dirname(outputPath), { recursive: true });
-
-    const args = [
-      "-i",
-      videoPath,
-      "-ss",
-      "00:00:01",
-      "-vframes",
-      "1",
-      "-vf",
-      "scale=320:180:force_original_aspect_ratio=decrease,pad=320:180:(ow-iw)/2:(oh-ih)/2",
-      "-y",
-      outputPath,
-    ];
-
-    await execute("ffmpeg", args);
-  } catch (error) {
-    console.error(`Failed to generate thumbnail for ${videoPath}:`, error);
-    // Don't throw error, just log it - we'll fall back to video file itself
-  }
-};
-
-const getVideoThumbnailPath = async (videoPath: string): Promise<string> => {
-  // Get or create a centralized thumbnails directory
-  const thumbnailsBaseDir = path.join(process.env.HOME || "/tmp", ".walltone", "thumbnails");
-
-  // Create a hash of the video path for unique thumbnail naming
-  const videoHash = crypto.createHash("md5").update(videoPath).digest("hex");
-  const thumbnailPath = path.join(thumbnailsBaseDir, `${videoHash}.jpg`);
-
-  try {
-    // Check if thumbnail already exists
-    await fs.access(thumbnailPath);
-    return thumbnailPath;
-  } catch {
-    // Generate thumbnail
-    await generateVideoThumbnail(videoPath, thumbnailPath);
-
-    try {
-      await fs.access(thumbnailPath);
-      return thumbnailPath;
-    } catch {
-      return videoPath; // Fallback to original video
-    }
-  }
-};
-
 const getMediaWallpapers = async (
   mediaType: "image" | "video",
   settingsKey: string,
@@ -306,10 +256,7 @@ const getMediaWallpapers = async (
             id: path.basename(file.path),
             name: file.name,
             path: file.path,
-            previewPath:
-              mediaType === "video"
-                ? `walltone-file://${await getVideoThumbnailPath(file.path)}`
-                : `walltone-file://${file.path}`,
+            previewPath: mediaType !== "video" ? `image://${file.path}` : `video://${file.path}`,
             dateAdded: Date.now(),
             tags: [mediaType],
             type: mediaType,
@@ -391,7 +338,7 @@ const getWallpaperEngineWallpapers = async () => {
                   id: path.basename(subdirectoryPath),
                   name: parsedData.title,
                   path: subdirectoryPath,
-                  previewPath: `walltone-file://${path.join(subdirectoryPath, parsedData.preview)}`,
+                  previewPath: `image://${path.join(subdirectoryPath, parsedData.preview)}`,
                   dateAdded: stat.mtime.getTime(),
                   workshopId: dirent.name,
                   file: parsedData.file,

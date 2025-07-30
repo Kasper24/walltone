@@ -162,14 +162,29 @@ export const Wallpaper = ({
     <div key={wallpaper.id} className="group relative overflow-hidden rounded-lg">
       <Dialog>
         <DialogTrigger className="flex w-full">
-          <img
-            className="h-56 w-full transform rounded-lg transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
-            src={wallpaper.previewPath}
-            alt={wallpaper.name}
-            loading="lazy"
-            decoding="async"
-          />
-          <div className="bg-background absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-50">
+          {wallpaper.type !== "video" ? (
+            <img
+              className="h-56 w-full transform rounded-lg transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
+              src={wallpaper.previewPath}
+              alt={wallpaper.name}
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <video
+              src={wallpaper.previewPath}
+              className="h-56 w-full transform rounded-lg object-fill transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
+              onMouseEnter={(e) => {
+                e.currentTarget.play();
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.pause();
+                e.currentTarget.currentTime = 0;
+              }}
+            ></video>
+          )}
+
+          <div className="bg-background pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-50">
             <span className="p-3 text-center font-semibold">{wallpaper.name}</span>
           </div>
         </DialogTrigger>

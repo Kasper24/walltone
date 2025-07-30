@@ -142,28 +142,45 @@ const WallpaperImage = ({
   onThemeGenerated,
 }: {
   wallpaper: BaseWallpaper;
-  onThemeGenerated: (imageElement: HTMLImageElement) => Promise<void>;
+  onThemeGenerated: (element: HTMLImageElement | HTMLVideoElement) => Promise<void>;
 }) => {
-  const ref = React.useRef<HTMLImageElement>(null);
+  const imageRef = React.useRef<HTMLImageElement>(null);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
 
   const handleImageLoad = React.useCallback(async () => {
-    if (ref.current) {
-      await onThemeGenerated(ref.current);
+    if (imageRef.current) {
+      await onThemeGenerated(imageRef.current);
+    }
+  }, [onThemeGenerated]);
+
+  const handleVideoLoad = React.useCallback(async () => {
+    if (videoRef.current) {
+      await onThemeGenerated(videoRef.current);
     }
   }, [onThemeGenerated]);
 
   return (
     <Card className="p-1">
       <CardContent className="p-1">
-        <img
-          crossOrigin="anonymous"
-          referrerPolicy="no-referrer"
-          className="h-48 w-full rounded-lg object-cover sm:h-56 md:h-64"
-          src={wallpaper.previewPath}
-          alt={wallpaper.name}
-          ref={ref}
-          onLoad={handleImageLoad}
-        />
+        {wallpaper.type !== "video" ? (
+          <img
+            className="h-48 w-full rounded-lg object-cover sm:h-56 md:h-64"
+            src={wallpaper.previewPath}
+            alt={wallpaper.name}
+            ref={imageRef}
+            onLoad={handleImageLoad}
+          />
+        ) : (
+          <video
+            className="h-48 w-full rounded-lg object-fill sm:h-56 md:h-64"
+            src={wallpaper.previewPath}
+            autoPlay
+            loop
+            playsInline
+            ref={videoRef}
+            onPlaying={handleVideoLoad}
+          ></video>
+        )}
       </CardContent>
     </Card>
   );
