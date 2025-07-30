@@ -470,7 +470,7 @@ const setVideoWallpaper = async (
   // Add video path
   args.push(videoPath);
 
-  await screenshotWallpaperInCage(["mpv", "ALL", videoPath], wallpaperOutputPath);
+  await screenshotWallpaperInCage(["mpv", "panscan=1.0", videoPath], wallpaperOutputPath);
   await execute({ command: "mpvpaper", args });
 };
 
@@ -550,19 +550,29 @@ const setWallpaperEngineWallpaper = async (
   }
 
   await screenshotWallpaperInCage(
-    ["linux-wallpaperengine", "--silent", "--fps", "1", "--assets-dir", assetsPath, wallpaperPath],
+    [
+      "linux-wallpaperengine",
+      "--silent",
+      "--fps",
+      "1",
+      "--assets-dir",
+      assetsPath,
+      "--window",
+      "0x0x1280x720",
+      wallpaperPath,
+    ],
     wallpaperOutputPath
   );
   await execute({ command: "linux-wallpaperengine", args });
 };
 
 const screenshotWallpaperInCage = async (cmd: string[], wallpaperOutputPath: string) => {
-  const INIT_TIME = 3;
+  const INIT_TIME = 5;
   const args = [
     "--",
     "sh",
     "-c",
-    `${cmd.join(" ")} & pid=$!; sleep ${INIT_TIME} && grim ${wallpaperOutputPath} && kill $pid`,
+    `${cmd.join(" ")} & pid=$!; sleep ${INIT_TIME} && grim -g "0,0 1280x720" ${wallpaperOutputPath} && kill $pid`,
   ];
   await execute({ command: "cage", args, env: { WLR_BACKENDS: "headless" } });
 };
