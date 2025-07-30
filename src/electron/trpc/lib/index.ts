@@ -4,8 +4,8 @@ const execute = (
   command: string,
   args: string[] = [],
   env: NodeJS.ProcessEnv = {}
-): Promise<void> => {
-  return new Promise<void>((resolve, reject) => {
+): Promise<{ stdout: string; stderr: string }> => {
+  return new Promise((resolve, reject) => {
     console.log(`Executing: ${command} ${args.join(" ")}`);
 
     const child = spawn(command, args, {
@@ -15,18 +15,25 @@ const execute = (
       },
     });
 
+    let stdout = "";
+    let stderr = "";
+
     child.stdout.on("data", (data) => {
-      console.log(`[${command}] STDOUT:`, data.toString().trim());
+      const text = data.toString();
+      stdout += text;
+      console.log(`[${command}] STDOUT:`, text.trim());
     });
 
     child.stderr.on("data", (data) => {
-      console.log(`[${command}] STDERR:`, data.toString().trim());
+      const text = data.toString();
+      stderr += text;
+      console.log(`[${command}] STDERR:`, text.trim());
     });
 
     child.on("close", (code) => {
       if (code === 0) {
         console.log(`[${command}] Process completed successfully`);
-        resolve();
+        resolve({ stdout, stderr });
       } else {
         const error = new Error(`Process exited with code ${code}`);
         console.error(`[${command}] Process failed with code ${code}`);

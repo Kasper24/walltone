@@ -2,6 +2,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "..";
+import { execute } from "../lib";
 
 export interface WlrMonitor {
   name: string;
@@ -39,7 +40,7 @@ const normalizeMonitor = (monitor: WlrMonitor) => ({
   serial: monitor.serial || "Unknown",
 });
 
-const getWlrMonitors = async () => {
+const getWlrOutputMonitors = async () => {
   try {
     const { stdout, stderr } = await execPromise("wlr-randr --json");
 
@@ -59,41 +60,27 @@ const getWlrMonitors = async () => {
   }
 };
 
-const detectDE = () => {
-  const { XDG_CURRENT_DESKTOP, WAYLAND_DISPLAY, SWAYSOCK, XDG_SESSION_TYPE } = process.env;
+const detectOutputProtocols = async () => {
+  const { stdout: protocols } = await execute("wayland-info");
 
-  // Check for KDE
-  if (XDG_CURRENT_DESKTOP?.toLowerCase().includes("kde")) {
-    return "kde";
-  }
-
-  // Check for wlroots-based compositors
-  if (WAYLAND_DISPLAY || SWAYSOCK || XDG_SESSION_TYPE === "wayland") {
-    return "wlr";
-  }
+  if (protocols.includes("zwlr_output_manager_v1")) return "zwlr_output_manager_v1";
 
   return "unknown";
 };
 
 export const monitorRouter = router({
   getAll: publicProcedure.query(async () => {
-    const desktopEnvironment = detectDE();
+    const outputProtocol = await detectOutputProtocols();
 
     try {
-      switch (desktopEnvironment) {
-        case "wlr":
-          return await getWlrMonitors();
-
-        case "kde":
-          throw new TRPCError({
-            code: "NOT_IMPLEMENTED",
-            message: "KDE support is not yet implemented",
-          });
+      switch (outputProtocol) {
+        case "zwlr_output_manager_v1":
+          return await getWlrOutputMonitors();
 
         default:
           throw new TRPCError({
             code: "PRECONDITION_FAILED",
-            message: `Unsupported desktop environment: ${desktopEnvironment}. Only wlroots-based compositors are currently supported.`,
+            message: "Only compositors supporting zwlr_output_manager_v1 are currently supported.",
           });
       }
     } catch (error) {
@@ -105,7 +92,7 @@ export const monitorRouter = router({
 
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: `Failed to get display configuration: ${errorMessage}`,
+        message: `Failed to get output configuration: ${errorMessage}`,
         cause: error,
       });
     }

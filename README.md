@@ -53,6 +53,8 @@ A modern wallpaper manager for Linux that supports static images, videos, and dy
   - [`linux-wallpaperengine`](https://github.com/catsout/wallpaper-engine-kde-plugin) - for Wallpaper Engine
   - [`cage`](https://github.com/cage-kiosk/cage) -  runs wallpapers in an isolated, invisible Wayland session specifically so we can screenshot them without affecting the user’s desktop
   - [`grim`](https://github.com/emersion/grim) - takes a screenshot of the wallpaper running inside cage
+  - [`wayland-info`](https://gitlab.freedesktop.org/wayland/wayland-utils/) - used to query Wayland compositor outputs protocol
+  - Optional: [`wlr-randr`](https://sr.ht/~emersion/wlr-randr/) – used to query outputs if your compositor supports the zwlr_output_manager_v1 protocol (commonly wlroots-based compositors)
 
 ### Installation
 

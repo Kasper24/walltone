@@ -54,6 +54,8 @@ pkgs.buildNpmPackage rec {
           pkgs.linux-wallpaperengine
           pkgs.cage
           pkgs.grim
+          pkgs.wayland-info
+          pkgs.wlr-randr
         ]
       }
 
