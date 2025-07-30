@@ -560,7 +560,7 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{path.split("/").pop()}</p>
-                      <p className="text-muted-foreground truncate text-xs">{path}</p>
+                      <p className="text-muted-foreground max-w-80 truncate text-xs">{path}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
