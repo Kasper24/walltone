@@ -55,7 +55,6 @@ pkgs.buildNpmPackage rec {
           pkgs.cage
           pkgs.grim
           pkgs.wayland-info
-          pkgs.wlr-randr
         ]
       }
 

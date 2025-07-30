@@ -1,5 +1,6 @@
 import React from "react";
 import { Palette, Save, Wallpaper, Copy, X, PaletteIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Slider } from "@uiw/react-color";
 import {
   DialogContent,
@@ -18,7 +19,6 @@ import LoadingButton from "@renderer/components/loading-button";
 import { BaseWallpaper } from "@electron/trpc/router/wallpaper";
 import { OnWallpaperApply, OnWallpaperDownload } from "../wallpapers-grid/types";
 import { useThemeGeneration, useColorEditor, useThemeEditor, useWallpaperActions } from "./hooks";
-import { copyToClipboard } from "./utils";
 import ApplyWallpaperDialog, { DynamicControlDefinition } from "./apply-dialog";
 
 const WallpaperDialog = ({
@@ -226,7 +226,10 @@ const ColorEditor = ({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => copyToClipboard(selectedColor)}
+            onClick={() => {
+              navigator.clipboard.writeText(selectedColor);
+              toast.success("Copied to clipboard");
+            }}
             className="h-6 w-6 p-0"
           >
             <Copy className="h-3 w-3" />

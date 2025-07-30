@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, Monitor, Loader2 } from "lucide-react";
+import { Check, Monitor as MonitorIcon, Loader2 } from "lucide-react";
 import {
   DialogContent,
   DialogDescription,
@@ -8,6 +8,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@renderer/components/ui/dialog";
+import { Monitor } from "@electron/trpc/router/monitor";
 import { Button } from "@renderer/components/ui/button";
 import { Checkbox } from "@renderer/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
@@ -21,14 +22,10 @@ import {
 import { Slider } from "@renderer/components/ui/slider";
 import { Switch } from "@renderer/components/ui/switch";
 import { BaseWallpaper } from "@electron/trpc/router/wallpaper";
-import { RouterOutputs } from "@electron/trpc/router/base";
 import { OnWallpaperApply } from "../wallpapers-grid/types";
-import { useScreenSelection, useWallpaperActions } from "./hooks";
-import { getCurrentResolution, getRelativePosition } from "./utils";
+import { useMonitorSelection, useWallpaperActions } from "./hooks";
 import { Label } from "../ui/label";
 import { ScrollArea } from "../ui/scroll-area";
-
-type Screen = RouterOutputs["monitor"]["getAll"][number];
 
 // Add new types for dynamic controls
 export interface DynamicControlDefinition {
@@ -61,17 +58,17 @@ const ApplyWallpaperDialog = ({
   controlDefinitions?: DynamicControlDefinition[];
 }) => {
   const {
-    data: screens,
+    data: monitors,
     isPending,
     isError,
-    selectedScreens,
-    screenScalingMethods,
-    toggleScreen,
+    selectedMonitors,
+    monitorScalingMethods,
+    toggleMonitor,
     updateScalingMethod,
     selectAll,
     selectNone,
     retryQuery,
-  } = useScreenSelection(scalingOptions);
+  } = useMonitorSelection(scalingOptions);
 
   const { applyMutation } = useWallpaperActions(wallpaper);
 
@@ -86,20 +83,20 @@ const ApplyWallpaperDialog = ({
 
   const handleApply = React.useCallback(() => {
     if (onApply) {
-      const screenConfigs = Array.from(selectedScreens).map((name) => ({
+      const monitorConfigs = Array.from(selectedMonitors).map((name) => ({
         name,
-        scalingMethod: screenScalingMethods[name] || scalingOptions?.[0]?.key || "fill",
+        scalingMethod: monitorScalingMethods[name] || scalingOptions?.[0]?.key || "fill",
       }));
       applyMutation.mutate({
         onApply,
-        screenConfigs,
+        monitorConfigs,
         controlValues, // Pass the control values separately
       });
     }
   }, [
     onApply,
-    selectedScreens,
-    screenScalingMethods,
+    selectedMonitors,
+    monitorScalingMethods,
     scalingOptions,
     controlValues,
     applyMutation,
@@ -128,20 +125,20 @@ const ApplyWallpaperDialog = ({
 
           <QuickSelectionButtons onSelectAll={selectAll} onSelectNone={selectNone} />
 
-          {screens && screens.length > 1 && (
+          {monitors && monitors.length > 1 && (
             <VisualMonitorLayout
-              screens={screens}
-              selectedScreens={selectedScreens}
-              onToggleScreen={toggleScreen}
+              monitors={monitors}
+              selectedMonitors={selectedMonitors}
+              onToggleMonitor={toggleMonitor}
             />
           )}
 
           <MonitorList
-            screens={screens || []}
-            selectedScreens={selectedScreens}
-            screenScalingMethods={screenScalingMethods}
+            monitors={monitors || []}
+            selectedMonitors={selectedMonitors}
+            monitorScalingMethods={monitorScalingMethods}
             scalingOptions={scalingOptions}
-            onToggleScreen={toggleScreen}
+            onToggleMonitor={toggleMonitor}
             onUpdateScalingMethod={updateScalingMethod}
           />
 
@@ -153,7 +150,7 @@ const ApplyWallpaperDialog = ({
             />
           )}
 
-          {selectedScreens.size === 0 && (
+          {selectedMonitors.size === 0 && (
             <div className="text-muted-foreground py-2 text-center text-sm">
               Select at least one monitor to apply the wallpaper
             </div>
@@ -163,8 +160,8 @@ const ApplyWallpaperDialog = ({
 
       <DialogFooter className="flex-row justify-end space-x-2">
         <DialogClose asChild>
-          <Button disabled={selectedScreens.size === 0} onClick={handleApply}>
-            Apply to {selectedScreens.size} Monitor{selectedScreens.size !== 1 ? "s" : ""}
+          <Button disabled={selectedMonitors.size === 0} onClick={handleApply}>
+            Apply to {selectedMonitors.size} Monitor{selectedMonitors.size !== 1 ? "s" : ""}
           </Button>
         </DialogClose>
       </DialogFooter>
@@ -210,7 +207,7 @@ const ApplyDialogError = ({ onRetry }: { onRetry: () => void }) => {
   return (
     <DialogContent className="py-8 text-center">
       <div className="bg-destructive/10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-        <Monitor className="text-destructive h-6 w-6" />
+        <MonitorIcon className="text-destructive h-6 w-6" />
       </div>
       <h3 className="text-lg font-semibold">Failed to load monitors</h3>
       <p className="text-muted-foreground text-sm">
@@ -266,23 +263,50 @@ const QuickSelectionButtons = ({
 };
 
 const VisualMonitorLayout = ({
-  screens,
-  selectedScreens,
-  onToggleScreen,
+  monitors,
+  selectedMonitors,
+  onToggleMonitor,
 }: {
-  screens: Screen[];
-  selectedScreens: Set<string>;
-  onToggleScreen: (name: string) => void;
+  monitors: Monitor[];
+  selectedMonitors: Set<string>;
+  onToggleMonitor: (name: string) => void;
 }) => {
+  const getRelativePosition = (monitor: Monitor, monitors: Monitor[]) => {
+    if (monitors.length <= 1) return { left: 0, top: 0, width: 100, height: 100 };
+
+    const minX = Math.min(...monitors.map((s) => s.x));
+    const minY = Math.min(...monitors.map((s) => s.y));
+    const maxX = Math.max(
+      ...monitors.map((s) => {
+        return s.x + s.width;
+      })
+    );
+    const maxY = Math.max(
+      ...monitors.map((s) => {
+        return s.y + s.height;
+      })
+    );
+
+    const totalWidth = maxX - minX;
+    const totalHeight = maxY - minY;
+
+    return {
+      left: ((monitor.x - minX) / totalWidth) * 100,
+      top: ((monitor.y - minY) / totalHeight) * 100,
+      width: (monitor.width / totalWidth) * 100,
+      height: (monitor.height / totalHeight) * 100,
+    };
+  };
+
   return (
     <div className="bg-muted/20 relative h-32 rounded-lg border p-4">
-      {screens.map((screen) => {
-        const position = getRelativePosition(screen, screens);
-        const isSelected = selectedScreens.has(screen.name);
+      {monitors.map((monitor) => {
+        const position = getRelativePosition(monitor, monitors);
+        const isSelected = selectedMonitors.has(monitor.name);
 
         return (
           <div
-            key={screen.name}
+            key={monitor.name}
             className={`absolute cursor-pointer rounded border-2 transition-all ${
               isSelected
                 ? "border-primary bg-primary/20"
@@ -296,12 +320,12 @@ const VisualMonitorLayout = ({
               minWidth: "60px",
               minHeight: "40px",
             }}
-            onClick={() => onToggleScreen(screen.name)}
+            onClick={() => onToggleMonitor(monitor.name)}
           >
             <div className="flex h-full items-center justify-center">
               <div className="text-center">
-                <Monitor className="mx-auto mb-1 h-4 w-4" />
-                <div className="text-xs font-medium">{screen.name}</div>
+                <MonitorIcon className="mx-auto mb-1 h-4 w-4" />
+                <div className="text-xs font-medium">{monitor.name}</div>
                 {isSelected && <Check className="text-primary mx-auto mt-1 h-3 w-3" />}
               </div>
             </div>
@@ -313,51 +337,50 @@ const VisualMonitorLayout = ({
 };
 
 const MonitorList = ({
-  screens,
-  selectedScreens,
-  screenScalingMethods,
+  monitors,
+  selectedMonitors,
+  monitorScalingMethods,
   scalingOptions,
-  onToggleScreen,
+  onToggleMonitor,
   onUpdateScalingMethod,
 }: {
-  screens: Screen[];
-  selectedScreens: Set<string>;
-  screenScalingMethods: Record<string, string>;
+  monitors: Monitor[];
+  selectedMonitors: Set<string>;
+  monitorScalingMethods: Record<string, string>;
   scalingOptions?: { key: string; text: string }[];
-  onToggleScreen: (name: string) => void;
+  onToggleMonitor: (name: string) => void;
   onUpdateScalingMethod: (name: string, scalingMethod: string) => void;
 }) => {
   return (
     <div className="max-h-64 space-y-2 overflow-y-auto">
-      {screens.map((screen) => {
-        const currentResolution = getCurrentResolution(screen);
-        const isSelected = selectedScreens.has(screen.name);
+      {monitors.map((monitor) => {
+        const isSelected = selectedMonitors.has(monitor.name);
         const currentScalingMethod =
-          screenScalingMethods[screen.name] || scalingOptions?.[0]?.key || "fill";
+          monitorScalingMethods[monitor.name] || scalingOptions?.[0]?.key || "fill";
 
         return (
-          <Card key={screen.name} className="hover:bg-muted/50 transition-colors">
+          <Card key={monitor.name} className="hover:bg-muted/50 transition-colors">
             <CardContent className="p-3">
               <div className="flex items-start space-x-3">
                 <div className="pt-0.5">
                   <Checkbox
-                    id={screen.name}
+                    id={monitor.name}
                     checked={isSelected}
-                    onCheckedChange={() => onToggleScreen(screen.name)}
+                    onCheckedChange={() => onToggleMonitor(monitor.name)}
                   />
                 </div>
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center space-x-2">
-                    <Monitor className="h-4 w-4" />
+                    <MonitorIcon className="h-4 w-4" />
                     <span className="font-medium">
-                      {screen.make} {screen.model}
-                      <span className="text-muted-foreground ml-2 text-xs">({screen.name})</span>
+                      {monitor.make} {monitor.model}
+                      <span className="text-muted-foreground ml-2 text-xs">({monitor.name})</span>
                     </span>
                   </div>
                   <div className="text-muted-foreground text-sm">
-                    {currentResolution.width} × {currentResolution.height} @{" "}
-                    {currentResolution.refresh_rate}Hz
-                    {screen.scale !== 1 && <span className="ml-2">• Scale: {screen.scale}x</span>}
+                    {monitor.width} × {monitor.height} @ {monitor.refreshRate}
+                    Hz
+                    {monitor.scale !== 1 && <span className="ml-2">• Scale: {monitor.scale}x</span>}
                   </div>
 
                   {isSelected && scalingOptions && scalingOptions.length > 0 && (
@@ -365,7 +388,7 @@ const MonitorList = ({
                       <label className="text-muted-foreground text-xs font-medium">Scaling:</label>
                       <Select
                         value={currentScalingMethod}
-                        onValueChange={(value) => onUpdateScalingMethod(screen.name, value)}
+                        onValueChange={(value) => onUpdateScalingMethod(monitor.name, value)}
                       >
                         <SelectTrigger className="h-7 w-28 text-xs">
                           <SelectValue />

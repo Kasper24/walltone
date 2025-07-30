@@ -4,7 +4,7 @@ import { BaseWallpaper, WallpaperData } from "@electron/trpc/router/wallpaper";
 
 export type OnWallpaperApply = (
   wallpaper: BaseWallpaper,
-  screenConfigs: { name: string; scalingMethod: string }[],
+  monitorConfigs: { name: string; scalingMethod: string }[],
   controlValues?: { [key: string]: any }
 ) => Promise<void>;
 

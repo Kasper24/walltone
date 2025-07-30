@@ -82,48 +82,47 @@ export const useThemeEditor = (theme: any, selectedColorKey: string | undefined)
   };
 };
 
-export const useScreenSelection = (scalingOptions?: { key: string; text: string }[]) => {
+export const useMonitorSelection = (scalingOptions?: { key: string; text: string }[]) => {
   const queryClient = useQueryClient();
-  const [selectedScreens, setSelectedScreens] = React.useState<Set<string>>(new Set());
-  const [screenScalingMethods, setScreenScalingMethods] = React.useState<Record<string, string>>(
+  const [selectedMonitors, setSelectedMonitors] = React.useState<Set<string>>(new Set());
+  const [monitorScalingMethods, setMonitorScalingMethods] = React.useState<Record<string, string>>(
     {}
   );
 
   const defaultScalingMethod = scalingOptions?.[0]?.key || "fill";
 
-  const screensQuery = useQuery({
-    queryKey: ["monitor-screens"],
+  const monitorsQuery = useQuery({
+    queryKey: ["all-monitors"],
     queryFn: async () => {
-      const allScreens = await client.monitor.getAll.query();
-      return allScreens.filter((screen) => screen.enabled);
+      return await client.monitor.getAll.query();
     },
     staleTime: 1000 * 60 * 1,
   });
 
   React.useEffect(() => {
-    if (screensQuery.data && screensQuery.data.length > 0) {
-      const firstScreen = screensQuery.data.find((screen) => screen.enabled);
-      if (firstScreen) {
-        setSelectedScreens(new Set([firstScreen.name]));
-        setScreenScalingMethods({ [firstScreen.name]: defaultScalingMethod });
+    if (monitorsQuery.data && monitorsQuery.data.length > 0) {
+      const firstMonitor = monitorsQuery.data[0];
+      if (firstMonitor) {
+        setSelectedMonitors(new Set([firstMonitor.name]));
+        setMonitorScalingMethods({ [firstMonitor.name]: defaultScalingMethod });
       }
     }
-  }, [screensQuery.data, defaultScalingMethod]);
+  }, [monitorsQuery.data, defaultScalingMethod]);
 
-  const toggleScreen = React.useCallback(
+  const toggleMonitor = React.useCallback(
     (name: string) => {
-      setSelectedScreens((prev) => {
+      setSelectedMonitors((prev) => {
         const newSet = new Set(prev);
         if (newSet.has(name)) {
           newSet.delete(name);
-          setScreenScalingMethods((prevMethods) => {
+          setMonitorScalingMethods((prevMethods) => {
             const newMethods = { ...prevMethods };
             delete newMethods[name];
             return newMethods;
           });
         } else {
           newSet.add(name);
-          setScreenScalingMethods((prevMethods) => ({
+          setMonitorScalingMethods((prevMethods) => ({
             ...prevMethods,
             [name]: defaultScalingMethod,
           }));
@@ -135,16 +134,16 @@ export const useScreenSelection = (scalingOptions?: { key: string; text: string 
   );
 
   const updateScalingMethod = React.useCallback((name: string, scalingMethod: string) => {
-    setScreenScalingMethods((prev) => ({
+    setMonitorScalingMethods((prev) => ({
       ...prev,
       [name]: scalingMethod,
     }));
   }, []);
 
   const selectAll = React.useCallback(() => {
-    if (screensQuery.data) {
-      const allnames = screensQuery.data.map((screen) => screen.name);
-      setSelectedScreens(new Set(allnames));
+    if (monitorsQuery.data) {
+      const allnames = monitorsQuery.data.map((monitor) => monitor.name);
+      setSelectedMonitors(new Set(allnames));
 
       const allMethods = allnames.reduce(
         (acc, name) => ({
@@ -153,24 +152,24 @@ export const useScreenSelection = (scalingOptions?: { key: string; text: string 
         }),
         {}
       );
-      setScreenScalingMethods(allMethods);
+      setMonitorScalingMethods(allMethods);
     }
-  }, [screensQuery.data, defaultScalingMethod]);
+  }, [monitorsQuery.data, defaultScalingMethod]);
 
   const selectNone = React.useCallback(() => {
-    setSelectedScreens(new Set());
-    setScreenScalingMethods({});
+    setSelectedMonitors(new Set());
+    setMonitorScalingMethods({});
   }, []);
 
   return {
-    ...screensQuery,
-    selectedScreens,
-    screenScalingMethods,
-    toggleScreen,
+    ...monitorsQuery,
+    selectedMonitors,
+    monitorScalingMethods,
+    toggleMonitor,
     updateScalingMethod,
     selectAll,
     selectNone,
-    retryQuery: () => queryClient.invalidateQueries({ queryKey: ["monitor-screens"] }),
+    retryQuery: () => queryClient.invalidateQueries({ queryKey: ["all-monitors"] }),
   };
 };
 
@@ -205,14 +204,14 @@ export const useWallpaperActions = (wallpaper: BaseWallpaper) => {
   const applyMutation = useMutation({
     mutationFn: async ({
       onApply,
-      screenConfigs,
+      monitorConfigs,
       controlValues,
     }: {
       onApply: OnWallpaperApply;
-      screenConfigs: Array<{ name: string; scalingMethod: string }>;
+      monitorConfigs: Array<{ name: string; scalingMethod: string }>;
       controlValues?: { [key: string]: any };
     }) => {
-      return await onApply(wallpaper, screenConfigs, controlValues);
+      return await onApply(wallpaper, monitorConfigs, controlValues);
     },
     onSuccess: () => {
       toast.success("Wallpaper applied successfully");

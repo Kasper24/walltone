@@ -1,6 +1,5 @@
-import path, { dirname } from "path";
+import path from "path";
 import { promises as fs } from "fs";
-import crypto from "crypto";
 import { execute, killProcess, santize } from "../lib";
 import z from "zod";
 import { TRPCError } from "@trpc/server";
@@ -91,7 +90,7 @@ export const wallpaperRouter = router({
         id: z.string().min(1),
         name: z.string().min(1),
         path: z.string().min(1),
-        screens: z
+        monitors: z
           .array(
             z.object({
               name: z.string().min(1),
@@ -133,16 +132,16 @@ export const wallpaperRouter = router({
 
       switch (input.type) {
         case "image":
-          await setImageWallpaper(wallpaperOutputPath, input.path, input.screens);
+          await setImageWallpaper(wallpaperOutputPath, input.path, input.monitors);
           break;
         case "video":
-          await setVideoWallpaper(input.path, input.screens, input.videoOptions);
+          await setVideoWallpaper(input.path, input.monitors, input.videoOptions);
           break;
         case "wallpaper-engine":
           await setWallpaperEngineWallpaper(
             wallpaperOutputPath,
             input.path,
-            input.screens,
+            input.monitors,
             input.wallpaperEngineOptions
           );
           break;
@@ -393,21 +392,21 @@ const sortWallpapers = (wallpapers: LibraryWallpaper[], sorting: string) => {
 const setImageWallpaper = async (
   wallpaperOutputPath: string,
   imagePath: string,
-  screens: { name: string; scalingMethod?: string }[]
+  monitors: { name: string; scalingMethod?: string }[]
 ) => {
   await fs.copyFile(imagePath, wallpaperOutputPath);
 
   await Promise.all(
-    screens.map(async (screen) => {
+    monitors.map(async (monitor) => {
       const args = [
         "--image",
         imagePath,
         "--output",
-        screen.name,
+        monitor.name,
         "--mode",
-        screen.scalingMethod || "crop",
+        monitor.scalingMethod || "crop",
       ];
-      await execute("swaybg", args);
+      await execute({ command: "swaybg", args });
     })
   );
 };
@@ -415,7 +414,7 @@ const setImageWallpaper = async (
 const setVideoWallpaper = async (
   wallpaperOutputPath: string,
   videoPath: string,
-  screens: { name: string; scalingMethod?: string }[],
+  monitors: { name: string; scalingMethod?: string }[],
   options?: {
     mute?: boolean;
   }
@@ -428,11 +427,10 @@ const setVideoWallpaper = async (
     mpvOptions.push("no-audio");
   }
 
-  // Add scaling options for each screen
-  console.log(screens);
-  screens.forEach((screen) => {
-    if (screen.scalingMethod) {
-      switch (screen.scalingMethod) {
+  // Add scaling options for each monitor
+  monitors.forEach((monitor) => {
+    if (monitor.scalingMethod) {
+      switch (monitor.scalingMethod) {
         case "fill":
           mpvOptions.push("panscan=1.0");
           break;
@@ -457,9 +455,9 @@ const setVideoWallpaper = async (
     args.push("-o", mpvOptions.join(" "));
   }
 
-  // Add screen names (use ALL if multiple screens, otherwise specific screen)
-  if (screens.length === 1) {
-    args.push(screens[0].name);
+  // Add monitor names (use ALL if multiple monitors, otherwise specific monitor)
+  if (monitors.length === 1) {
+    args.push(monitors[0].name);
   } else {
     args.push("ALL");
   }
@@ -468,13 +466,13 @@ const setVideoWallpaper = async (
   args.push(videoPath);
 
   await screenshotWallpaperInCage(["mpv", "ALL", videoPath], wallpaperOutputPath);
-  await execute("mpvpaper", args);
+  await execute({ command: "mpvpaper", args });
 };
 
 const setWallpaperEngineWallpaper = async (
   wallpaperOutputPath: string,
   wallpaperPath: string,
-  screens: { name: string; scalingMethod?: string }[],
+  monitors: { name: string; scalingMethod?: string }[],
   options?: {
     silent?: boolean;
     volume?: number;
@@ -497,13 +495,13 @@ const setWallpaperEngineWallpaper = async (
     });
 
   const args = [
-    ...screens.flatMap((screen) => [
+    ...monitors.flatMap((monitor) => [
       "--screen-root",
-      screen.name,
+      monitor.name,
       "--bg",
       wallpaperPath,
       "--scaling",
-      screen.scalingMethod || "default",
+      monitor.scalingMethod || "default",
     ]),
     "--assets-dir",
     assetsPath,
@@ -550,7 +548,7 @@ const setWallpaperEngineWallpaper = async (
     ["linux-wallpaperengine", "--silent", "--fps", "1", "--assets-dir", assetsPath, wallpaperPath],
     wallpaperOutputPath
   );
-  await execute("linux-wallpaperengine", args);
+  await execute({ command: "linux-wallpaperengine", args });
 };
 
 const screenshotWallpaperInCage = async (cmd: string[], wallpaperOutputPath: string) => {
@@ -561,7 +559,5 @@ const screenshotWallpaperInCage = async (cmd: string[], wallpaperOutputPath: str
     "-c",
     `${cmd.join(" ")} & pid=$!; sleep ${INIT_TIME} && grim ${wallpaperOutputPath} && kill $pid`,
   ];
-  await execute("cage", args, {
-    WLR_BACKENDS: "headless",
-  });
+  await execute({ command: "cage", args, env: { WLR_BACKENDS: "headless" } });
 };

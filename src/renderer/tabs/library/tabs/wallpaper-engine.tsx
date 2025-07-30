@@ -149,13 +149,13 @@ const LibraryWallpaperEngineTab = () => {
           defaultValue: false,
         },
       ]}
-      onWallpaperApply={async (wallpaper, screens, controlValues) => {
+      onWallpaperApply={async (wallpaper, monitors, controlValues) => {
         await client.wallpaper.setWallpaper.mutate({
           type: "wallpaper-engine",
           id: wallpaper.id,
           name: wallpaper.name,
           path: wallpaper.path,
-          screens,
+          monitors,
           wallpaperEngineOptions: controlValues,
         });
       }}

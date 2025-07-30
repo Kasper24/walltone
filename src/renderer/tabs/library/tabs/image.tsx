@@ -59,13 +59,13 @@ const LibraryImageTab = () => {
         { key: "center", text: "Center" },
         { key: "tile", text: "Tile" },
       ]}
-      onWallpaperApply={async (wallpaper, screens) => {
+      onWallpaperApply={async (wallpaper, monitors) => {
         await client.wallpaper.setWallpaper.mutate({
           type: "image",
           id: wallpaper.id,
           name: wallpaper.name,
           path: wallpaper.path,
-          screens,
+          monitors,
         });
       }}
     />

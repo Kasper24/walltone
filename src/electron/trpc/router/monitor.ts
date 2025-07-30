@@ -1,88 +1,90 @@
-import { exec } from "child_process";
-import { promisify } from "util";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "..";
 import { execute } from "../lib";
 
-export interface WlrMonitor {
+export type Monitor = {
   name: string;
-  description: string;
   make: string;
   model: string;
-  serial: string;
-  physical_size: {
-    width: number;
-    height: number;
-  };
-  enabled: boolean;
-  mode: {
-    width: number;
-    height: number;
-    refresh: number;
-    preferred: boolean;
-    current: boolean;
-  };
-  position: {
-    x: number;
-    y: number;
-  };
-  transform: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  refreshRate: number;
   scale: number;
-  adaptive_sync: boolean;
-}
-
-const execPromise = promisify(exec);
-
-const normalizeMonitor = (monitor: WlrMonitor) => ({
-  ...monitor,
-  make: monitor.make || "Unknown",
-  model: monitor.model || "Unknown",
-  serial: monitor.serial || "Unknown",
-});
-
-const getWlrOutputMonitors = async () => {
-  try {
-    const { stdout, stderr } = await execPromise("wlr-randr --json");
-
-    if (stderr) {
-      throw new Error(`wlr-randr stderr: ${stderr}`);
-    }
-
-    const rawMonitors = JSON.parse(stdout) as WlrMonitor[];
-    return rawMonitors.map(normalizeMonitor);
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new Error("Failed to parse wlr-randr JSON output");
-    }
-
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    throw new Error(`wlr-randr command failed: ${errorMessage}`);
-  }
-};
-
-const detectOutputProtocols = async () => {
-  const { stdout: protocols } = await execute("wayland-info");
-
-  if (protocols.includes("zwlr_output_manager_v1")) return "zwlr_output_manager_v1";
-
-  return "unknown";
 };
 
 export const monitorRouter = router({
   getAll: publicProcedure.query(async () => {
-    const outputProtocol = await detectOutputProtocols();
-
     try {
-      switch (outputProtocol) {
-        case "zwlr_output_manager_v1":
-          return await getWlrOutputMonitors();
+      const { stdout } = await execute({
+        command: "wayland-info",
+        logStdout: false,
+        logStderr: false,
+      });
 
-        default:
-          throw new TRPCError({
-            code: "PRECONDITION_FAILED",
-            message: "Only compositors supporting zwlr_output_manager_v1 are currently supported.",
-          });
+      const lines = stdout.split("\n");
+
+      const monitors: Monitor[] = [];
+      let current: Partial<Monitor> = {};
+      let isInOutputBlock = false;
+      for (const line of lines) {
+        const trimmed = line.trim();
+
+        // New output block
+        if (trimmed.includes("interface: 'wl_output'")) {
+          if (current.name) {
+            monitors.push(current as Monitor);
+          }
+          current = {};
+          isInOutputBlock = true;
+          continue;
+        }
+
+        if (!isInOutputBlock) continue;
+
+        const kvPairs = trimmed.matchAll(/(\w+):\s*'?([^',]+)'?/g);
+        for (const [, key, rawValue] of kvPairs) {
+          const value = rawValue.replace(/^'|'$/g, "").trim(); // Remove quotes if any
+
+          switch (key) {
+            case "name":
+              current.name = value;
+              break;
+            case "make":
+              current.make = value;
+              break;
+            case "model":
+              current.model = value;
+              break;
+            case "x":
+              current.x = parseInt(value);
+              break;
+            case "y":
+              current.y = parseInt(value);
+              break;
+            case "scale":
+              current.scale = parseInt(value);
+              break;
+            case "width":
+              current.width = parseInt(value);
+              break;
+            case "height":
+              current.height = parseInt(value);
+              break;
+            case "refresh":
+              current.refreshRate = parseFloat(value);
+              break;
+          }
+        }
       }
+
+      // Push last monitor
+      if (current.name) {
+        monitors.push(current as Monitor);
+      }
+
+      return monitors;
     } catch (error) {
       if (error instanceof TRPCError) {
         throw error;
@@ -92,7 +94,7 @@ export const monitorRouter = router({
 
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: `Failed to get output configuration: ${errorMessage}`,
+        message: `Failed to get monitor configuration: ${errorMessage}`,
         cause: error,
       });
     }
