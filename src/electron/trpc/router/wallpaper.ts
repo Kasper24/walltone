@@ -135,7 +135,12 @@ export const wallpaperRouter = router({
           await setImageWallpaper(wallpaperOutputPath, input.path, input.monitors);
           break;
         case "video":
-          await setVideoWallpaper(input.path, input.monitors, input.videoOptions);
+          await setVideoWallpaper(
+            wallpaperOutputPath,
+            input.path,
+            input.monitors,
+            input.videoOptions
+          );
           break;
         case "wallpaper-engine":
           await setWallpaperEngineWallpaper(
