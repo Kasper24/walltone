@@ -206,24 +206,24 @@ export const themeRouter = router({
               theme: input.theme,
             });
 
-            if (tpl.postHook) {
-              try {
-                const [cmd, ...args] = tpl.postHook.split(" ");
-                await execute({ command: cmd, args, shell: true });
-              } catch (error) {
-                const errorMessage =
-                  error instanceof Error ? error.message : "Unknown error occurred";
-                throw new TRPCError({
-                  code: "INTERNAL_SERVER_ERROR",
-                  message: `Error running post-hook command: ${tpl.postHook}: ${errorMessage}`,
-                  cause: error,
-                });
-              }
-            }
-
             try {
               await fs.mkdir(path.dirname(tpl.dest), { recursive: true });
               await fs.writeFile(tpl.dest, rendered, "utf-8");
+
+              if (tpl.postHook) {
+                try {
+                  const [cmd, ...args] = tpl.postHook.split(" ");
+                  await execute({ command: cmd, args, shell: true });
+                } catch (error) {
+                  const errorMessage =
+                    error instanceof Error ? error.message : "Unknown error occurred";
+                  throw new TRPCError({
+                    code: "INTERNAL_SERVER_ERROR",
+                    message: `Error running post-hook command: ${tpl.postHook}: ${errorMessage}`,
+                    cause: error,
+                  });
+                }
+              }
             } catch (error) {
               const errorMessage =
                 error instanceof Error ? error.message : "Unknown error occurred";
