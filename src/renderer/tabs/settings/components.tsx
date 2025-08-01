@@ -93,6 +93,7 @@ const InputSetting = ({
         key: settingKey,
         path: nestedSettingPath,
         value: value,
+        encrypt,
       });
     },
     onSuccess: () => {
