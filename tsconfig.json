@@ -2,8 +2,8 @@
   "compilerOptions": {
     "jsx": "react",
     "target": "esnext",
-    "module": "node16",
-    "moduleResolution": "node16",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "forceConsistentCasingInFileNames": true,
     "allowJs": false,
     "skipLibCheck": true,
@@ -15,7 +15,7 @@
     "strict": true,
     "alwaysStrict": true,
     "noFallthroughCasesInSwitch": true,
-    "lib": ["dom", "esnext"],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "baseUrl": ".",
     "paths": {
       "@renderer/*": ["./src/renderer/*"],

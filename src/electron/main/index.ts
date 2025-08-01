@@ -1,4 +1,5 @@
 import path from "path";
+import { fileURLToPath } from "url";
 import {
   app,
   protocol,
@@ -15,6 +16,8 @@ import { execute, killProcess } from "./lib";
 
 let isQuitting = false;
 let mainWindow: BrowserWindow;
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 protocol.registerSchemesAsPrivileged([
   {
