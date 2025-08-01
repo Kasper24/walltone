@@ -386,7 +386,6 @@ const WallpaperActions = ({
         onClick={() => setThemeMutation.mutate(theme)}
         className="flex-1 text-sm"
         disabled={!theme}
-        variant="outline"
       >
         <PaletteIcon className="mr-2 h-4 w-4" />
         Set Theme
