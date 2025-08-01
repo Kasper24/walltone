@@ -121,7 +121,7 @@ const adjustAccentColors = (colors: chroma.Color[]) => {
   const accentColors = colors.filter((color) => {
     const [_, saturation, __] = color.hsl();
     const luminance = color.luminance();
-    return saturation > 0.3 && luminance > 0.08&& luminance < 0.8;
+    return saturation > 0.3 && luminance > 0.08 && luminance < 0.8;
   });
 
   return accentColors.length < 8

@@ -68,6 +68,6 @@ const generateMaterialTheme = async (img: HTMLImageElement) => {
       },
     },
   };
-}
+};
 
 export default generateMaterialTheme;

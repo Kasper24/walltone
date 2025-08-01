@@ -14,6 +14,6 @@ const LoadingButton = ({ children, isLoading, ...props }: Props) => {
       {children}
     </Button>
   );
-}
+};
 
 export default LoadingButton;
