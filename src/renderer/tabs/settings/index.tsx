@@ -43,10 +43,16 @@ const SETTINGS_CONFIG: SettingsSection[] = [
     ],
   },
   {
-    title: "Templates",
-    description: "Manage templates",
+    title: "Theme",
+    description: "Manage theme settings",
     icon: Settings,
     settings: [
+      {
+        key: "theme.restoreOnStart",
+        title: "Restore on Start",
+        description: "Restore the last wallpaper on startup",
+        type: "boolean",
+      },
       {
         key: "theme.templates",
         title: "Custom Templates",

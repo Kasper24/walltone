@@ -10,7 +10,8 @@ import {
   globalShortcut,
 } from "electron";
 import { createIPCHandler } from "electron-trpc-experimental/main";
-import { appRouter } from "@electron/main/trpc/routes/base";
+import { appRouter, caller } from "@electron/main/trpc/routes/base";
+import { execute, killProcess } from "./lib";
 
 let isQuitting = false;
 let mainWindow: BrowserWindow;
@@ -25,6 +26,27 @@ protocol.registerSchemesAsPrivileged([
     },
   },
 ]);
+
+async function restoreWallpaperOnStart() {
+  const restoreOnStart = await caller.settings.get({
+    key: "theme.restoreOnStart",
+  });
+
+  if (restoreOnStart) {
+    const lastWallpaperCmd = (await caller.settings.get({
+      key: "theme.lastWallpaperCmd",
+    })) as { command: string; args: string[] };
+    if (lastWallpaperCmd) {
+      killProcess("swaybg");
+      killProcess("mpvpaper");
+      killProcess("linux-wallpaperengine");
+      execute({
+        command: lastWallpaperCmd.command,
+        args: lastWallpaperCmd.args,
+      });
+    }
+  }
+}
 
 const createWindow = () => {
   protocol.handle("image", async (request) => {
@@ -55,6 +77,7 @@ const createWindow = () => {
   createTray(mainWindow);
 
   createIPCHandler({ router: appRouter, windows: [mainWindow] });
+  restoreWallpaperOnStart();
 
   mainWindow.on("close", function (event) {
     if (!isQuitting) {

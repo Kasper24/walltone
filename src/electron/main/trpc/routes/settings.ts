@@ -14,6 +14,8 @@ const keySchema = z.enum([
   "video.wallpaperFolders",
   "theme.templates",
   "theme.wallpaperCopyDestinations",
+  "theme.restoreOnStart",
+  "theme.lastWallpaperCmd",
 ]);
 
 const filePicker = async (type: "file" | "folder"): Promise<string | null> => {

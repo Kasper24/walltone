@@ -441,6 +441,14 @@ const setImageWallpaper = async (
     );
   });
 
+  await caller.settings.set({
+    key: "theme.lastWallpaperCmd",
+    value: {
+      command: "swaybg",
+      args,
+    },
+  });
+
   await execute({ command: "swaybg", args });
 };
 
@@ -496,6 +504,14 @@ const setVideoWallpaper = async (
 
   // Add video path
   args.push(videoPath);
+
+  await caller.settings.set({
+    key: "theme.lastWallpaperCmd",
+    value: {
+      command: "mpvpaper",
+      args,
+    },
+  });
 
   await execute({ command: "mpvpaper", args });
 };
@@ -564,6 +580,14 @@ const setWallpaperEngineWallpaper = async (
   if (options?.noFullscreenPause) {
     args.push("--no-fullscreen-pause");
   }
+
+  await caller.settings.set({
+    key: "theme.lastWallpaperCmd",
+    value: {
+      command: "linux-wallpaperengine",
+      args,
+    },
+  });
 
   await execute({ command: "linux-wallpaperengine", args });
 };
