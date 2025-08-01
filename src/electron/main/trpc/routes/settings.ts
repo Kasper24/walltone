@@ -1,8 +1,10 @@
 import { dialog, safeStorage } from "electron";
-import settings from "electron-settings";
+import Store from "electron-store";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "..";
+
+const store = new Store({ name: "settings" });
 
 const keySchema = z.enum([
   "unsplash.apiKey",
@@ -35,9 +37,9 @@ const setValue = async (key: string, value: any, encrypt: boolean) => {
   try {
     if (encrypt && safeStorage.isEncryptionAvailable()) {
       const encryptedValue = safeStorage.encryptString(value);
-      await settings.set(key, encryptedValue.toString("base64"));
+      store.set(key, encryptedValue.toString("base64"));
     } else {
-      await settings.set(key, value);
+      store.set(key, value);
     }
   } catch (error) {
     throw new TRPCError({
@@ -59,7 +61,7 @@ export const settingsRouter = router({
     )
     .query(async ({ input }) => {
       try {
-        let settingValue = await settings.get(input.key);
+        let settingValue = store.get(input.key);
         if (input.path) settingValue = getNestedValue(settingValue, input.path);
 
         if (!settingValue) return null;
@@ -88,7 +90,7 @@ export const settingsRouter = router({
     )
     .mutation(async ({ input }) => {
       try {
-        let settingValue = await settings.get(input.key);
+        let settingValue = store.get(input.key);
         const newValue =
           input.value ?? (input.filePicker ? await filePicker(input.filePicker) : null);
 
@@ -137,7 +139,7 @@ export const settingsRouter = router({
     )
     .mutation(async ({ input }) => {
       try {
-        let settingValue = (await settings.get(input.key)) || [];
+        let settingValue = store.get(input.key) || [];
         if (input.path) settingValue = getNestedValue(settingValue, input.path);
 
         if (!Array.isArray(settingValue)) {
@@ -170,7 +172,7 @@ export const settingsRouter = router({
     )
     .mutation(async ({ input }) => {
       try {
-        let settingValue = await settings.get(input.key);
+        let settingValue = store.get(input.key);
         if (input.path) settingValue = getNestedValue(settingValue, input.path);
 
         if (!Array.isArray(settingValue)) {
