@@ -27,7 +27,7 @@ pkgs.buildNpmPackage rec {
 
   src = ./.;
 
-  npmDepsHash = "sha256-3mNyZYt6ROW+VM4d1od0XYOXrdq9R3lFD/+bNvAzBK0=";
+  npmDepsHash = "sha256-GoRQM+BkDkrElCJ0/BxVIc/JbVN1fuvmAv+3geUN1oc=";
 
   dontNpmBuild = true;
   makeCacheWritable = true;
@@ -49,12 +49,11 @@ pkgs.buildNpmPackage rec {
       --prefix PATH : ${
         pkgs.lib.makeBinPath [
           pkgs.swaybg
-          pkgs.ffmpeg
           pkgs.mpvpaper
           pkgs.linux-wallpaperengine
           pkgs.cage
           pkgs.grim
-          pkgs.wayland-info
+          pkgs.wayland-utils
         ]
       }
 
