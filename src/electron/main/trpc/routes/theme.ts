@@ -183,12 +183,11 @@ export const themeRouter = router({
         ((await caller.settings.get({
           key: "theme.templates",
         })) as { src: string; dest: string; postHook: string }[]) || [];
-      if (!templates) {
+      if (!templates)
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Templates are not set.",
         });
-      }
 
       await Promise.all(
         templates.map(async (tpl) => {
@@ -201,18 +200,32 @@ export const themeRouter = router({
 
           try {
             const content = await fs.readFile(tpl.src, "utf-8");
-            const rendered = await renderTemplate(content, {
-              wallpaper: input.wallpaper,
+            const rendered = await renderString(content, {
+              wallpaper: {
+                id: santize(input.wallpaper.id),
+                name: santize(input.wallpaper.name),
+              },
               theme: input.theme,
             });
 
             try {
-              await fs.mkdir(path.dirname(tpl.dest), { recursive: true });
-              await fs.writeFile(tpl.dest, rendered, "utf-8");
+              const destination = await renderString(tpl.dest, {
+                wallpaper: {
+                  id: santize(input.wallpaper.id),
+                  name: santize(input.wallpaper.name),
+                },
+                theme: input.theme,
+              });
+              await fs.mkdir(path.dirname(destination), { recursive: true });
+              await fs.writeFile(destination, rendered, "utf-8");
 
               if (tpl.postHook) {
                 try {
-                  const [cmd, ...args] = tpl.postHook.split(" ");
+                  const postHook = await renderString(tpl.postHook, {
+                    wallpaper: input.wallpaper,
+                    theme: input.theme,
+                  });
+                  const [cmd, ...args] = postHook.split(" ");
                   await execute({ command: cmd, args, shell: true });
                 } catch (error) {
                   const errorMessage =
@@ -613,10 +626,11 @@ const copyWallpaperToDestinations = async (
 
   await Promise.all(
     wallpaperDestinations.map(async (destination) => {
-      destination = await renderTemplate(destination, {
-        id: santize(wallpaperId),
-        name: santize(wallpaperName),
-        path: wallpaperPath,
+      destination = await renderString(destination, {
+        wallpaper: {
+          id: santize(wallpaperId),
+          name: santize(wallpaperName),
+        },
       });
       await fs.mkdir(path.dirname(destination), { recursive: true });
       await fs.copyFile(wallpaperPath, destination);
@@ -624,7 +638,7 @@ const copyWallpaperToDestinations = async (
   );
 };
 
-const renderTemplate = async (content: string, context: Record<string, unknown>) => {
+const renderString = async (content: string, context: Record<string, unknown>) => {
   return content.replace(/\$\{([\s\S]+?)\}/g, (_, expr) => {
     try {
       const fn = new Function(...Object.keys(context), "color", `return (${expr})`);
