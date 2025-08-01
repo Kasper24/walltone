@@ -138,7 +138,3 @@ app.whenReady().then(createWindow);
 app.on("before-quit", function () {
   isQuitting = true;
 });
-
-if (require("electron-squirrel-startup")) {
-  app.quit();
-}
