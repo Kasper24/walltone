@@ -10,7 +10,7 @@ import {
   globalShortcut,
 } from "electron";
 import { createIPCHandler } from "electron-trpc-experimental/main";
-import { appRouter } from "@electron/trpc/router/base";
+import { appRouter } from "@electron/main/trpc/routes/base";
 
 let isQuitting = false;
 let mainWindow: BrowserWindow;

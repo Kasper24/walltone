@@ -8,7 +8,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@renderer/components/ui/dialog";
-import { Monitor } from "@electron/trpc/router/monitor";
+import { Monitor } from "@electron/main/trpc/routes/monitor";
 import { Button } from "@renderer/components/ui/button";
 import { Checkbox } from "@renderer/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
@@ -21,7 +21,7 @@ import {
 } from "@renderer/components/ui/select";
 import { Slider } from "@renderer/components/ui/slider";
 import { Switch } from "@renderer/components/ui/switch";
-import { BaseWallpaper } from "@electron/trpc/router/wallpaper";
+import { BaseWallpaper } from "@electron/main/trpc/routes/theme";
 import { OnWallpaperApply } from "../wallpapers-grid/types";
 import { useMonitorSelection, useWallpaperActions } from "./hooks";
 import { Label } from "../ui/label";

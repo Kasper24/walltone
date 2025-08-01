@@ -15,8 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/u
 import { Badge } from "@renderer/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs";
 import { ScrollArea } from "@renderer/components/ui/scroll-area";
-import LoadingButton from "@renderer/components/loading-button";
-import { BaseWallpaper } from "@electron/trpc/router/wallpaper";
+import LoadingButton from "@renderer/components/ui/loading-button";
+import { BaseWallpaper } from "@electron/main/trpc/routes/theme";
 import { OnWallpaperApply, OnWallpaperDownload } from "../wallpapers-grid/types";
 import { useThemeGeneration, useColorEditor, useThemeEditor, useWallpaperActions } from "./hooks";
 import ApplyWallpaperDialog, { DynamicControlDefinition } from "./apply-dialog";

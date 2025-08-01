@@ -1,4 +1,4 @@
-import { DownloadableWallpaper } from "@electron/trpc/router/wallpaper";
+import { DownloadableWallpaper } from "@electron/main/trpc/routes/theme";
 
 export type WallhavenSorting = "date_added" | "random" | "views" | "favorites" | "toplist";
 export type WallhavenCategory = "general" | "anime" | "people";

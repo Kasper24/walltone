@@ -41,7 +41,7 @@ const LibraryImageTab = () => {
       }}
       queryKeys={["library-image"]}
       queryFn={async ({ pageParam, query }) =>
-        await client.wallpaper.getWallpapers.query({
+        await client.theme.getWallpapers.query({
           type: "image",
           page: pageParam,
           limit: 20,
@@ -60,7 +60,7 @@ const LibraryImageTab = () => {
         { key: "tile", text: "Tile" },
       ]}
       onWallpaperApply={async (wallpaper, monitors) => {
-        await client.wallpaper.setWallpaper.mutate({
+        await client.theme.setWallpaper.mutate({
           type: "image",
           id: wallpaper.id,
           name: wallpaper.name,

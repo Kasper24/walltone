@@ -3,7 +3,7 @@ import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useDebouncedCallback } from "use-debounce";
 import { client } from "@renderer/lib/trpc";
-import { BaseWallpaper } from "@electron/trpc/router/wallpaper";
+import { BaseWallpaper } from "@electron/main/trpc/routes/theme";
 import { AppliedFilters, ConfigurationRequirement, WallpapersGridProps } from "./types";
 
 export const useWallpaperSearch = () => {

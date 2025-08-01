@@ -26,7 +26,7 @@ import { Card, CardHeader, CardContent, CardTitle, CardFooter } from "@renderer/
 import { Switch } from "@renderer/components/ui/switch";
 import { toast } from "sonner";
 import { client } from "@renderer/lib/trpc";
-import { RouterInputs } from "@electron/trpc/router/base";
+import { RouterInputs } from "@electron/main/trpc/routes/base";
 
 type SettingKey = RouterInputs["settings"]["get"]["key"];
 

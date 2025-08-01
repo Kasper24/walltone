@@ -3,13 +3,13 @@ import { router, createCallerFactory } from "..";
 import { fileRouter } from "./file";
 import { monitorRouter } from "./monitor";
 import { settingsRouter } from "./settings";
-import { wallpaperRouter } from "./wallpaper";
+import { themeRouter } from "./theme";
 
 export const appRouter = router({
   file: fileRouter,
   monitor: monitorRouter,
   settings: settingsRouter,
-  wallpaper: wallpaperRouter,
+  theme: themeRouter,
 });
 
 export const caller = createCallerFactory(appRouter)({});

@@ -1,4 +1,4 @@
-import { DownloadableWallpaper } from "@electron/trpc/router/wallpaper";
+import { DownloadableWallpaper } from "@electron/main/trpc/routes/theme";
 
 interface UnsplashPhoto {
   id: string;

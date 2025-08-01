@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { DialogClose } from "@renderer/components/ui/dialog";
 import WallpapersGrid from "@renderer/components/wallpapers-grid";
-import LoadingButton from "@renderer/components/loading-button";
+import LoadingButton from "@renderer/components/ui/loading-button";
 import { useCurrentTab } from "@renderer/providers/current-tab-provider";
 import useWallpaperEngineApiKey from "@renderer/hooks/useWallpaperEngineApiKey";
 import { client } from "@renderer/lib/trpc";
@@ -53,7 +53,7 @@ const LibraryWallpaperEngineTab = () => {
       queryFn={async ({ pageParam, query, sorting, appliedFilters }) => {
         const tags = Object.entries(appliedFilters?.arrays || {}).flatMap(([_, values]) => values);
 
-        return await client.wallpaper.getWallpapers.query({
+        return await client.theme.getWallpapers.query({
           type: "wallpaper-engine",
           page: pageParam,
           limit: 50,
@@ -150,7 +150,7 @@ const LibraryWallpaperEngineTab = () => {
         },
       ]}
       onWallpaperApply={async (wallpaper, monitors, controlValues) => {
-        await client.wallpaper.setWallpaper.mutate({
+        await client.theme.setWallpaper.mutate({
           type: "wallpaper-engine",
           id: wallpaper.id,
           name: wallpaper.name,

@@ -24,7 +24,7 @@ import { Badge } from "@renderer/components/ui/badge";
 import { Separator } from "@renderer/components/ui/separator";
 import { useCurrentTab } from "@renderer/providers/current-tab-provider";
 import { cn } from "@renderer/lib/cn";
-import { BaseWallpaper } from "@electron/trpc/router/wallpaper";
+import { BaseWallpaper } from "@electron/main/trpc/routes/theme";
 import WallpaperDialog from "../wallpaper-dialog";
 import { DynamicControlDefinition } from "../wallpaper-dialog/apply-dialog";
 import { ConfigurationRequirement, OnWallpaperApply, OnWallpaperDownload } from "./types";

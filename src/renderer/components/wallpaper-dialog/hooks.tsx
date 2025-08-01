@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import generateThemes from "@renderer/lib/theme";
 import { client } from "@renderer/lib/trpc";
-import { BaseWallpaper } from "@electron/trpc/router/wallpaper";
+import { BaseWallpaper } from "@electron/main/trpc/routes/theme";
 import { OnWallpaperApply, OnWallpaperDownload } from "../wallpapers-grid/types";
 
 export const useThemeGeneration = () => {
@@ -188,7 +188,7 @@ export const useWallpaperActions = (wallpaper: BaseWallpaper) => {
 
   const setThemeMutation = useMutation({
     mutationFn: async (theme: any) => {
-      await client.wallpaper.setTheme.mutate({
+      await client.theme.setTheme.mutate({
         wallpaper: wallpaper,
         theme: theme,
       });

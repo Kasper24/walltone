@@ -2,7 +2,7 @@ import path from "path";
 import { promises as fs } from "fs";
 import z from "zod";
 import { TRPCError } from "@trpc/server";
-import { execute, killProcess, santize } from "../lib";
+import { execute } from "@electron/main/lib";
 import { publicProcedure, router } from "..";
 import { caller } from "./base";
 import { color } from "chroma.ts";
@@ -37,7 +37,7 @@ export interface WallpaperData {
   nextPage: number | null;
 }
 
-export const wallpaperRouter = router({
+export const themeRouter = router({
   getWallpapers: publicProcedure
     .input(
       z.object({
