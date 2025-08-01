@@ -36,3 +36,15 @@ jobs:
 
       - name: Package
         run: npm run package
+
+  nix-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Build Nix package
+        run: nix build
