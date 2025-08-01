@@ -1,5 +1,6 @@
-import { dialog, safeStorage } from "electron";
+import { dialog } from "electron";
 import Store from "electron-store";
+import keytar from "keytar";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
@@ -35,12 +36,8 @@ const getNestedValue = (obj: any, path: (string | number)[]): any => {
 
 const setValue = async (key: string, value: any, encrypt: boolean) => {
   try {
-    if (encrypt && safeStorage.isEncryptionAvailable()) {
-      const encryptedValue = safeStorage.encryptString(value);
-      store.set(key, encryptedValue.toString("base64"));
-    } else {
-      store.set(key, value);
-    }
+    if (encrypt) await keytar.setPassword("walltone", key, value);
+    else store.set(key, value);
   } catch (error) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
@@ -66,8 +63,8 @@ export const settingsRouter = router({
 
         if (!settingValue) return null;
 
-        if (input.decrypt && safeStorage.isEncryptionAvailable())
-          return safeStorage.decryptString(Buffer.from(settingValue as string, "base64"));
+        if (input.decrypt) return await keytar.getPassword("walltone", input.key);
+
         return settingValue;
       } catch (error) {
         throw new TRPCError({
