@@ -428,19 +428,20 @@ const setImageWallpaper = async (
   imagePath: string,
   monitors: { name: string; scalingMethod?: string }[]
 ) => {
-  await Promise.all(
-    monitors.map(async (monitor) => {
-      const args = [
-        "--image",
-        imagePath,
-        "--output",
-        monitor.name,
-        "--mode",
-        monitor.scalingMethod || "crop",
-      ];
-      await execute({ command: "swaybg", args });
-    })
-  );
+  const args: string[] = [];
+
+  monitors.forEach((monitor) => {
+    args.push(
+      "--output",
+      monitor.name,
+      "--image",
+      imagePath,
+      "--mode",
+      monitor.scalingMethod || "crop"
+    );
+  });
+
+  await execute({ command: "swaybg", args });
 };
 
 const setVideoWallpaper = async (
