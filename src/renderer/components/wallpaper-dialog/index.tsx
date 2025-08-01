@@ -2,6 +2,7 @@ import React from "react";
 import { Palette, Save, Wallpaper, Copy, X, PaletteIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Slider } from "@uiw/react-color";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
 import {
   DialogContent,
   DialogDescription,
@@ -9,17 +10,24 @@ import {
   DialogTitle,
   DialogTrigger,
   Dialog,
-} from "@renderer/components/ui/dialog";
-import { Button } from "@renderer/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
-import { Badge } from "@renderer/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs";
-import { ScrollArea } from "@renderer/components/ui/scroll-area";
-import LoadingButton from "@renderer/components/ui/loading-button";
-import { BaseWallpaper } from "@electron/main/trpc/routes/theme";
-import { OnWallpaperApply, OnWallpaperDownload } from "../wallpapers-grid/types";
-import { useThemeGeneration, useColorEditor, useThemeEditor, useWallpaperActions } from "./hooks";
-import ApplyWallpaperDialog, { DynamicControlDefinition } from "./apply-dialog";
+} from "@renderer/components/ui/dialog.js";
+import { Button } from "@renderer/components/ui/button.js";
+import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card.js";
+import { Badge } from "@renderer/components/ui/badge.js";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs.js";
+import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
+import LoadingButton from "@renderer/components/ui/loading-button.js";
+import {
+  type OnWallpaperApply,
+  type OnWallpaperDownload,
+} from "@renderer/components/wallpapers-grid/types.js";
+import {
+  useThemeGeneration,
+  useColorEditor,
+  useThemeEditor,
+  useWallpaperActions,
+} from "./hooks.js";
+import ApplyWallpaperDialog, { DynamicControlDefinition } from "./apply-dialog.js";
 
 const WallpaperDialog = ({
   wallpaper,

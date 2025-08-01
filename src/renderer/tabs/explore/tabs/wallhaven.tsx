@@ -1,7 +1,6 @@
-import React from "react";
-import WallpapersGrid from "@renderer/components/wallpapers-grid";
-import { wallhavenSearch, WallhavenSorting } from "@renderer/api/wallhaven";
-import { client } from "@renderer/lib/trpc";
+import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
+import { wallhavenSearch, WallhavenSorting } from "@renderer/api/wallhaven.js";
+import { client } from "@renderer/lib/trpc.js";
 
 const ExploreWallhavenTab = () => {
   return (

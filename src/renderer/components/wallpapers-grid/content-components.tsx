@@ -10,24 +10,24 @@ import {
   Settings,
   CheckCircle2,
 } from "lucide-react";
-import { Dialog, DialogTrigger } from "@renderer/components/ui/dialog";
-import { ScrollArea } from "@renderer/components/ui/scroll-area";
+import { BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
+import { Dialog, DialogTrigger } from "@renderer/components/ui/dialog.js";
+import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@renderer/components/ui/card";
-import { Button } from "@renderer/components/ui/button";
-import { Badge } from "@renderer/components/ui/badge";
-import { Separator } from "@renderer/components/ui/separator";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider";
-import { cn } from "@renderer/lib/cn";
-import { BaseWallpaper } from "@electron/main/trpc/routes/theme";
-import WallpaperDialog from "../wallpaper-dialog";
-import { DynamicControlDefinition } from "../wallpaper-dialog/apply-dialog";
-import { ConfigurationRequirement, OnWallpaperApply, OnWallpaperDownload } from "./types";
+} from "@renderer/components/ui/card.js";
+import { Button } from "@renderer/components/ui/button.js";
+import { Badge } from "@renderer/components/ui/badge.js";
+import { Separator } from "@renderer/components/ui/separator.js";
+import WallpaperDialog from "@renderer/components/wallpaper-dialog/index.js";
+import { type DynamicControlDefinition } from "@renderer/components/wallpaper-dialog/apply-dialog.js";
+import { useCurrentTab } from "@renderer/providers/current-tab-provider.js";
+import { cn } from "@renderer/lib/cn.js";
+import { ConfigurationRequirement, OnWallpaperApply, OnWallpaperDownload } from "./types.js";
 
 export const ConfigurationScreen = ({
   requirement,

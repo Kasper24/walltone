@@ -1,9 +1,8 @@
-import React from "react";
 import { ExternalLink, Key, RefreshCcw, Settings } from "lucide-react";
-import WallpapersGrid from "@renderer/components/wallpapers-grid";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider";
-import { client } from "@renderer/lib/trpc";
-import { pexelsVideosSearch } from "@renderer/api/pexels";
+import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
+import { useCurrentTab } from "@renderer/providers/current-tab-provider.js";
+import { client } from "@renderer/lib/trpc.js";
+import { pexelsVideosSearch } from "@renderer/api/pexels.js";
 
 const ExplorePexelsVideosTab = () => {
   const { setCurrentTab } = useCurrentTab();
@@ -48,7 +47,7 @@ const ExplorePexelsVideosTab = () => {
         ],
       }}
       queryKeys={[`explore-pexels-videos`]}
-      queryFn={async ({ pageParam, query, sorting, appliedFilters, configValue }) =>
+      queryFn={async ({ pageParam, query, appliedFilters, configValue }) =>
         await pexelsVideosSearch({
           apiKey: configValue,
           page: pageParam,

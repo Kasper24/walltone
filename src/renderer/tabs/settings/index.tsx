@@ -1,15 +1,15 @@
 import React from "react";
 import { Image, Monitor, Settings, Palette, LucideIcon } from "lucide-react";
-import { ScrollArea } from "@renderer/components/ui/scroll-area";
-import { Card, CardHeader, CardContent, CardTitle } from "@renderer/components/ui/card";
-import { RouterInputs } from "@electron/main/trpc/routes/base";
+import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
+import { Card, CardHeader, CardContent, CardTitle } from "@renderer/components/ui/card.js";
+import { RouterInputs } from "@electron/main/trpc/routes/base.js";
 import {
   InputSetting,
   BooleanSetting,
   FolderListSetting,
   ThemeSetting,
   TemplateListSetting,
-} from "./components";
+} from "./components.js";
 
 type SettingKey = RouterInputs["settings"]["get"]["key"];
 

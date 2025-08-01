@@ -1,4 +1,4 @@
-import { DownloadableWallpaper } from "@electron/main/trpc/routes/theme";
+import { type DownloadableWallpaper } from "@electron/main/trpc/routes/theme.js";
 
 interface PexelsPhoto {
   id: number;

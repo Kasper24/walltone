@@ -1,4 +1,4 @@
-import { BaseWallpaper } from "@electron/main/trpc/routes/theme";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
 
 interface WallpaperEngineWorkshopItem {
   result: number;

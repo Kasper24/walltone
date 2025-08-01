@@ -1,17 +1,16 @@
-import React from "react";
 import { Folder, RefreshCcw, Settings } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { DialogClose } from "@renderer/components/ui/dialog";
-import WallpapersGrid from "@renderer/components/wallpapers-grid";
-import LoadingButton from "@renderer/components/ui/loading-button";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider";
-import useWallpaperEngineApiKey from "@renderer/hooks/useWallpaperEngineApiKey";
-import { client } from "@renderer/lib/trpc";
+import { DialogClose } from "@renderer/components/ui/dialog.js";
+import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
+import LoadingButton from "@renderer/components/ui/loading-button.js";
+import { useCurrentTab } from "@renderer/providers/current-tab-provider.js";
+import useWallpaperEngineApiKey from "@renderer/hooks/useWallpaperEngineApiKey.js";
+import { client } from "@renderer/lib/trpc.js";
 import {
   wallpaperEngineGetTags,
   wallpaperEngineWorkshopItemUnsubscribe,
-} from "@renderer/api/wallpaper-engine";
+} from "@renderer/api/wallpaper-engine.js";
 
 const LibraryWallpaperEngineTab = () => {
   const { setCurrentTab } = useCurrentTab();

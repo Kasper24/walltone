@@ -7,25 +7,25 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
-} from "@renderer/components/ui/dialog";
-import { Monitor } from "@electron/main/trpc/routes/monitor";
-import { Button } from "@renderer/components/ui/button";
-import { Checkbox } from "@renderer/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
+} from "@renderer/components/ui/dialog.js";
+import { type Monitor } from "@electron/main/trpc/routes/monitor.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
+import { Button } from "@renderer/components/ui/button.js";
+import { Checkbox } from "@renderer/components/ui/checkbox.js";
+import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card.js";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@renderer/components/ui/select";
-import { Slider } from "@renderer/components/ui/slider";
-import { Switch } from "@renderer/components/ui/switch";
-import { BaseWallpaper } from "@electron/main/trpc/routes/theme";
-import { OnWallpaperApply } from "../wallpapers-grid/types";
-import { useMonitorSelection, useWallpaperActions } from "./hooks";
-import { Label } from "../ui/label";
-import { ScrollArea } from "../ui/scroll-area";
+} from "@renderer/components/ui/select.js";
+import { Slider } from "@renderer/components/ui/slider.js";
+import { Switch } from "@renderer/components/ui/switch.js";
+import { Label } from "@renderer/components/ui/label.js";
+import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
+import { OnWallpaperApply } from "@renderer/components/wallpapers-grid/types.js";
+import { useMonitorSelection, useWallpaperActions } from "./hooks.js";
 
 // Add new types for dynamic controls
 export interface DynamicControlDefinition {

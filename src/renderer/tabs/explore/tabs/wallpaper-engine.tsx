@@ -1,13 +1,12 @@
-import React from "react";
 import { ExternalLink, Key, RefreshCcw, Settings } from "lucide-react";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider";
-import WallpapersGrid from "@renderer/components/wallpapers-grid";
+import { useCurrentTab } from "@renderer/providers/current-tab-provider.js";
+import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
 import {
   wallpaperEngineWorkshopSearch,
   wallpaperEngineWorkshopItemSubscribe,
   wallpaperEngineGetTags,
-} from "@renderer/api/wallpaper-engine";
-import { client } from "@renderer/lib/trpc";
+} from "@renderer/api/wallpaper-engine.js";
+import { client } from "@renderer/lib/trpc.js";
 
 const ExploreWallpaperEngineTab = () => {
   const { setCurrentTab } = useCurrentTab();

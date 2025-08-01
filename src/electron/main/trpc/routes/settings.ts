@@ -2,7 +2,7 @@ import { dialog, safeStorage } from "electron";
 import Store from "electron-store";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { publicProcedure, router } from "..";
+import { publicProcedure, router } from "@electron/main/trpc/index.js";
 
 const store = new Store({ name: "settings" });
 
@@ -90,7 +90,7 @@ export const settingsRouter = router({
     )
     .mutation(async ({ input }) => {
       try {
-        let settingValue = store.get(input.key);
+        const settingValue = store.get(input.key);
         const newValue =
           input.value ?? (input.filePicker ? await filePicker(input.filePicker) : null);
 

@@ -1,6 +1,6 @@
 import { LucideIcon } from "lucide-react";
-import { RouterInputs } from "@electron/main/trpc/routes/base";
-import { BaseWallpaper, WallpaperData } from "@electron/main/trpc/routes/theme";
+import { RouterInputs } from "@electron/main/trpc/routes/base.js";
+import { BaseWallpaper, WallpaperData } from "@electron/main/trpc/routes/theme.js";
 
 export type OnWallpaperApply = (
   wallpaper: BaseWallpaper,

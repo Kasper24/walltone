@@ -27,13 +27,16 @@ export default [
         // ...globals.browser,
       },
     },
+    rules: {
+      "react/react-in-jsx-scope": "off",
+    },
   },
   {
     plugins: {
       "react-refresh": reactRefresh,
     },
     rules: {
-      "react-refresh/only-export-components": "error",
+      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
     },
   },
   {

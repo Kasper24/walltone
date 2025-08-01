@@ -1,10 +1,13 @@
 import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import generateThemes from "@renderer/lib/theme";
-import { client } from "@renderer/lib/trpc";
-import { BaseWallpaper } from "@electron/main/trpc/routes/theme";
-import { OnWallpaperApply, OnWallpaperDownload } from "../wallpapers-grid/types";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
+import {
+  type OnWallpaperApply,
+  type OnWallpaperDownload,
+} from "@renderer/components/wallpapers-grid/types.js";
+import generateThemes from "@renderer/lib/theme/index.js";
+import { client } from "@renderer/lib/trpc.js";
 
 export const useThemeGeneration = () => {
   const [theme, setTheme] = React.useState<any>();

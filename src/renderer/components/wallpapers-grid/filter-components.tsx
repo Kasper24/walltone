@@ -7,24 +7,24 @@ import {
   SheetDescription,
   SheetTitle,
   SheetTrigger,
-} from "@renderer/components/ui/sheet";
+} from "@renderer/components/ui/sheet.js";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@renderer/components/ui/select";
-import { Button } from "@renderer/components/ui/button";
-import { Label } from "@renderer/components/ui/label";
-import { Badge } from "@renderer/components/ui/badge";
-import { Checkbox } from "@renderer/components/ui/checkbox";
-import { Switch } from "@renderer/components/ui/switch";
-import { Separator } from "@renderer/components/ui/separator";
-import { ScrollArea } from "@renderer/components/ui/scroll-area";
-import { Input } from "@renderer/components/ui/input";
-import { cn } from "@renderer/lib/cn";
-import { FilterDefinition, AppliedFilters, SetAppliedFilters } from "./types";
+} from "@renderer/components/ui/select.js";
+import { Button } from "@renderer/components/ui/button.js";
+import { Label } from "@renderer/components/ui/label.js";
+import { Badge } from "@renderer/components/ui/badge.js";
+import { Checkbox } from "@renderer/components/ui/checkbox.js";
+import { Switch } from "@renderer/components/ui/switch.js";
+import { Separator } from "@renderer/components/ui/separator.js";
+import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
+import { Input } from "@renderer/components/ui/input.js";
+import { cn } from "@renderer/lib/cn.js";
+import { FilterDefinition, AppliedFilters, SetAppliedFilters } from "./types.js";
 
 export const FilterSheet = ({
   filterDefinitions,

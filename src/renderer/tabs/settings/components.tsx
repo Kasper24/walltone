@@ -1,31 +1,26 @@
 import React from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useTheme } from "@renderer/providers/theme-provider";
 import {
   FileText,
   ExternalLink,
   EyeIcon,
   EyeOffIcon,
   Folder,
-  Image,
   Loader2,
-  Monitor,
   Plus,
-  Settings,
   Trash2,
   Moon,
   Sun,
-  Palette,
-  LucideIcon,
   Terminal,
 } from "lucide-react";
-import { Button } from "@renderer/components/ui/button";
-import { Input } from "@renderer/components/ui/input";
-import { Card, CardContent } from "@renderer/components/ui/card";
-import { Switch } from "@renderer/components/ui/switch";
 import { toast } from "sonner";
-import { client } from "@renderer/lib/trpc";
-import { RouterInputs } from "@electron/main/trpc/routes/base";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTheme } from "@renderer/providers/theme-provider.js";
+import { Button } from "@renderer/components/ui/button.js";
+import { Input } from "@renderer/components/ui/input.js";
+import { Card, CardContent } from "@renderer/components/ui/card.js";
+import { Switch } from "@renderer/components/ui/switch.js";
+import { client } from "@renderer/lib/trpc.js";
+import { RouterInputs } from "@electron/main/trpc/routes/base.js";
 
 type SettingKey = RouterInputs["settings"]["get"]["key"];
 

@@ -1,7 +1,7 @@
 import { shell } from "electron";
-import { getMainWindow } from "@electron/main";
 import z from "zod";
-import { publicProcedure, router } from "..";
+import { getMainWindow } from "@electron/main/index.js";
+import { publicProcedure, router } from "@electron/main/trpc/index.js";
 
 export const fileRouter = router({
   download: publicProcedure.input(z.object({ url: z.string() })).mutation(async ({ input }) => {

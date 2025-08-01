@@ -2,10 +2,10 @@ import path from "path";
 import { promises as fs } from "fs";
 import z from "zod";
 import { TRPCError } from "@trpc/server";
-import { execute, killProcess, santize } from "@electron/main/lib";
-import { publicProcedure, router } from "..";
-import { caller } from "./base";
 import { color } from "chroma.ts";
+import { execute, killProcess, santize } from "@electron/main/lib/index.js";
+import { publicProcedure, router } from "@electron/main/trpc/index.js";
+import { caller } from "./base.js";
 
 const SUPPORTED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"];
 const SUPPORTED_VIDEO_EXTENSIONS = [".mp4", ".mkv", ".webm", ".avi", ".mov"];

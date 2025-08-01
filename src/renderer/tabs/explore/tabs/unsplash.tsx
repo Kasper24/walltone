@@ -1,9 +1,8 @@
-import React from "react";
 import { ExternalLink, Key, RefreshCcw, Settings } from "lucide-react";
-import WallpapersGrid from "@renderer/components/wallpapers-grid";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider";
-import { client } from "@renderer/lib/trpc";
-import { unsplashSearch } from "@renderer/api/unsplash";
+import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
+import { useCurrentTab } from "@renderer/providers/current-tab-provider.js";
+import { client } from "@renderer/lib/trpc.js";
+import { unsplashSearch } from "@renderer/api/unsplash.js";
 
 const ExploreUnsplashTab = () => {
   const { setCurrentTab } = useCurrentTab();

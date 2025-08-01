@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "jsx": "react",
+    "noEmit": true,
+    "useDefineForClassFields": true,
+    "jsx": "react-jsx",
     "target": "esnext",
     "module": "nodenext",
     "moduleResolution": "nodenext",
@@ -17,12 +19,13 @@
     "noFallthroughCasesInSwitch": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "baseUrl": ".",
+    "outDir": "dist",
+    "resolveJsonModule": true,
     "paths": {
       "@renderer/*": ["./src/renderer/*"],
       "@electron/*": ["./src/electron/*"]
-    },
-    "outDir": "dist",
-    "resolveJsonModule": true
+    }
   },
-  "include": ["src"]
+  "include": ["src", "forge.env.d.ts"],
+  "exclude": ["node_modules"]
 }

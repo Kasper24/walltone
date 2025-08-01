@@ -1,6 +1,6 @@
 import * as chroma from "chroma.ts";
-import generateBase16Theme from "./base16";
-import generateMaterialTheme from "./material";
+import generateBase16Theme from "./base16.js";
+import generateMaterialTheme from "./material.js";
 
 export interface ThemeInterface {
   name: string;

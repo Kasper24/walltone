@@ -1,8 +1,7 @@
-import React from "react";
 import { Folder, RefreshCcw, Settings } from "lucide-react";
-import WallpapersGrid from "@renderer/components/wallpapers-grid";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider";
-import { client } from "@renderer/lib/trpc";
+import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
+import { useCurrentTab } from "@renderer/providers/current-tab-provider.js";
+import { client } from "@renderer/lib/trpc.js";
 
 const LibraryVideoTab = () => {
   const { setCurrentTab } = useCurrentTab();

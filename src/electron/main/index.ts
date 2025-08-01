@@ -1,5 +1,4 @@
 import path from "path";
-import { fileURLToPath } from "url";
 import {
   app,
   protocol,
@@ -11,13 +10,11 @@ import {
   globalShortcut,
 } from "electron";
 import { createIPCHandler } from "electron-trpc-experimental/main";
-import { appRouter, caller } from "@electron/main/trpc/routes/base";
-import { execute, killProcess } from "./lib";
+import { appRouter, caller } from "@electron/main/trpc/routes/base.js";
+import { execute, killProcess } from "@electron/main/lib/index.js";
 
 let isQuitting = false;
 let mainWindow: BrowserWindow;
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -73,7 +70,7 @@ const createWindow = () => {
       nodeIntegration: true,
       nodeIntegrationInSubFrames: false,
       webSecurity: false,
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(import.meta.dirname, "preload.js"),
     },
     titleBarStyle: "hidden",
   });
@@ -100,12 +97,16 @@ const createWindow = () => {
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+    mainWindow.loadFile(
+      path.join(import.meta.dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+    );
   }
 };
 
 const createTray = (mainWindow: BrowserWindow) => {
-  const icon = nativeImage.createFromPath(path.join(__dirname, "..", "..", "assets", "icon.png"));
+  const icon = nativeImage.createFromPath(
+    path.join(import.meta.dirname, "..", "..", "assets", "icon.png")
+  );
   const tray = new Tray(icon);
   const contextMenu = Menu.buildFromTemplate([
     {

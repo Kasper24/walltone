@@ -1,5 +1,5 @@
-import { client } from "@renderer/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
+import { client } from "@renderer/lib/trpc.js";
 
 const useWallpaperEngineApiKey = () => {
   return useQuery({

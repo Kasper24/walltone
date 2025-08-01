@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
-import { publicProcedure, router } from "..";
-import { execute } from "@electron/main/lib";
+import { publicProcedure, router } from "@electron/main/trpc/index.js";
+import { execute } from "@electron/main/lib/index.js";
 
 export type Monitor = {
   name: string;
