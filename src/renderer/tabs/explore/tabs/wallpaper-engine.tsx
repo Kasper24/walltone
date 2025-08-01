@@ -16,7 +16,7 @@ const ExploreWallpaperEngineTab = () => {
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "wallpaper-engine:api-key",
+          key: "wallpaperEngine.apiKey",
         },
         title: "Wallpaper Engine API Key Required",
         description: "To browse Unsplash wallpapers, you need to configure your API key first.",
@@ -73,7 +73,7 @@ const ExploreWallpaperEngineTab = () => {
       filterDefinitions={wallpaperEngineGetTags() as any}
       onWallpaperDownload={async (wallpaper) => {
         const apiKey = (await client.settings.get.query({
-          key: "wallpaper-engine:api-key",
+          key: "wallpaperEngine.apiKey",
         })) as string;
         await wallpaperEngineWorkshopItemSubscribe(wallpaper.id, apiKey as string);
       }}

@@ -12,7 +12,7 @@ const ExplorePexelsImagesTab = () => {
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "pexels:api-key",
+          key: "pexels.apiKey",
         },
         title: "Pexels API Key Required",
         description: "To browse Pexels wallpapers, you need to configure your API key first.",

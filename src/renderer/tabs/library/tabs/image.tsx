@@ -11,7 +11,7 @@ const LibraryImageTab = () => {
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "image:wallpaper-folders",
+          key: "image.wallpaperFolders",
         },
         title: "Image Library Configuration",
         description: "To browse image wallpapers, you need to add wallpaper folders first.",

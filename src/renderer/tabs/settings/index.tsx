@@ -2,6 +2,7 @@ import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "@renderer/providers/theme-provider";
 import {
+  FileText,
   ExternalLink,
   EyeIcon,
   EyeOffIcon,
@@ -16,11 +17,12 @@ import {
   Sun,
   Palette,
   LucideIcon,
+  Terminal,
 } from "lucide-react";
 import { Button } from "@renderer/components/ui/button";
 import { Input } from "@renderer/components/ui/input";
 import { ScrollArea } from "@renderer/components/ui/scroll-area";
-import { Card, CardHeader, CardContent, CardTitle } from "@renderer/components/ui/card";
+import { Card, CardHeader, CardContent, CardTitle, CardFooter } from "@renderer/components/ui/card";
 import { Switch } from "@renderer/components/ui/switch";
 import { toast } from "sonner";
 import { client } from "@renderer/lib/trpc";
@@ -36,7 +38,7 @@ interface SettingConfig {
   key: SettingKey;
   title: string;
   description?: string;
-  type: "input" | "folder" | "encrypted" | "boolean" | "folder-list" | "theme";
+  type: "input" | "folder" | "encrypted" | "boolean" | "folder-list" | "theme" | "template-list";
   placeholder?: string;
 }
 
@@ -62,16 +64,21 @@ const SETTINGS_CONFIG: SettingsSection[] = [
     ],
   },
   {
-    title: "General",
-    description: "Basic application settings",
+    title: "Templates",
+    description: "Manage templates",
     icon: Settings,
     settings: [
       {
-        key: "theme:output-path",
-        title: "Theme Output Path",
-        description: "Where generated themes will be saved",
-        type: "folder",
-        placeholder: "Enter theme output path",
+        key: "theme.templates",
+        title: "Custom Templates",
+        description: "Manage your template sources and destinations",
+        type: "template-list",
+      },
+      {
+        key: "theme.wallpaperCopyDestinations",
+        title: "Wallpaper Copy Destinations",
+        description: "Folders to copy wallpapers into",
+        type: "folder-list",
       },
     ],
   },
@@ -81,7 +88,7 @@ const SETTINGS_CONFIG: SettingsSection[] = [
     icon: Monitor,
     settings: [
       {
-        key: "unsplash:api-key",
+        key: "unsplash.apiKey",
         title: "Unsplash API Key",
         description: "Required for downloading wallpapers from Unsplash",
         type: "encrypted",
@@ -95,7 +102,7 @@ const SETTINGS_CONFIG: SettingsSection[] = [
     icon: Monitor,
     settings: [
       {
-        key: "pexels:api-key",
+        key: "pexels.apiKey",
         title: "Pexels API Key",
         description: "Required for downloading wallpapers from Unsplash",
         type: "encrypted",
@@ -109,21 +116,21 @@ const SETTINGS_CONFIG: SettingsSection[] = [
     icon: Monitor,
     settings: [
       {
-        key: "wallpaper-engine:api-key",
+        key: "wallpaperEngine.apiKey",
         title: "Steam API Key",
         description: "Required for downloading wallpapers from Steam Workshop",
         type: "encrypted",
         placeholder: "Enter your Steam API key",
       },
       {
-        key: "wallpaper-engine:assets-folder",
+        key: "wallpaperEngine.assetsFolder",
         title: "Assets Path",
         description: "Location of Wallpaper Engine assets",
         type: "folder",
         placeholder: "Enter Wallpaper Engine assets folder",
       },
       {
-        key: "wallpaper-engine:wallpaper-folders",
+        key: "wallpaperEngine.wallpaperFolders",
         title: "Wallpaper Folders",
         description: "Additional folders to scan for wallpapers",
         type: "folder-list",
@@ -136,7 +143,7 @@ const SETTINGS_CONFIG: SettingsSection[] = [
     icon: Image,
     settings: [
       {
-        key: "image:wallpaper-folders",
+        key: "image.wallpaperFolders",
         title: "Wallpaper Folders",
         description: "Local folders containing wallpaper images",
         type: "folder-list",
@@ -149,7 +156,7 @@ const SETTINGS_CONFIG: SettingsSection[] = [
     icon: Image,
     settings: [
       {
-        key: "video:wallpaper-folders",
+        key: "video.wallpaperFolders",
         title: "Wallpaper Folders",
         description: "Local folders containing wallpaper videos",
         type: "folder-list",
@@ -164,7 +171,7 @@ const SETTINGS_CONFIG: SettingsSection[] = [
 
 const SettingsTab = () => {
   return (
-    <ScrollArea className="mx-auto h-[95vh] max-w-4xl p-6">
+    <ScrollArea className="mx-auto h-[90vh] max-w-6xl p-6">
       <div className="space-y-8">
         {SETTINGS_CONFIG.map((section) => (
           <SettingsSection key={section.title} section={section} />
@@ -219,17 +226,17 @@ const SettingsItem = ({ setting }: { setting: SettingConfig }) => {
   );
 };
 
-// ========================================================================================
-// DYNAMIC SETTING INPUT COMPONENT
-// ========================================================================================
-
 const SettingInput = ({ setting }: { setting: SettingConfig }) => {
   switch (setting.type) {
     case "input":
       return <InputSetting settingKey={setting.key} placeholder={setting.placeholder || ""} />;
     case "folder":
       return (
-        <InputSetting settingKey={setting.key} placeholder={setting.placeholder || ""} folder />
+        <InputSetting
+          settingKey={setting.key}
+          placeholder={setting.placeholder || ""}
+          filePicker="folder"
+        />
       );
     case "encrypted":
       return (
@@ -241,6 +248,8 @@ const SettingInput = ({ setting }: { setting: SettingConfig }) => {
       return <FolderListSetting settingKey={setting.key} />;
     case "theme":
       return <ThemeSetting />;
+    case "template-list":
+      return <TemplateListSetting settingKey={setting.key} />;
     default:
       return <div>Unknown setting type</div>;
   }
@@ -268,44 +277,72 @@ const ThemeSetting = () => {
   );
 };
 
+interface InputSettingProps {
+  settingKey: SettingKey;
+  nestedSettingPath?: (string | number)[];
+  encrypt?: boolean;
+  filePicker?: "file" | "folder";
+  placeholder?: string;
+  showOpenInExplorerButton?: boolean;
+}
+
 const InputSetting = ({
   settingKey,
-  placeholder,
+  nestedSettingPath,
+  placeholder = "",
   encrypt = false,
-  folder = false,
-}: {
-  settingKey: SettingKey;
-  placeholder: string;
-  encrypt?: boolean;
-  folder?: boolean;
-}) => {
-  const [showPassword, setShowPassword] = React.useState(false);
+  filePicker,
+  showOpenInExplorerButton = false,
+}: InputSettingProps) => {
   const queryClient = useQueryClient();
+  const queryKey = nestedSettingPath ? [settingKey, ...nestedSettingPath] : [settingKey];
+  const [localValue, setLocalValue] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const {
     data: value,
     isPending,
     isError,
   } = useQuery({
-    queryKey: [settingKey],
-    queryFn: async () => {
-      return await client.settings.get.query({
+    queryKey: queryKey,
+    queryFn: async () =>
+      await client.settings.get.query({
         key: settingKey,
+        path: nestedSettingPath,
         decrypt: encrypt,
-      });
-    },
+      }),
   });
 
-  const setValue = useMutation({
+  React.useEffect(() => {
+    setLocalValue(value ?? "");
+  }, [value]);
+
+  const onBlurMutation = useMutation({
     mutationFn: async (value: string) => {
       await client.settings.set.mutate({
         key: settingKey,
+        path: nestedSettingPath,
         value: value,
-        encrypt: encrypt,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [settingKey] });
+      queryClient.invalidateQueries({ queryKey: queryKey });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const onBrowseFolderMutation = useMutation({
+    mutationFn: async () => {
+      await client.settings.set.mutate({
+        key: settingKey,
+        path: nestedSettingPath,
+        filePicker,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKey });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -319,7 +356,7 @@ const InputSetting = ({
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           <span className="text-muted-foreground text-sm">Loading...</span>
         </div>
-        {folder && (
+        {filePicker && (
           <Button variant="outline" disabled>
             <Folder className="mr-2 h-4 w-4" />
             Browse
@@ -336,7 +373,7 @@ const InputSetting = ({
           <div className="border-destructive bg-destructive/10 flex h-10 flex-1 items-center rounded-md border px-3">
             <span className="text-destructive text-sm">Failed to load setting</span>
           </div>
-          {folder && (
+          {filePicker && (
             <Button variant="outline" disabled>
               <Folder className="mr-2 h-4 w-4" />
               Browse
@@ -346,7 +383,7 @@ const InputSetting = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => queryClient.invalidateQueries({ queryKey: [settingKey] })}
+          onClick={() => queryClient.invalidateQueries({ queryKey: queryKey })}
           className="h-8"
         >
           Retry
@@ -356,16 +393,19 @@ const InputSetting = ({
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-1 gap-2">
       <div className="relative flex-1">
         <Input
+          value={localValue}
           type={encrypt && !showPassword ? "password" : "text"}
           placeholder={placeholder}
-          value={(value as string) || ""}
-          onChange={(event) => {
-            setValue.mutate(event.target.value);
+          onChange={(e) => {
+            setLocalValue(e.target.value);
           }}
-          disabled={setValue.isPending}
+          onBlur={(e) => {
+            onBlurMutation.mutate(e.target.value);
+          }}
+          disabled={onBlurMutation.isPending}
         />
         {encrypt && (
           <Button
@@ -374,6 +414,7 @@ const InputSetting = ({
             size="sm"
             className="absolute top-0 right-0 h-full px-3 py-2 hover:bg-transparent"
             onClick={() => setShowPassword((prev) => !prev)}
+            tabIndex={-1}
           >
             {showPassword ? (
               <EyeOffIcon className="h-4 w-4" aria-hidden="true" />
@@ -384,23 +425,31 @@ const InputSetting = ({
           </Button>
         )}
       </div>
-      {folder && (
+      {filePicker && (
         <Button
-          variant="outline"
-          disabled={setValue.isPending}
-          onClick={async () => {
-            const path = await client.file.pickFolder.mutate();
-            if (path) {
-              setValue.mutate(path);
-            }
-          }}
+          size="sm"
+          variant="ghost"
+          disabled={onBlurMutation.isPending}
+          onClick={() => onBrowseFolderMutation.mutate()}
         >
-          {setValue.isPending ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          {onBlurMutation.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Folder className="mr-2 h-4 w-4" />
+            <Folder className="h-4 w-4" />
           )}
-          Browse
+        </Button>
+      )}
+      {filePicker && showOpenInExplorerButton && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() =>
+            client.file.openInExplorer.mutate({
+              path: localValue,
+            })
+          }
+        >
+          <ExternalLink className="h-4 w-4" />
         </Button>
       )}
     </div>
@@ -495,7 +544,8 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
 
   const addPathMutation = useMutation({
     mutationFn: async () => {
-      await client.settings.addFolder.mutate({
+      await client.settings.add.mutate({
+        filePicker: "folder",
         key: settingKey,
       });
     },
@@ -508,10 +558,10 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
   });
 
   const deletePathMutation = useMutation({
-    mutationFn: async (path: string) => {
-      await client.settings.deleteFolder.mutate({
+    mutationFn: async (index: number) => {
+      await client.settings.delete.mutate({
         key: settingKey,
-        folder: path,
+        index,
       });
     },
     onSuccess: () => {
@@ -547,78 +597,206 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
   }
 
   return (
-    <div className="space-y-3">
-      {paths?.length > 0 && (
-        <div className="grid gap-3">
-          {paths.map((path) => (
-            <Card key={path} className="group hover:bg-muted/50 transition-colors">
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <div className="bg-muted rounded-lg p-2">
-                      <Folder className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{path.split("/").pop()}</p>
-                      <p className="text-muted-foreground max-w-80 truncate text-xs">{path}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        client.file.openInExplorer.mutate({
-                          path,
-                        })
-                      }
-                      className="h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deletePathMutation.mutate(path)}
-                      disabled={deletePathMutation.isPending}
-                      className="text-destructive hover:text-destructive h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                    >
-                      {deletePathMutation.isPending && deletePathMutation.variables === path ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-3 w-3" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+    <Card>
+      <CardContent className="space-y-3">
+        {paths?.map((path: string, index: number) => (
+          <div className="flex gap-2" key={index}>
+            <InputSetting
+              key={path}
+              settingKey={settingKey}
+              nestedSettingPath={[index]}
+              placeholder="Enter folder path"
+              filePicker="folder"
+            />
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-destructive hover:text-destructive"
+              onClick={() => deletePathMutation.mutate(index)}
+            >
+              {deletePathMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        ))}
 
-      <Button
-        onClick={() => addPathMutation.mutate()}
-        variant="outline"
-        className="h-12 w-full border-dashed"
-        disabled={addPathMutation.isPending}
-      >
-        {addPathMutation.isPending ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Plus className="mr-2 h-4 w-4" />
-        )}
-        Add Folder
-      </Button>
-
-      {!paths ||
-        (paths?.length === 0 && (
+        {(!paths || paths?.length === 0) && (
           <div className="text-muted-foreground py-8 text-center">
             <Folder className="mx-auto mb-2 h-8 w-8 opacity-50" />
             <p className="text-sm">No folders added yet</p>
           </div>
-        ))}
-    </div>
+        )}
+
+        <Button
+          onClick={() => addPathMutation.mutate()}
+          variant="outline"
+          className="w-full border-dashed"
+          disabled={addPathMutation.isPending}
+        >
+          {addPathMutation.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="mr-2 h-4 w-4" />
+          )}
+          Add Folder
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
+const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
+  const queryClient = useQueryClient();
+
+  const {
+    data: templates,
+    isPending,
+    isError,
+  } = useQuery({
+    queryKey: [settingKey],
+    queryFn: async () => {
+      return await client.settings.get.query({ key: settingKey });
+    },
+  });
+
+  const addTemplateMutation = useMutation({
+    mutationFn: async () => {
+      await client.settings.add.mutate({
+        key: "theme.templates",
+        value: { src: "", dest: "", postHook: "" },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [settingKey] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (index: number) => {
+      await client.settings.delete.mutate({ key: "theme.templates", index });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [settingKey] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  if (isPending) {
+    return (
+      <div className="flex h-20 items-center justify-center">
+        <Loader2 className="h-4 w-4 animate-spin" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-destructive text-sm">Failed to load templates</p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => queryClient.invalidateQueries({ queryKey: [settingKey] })}
+          className="mt-2"
+        >
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <Card className="space-y-3">
+      <CardContent className="space-y-3">
+        {templates?.length > 0 && (
+          <div className="grid gap-3">
+            {templates?.map((_, idx: number) => (
+              <div className="space-y-3">
+                {/* Source file row */}
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  <span className="text-muted-foreground w-12 text-xs font-medium">Source:</span>
+                  <InputSetting
+                    settingKey={settingKey}
+                    nestedSettingPath={[idx, "src"]}
+                    placeholder="Enter source template file"
+                    showOpenInExplorerButton
+                    filePicker="file"
+                  />
+                </div>
+
+                {/* Destination file row */}
+                <div className="flex items-center gap-2">
+                  <Folder className="h-4 w-4" />
+                  <span className="text-muted-foreground w-12 text-xs font-medium">Dest:</span>
+                  <InputSetting
+                    settingKey={settingKey}
+                    nestedSettingPath={[idx, "dest"]}
+                    placeholder="Enter destination directory"
+                    filePicker="folder"
+                    showOpenInExplorerButton
+                  />
+                </div>
+
+                {/* Post hook row */}
+                <div className="flex items-center gap-2">
+                  <Terminal className="h-4 w-4" />
+                  <span className="text-muted-foreground w-12 text-xs font-medium">Post Hook:</span>
+                  <InputSetting
+                    settingKey={settingKey}
+                    nestedSettingPath={[idx, "postHook"]}
+                    placeholder="Enter post hook command"
+                  />
+                </div>
+
+                {/* Delete button */}
+                <Button
+                  className="w-full flex-1"
+                  variant="destructive"
+                  onClick={() => deleteTemplateMutation.mutate(idx)}
+                >
+                  {deleteTemplateMutation.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="mr-2 h-4 w-4" />
+                  )}
+                  Delete
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(!templates || templates?.length === 0) && (
+          <div className="text-muted-foreground py-8 text-center">
+            <FileText className="mx-auto mb-2 h-8 w-8 opacity-50" />
+            <p className="text-sm">No templates added yet</p>
+          </div>
+        )}
+
+        <Button
+          onClick={() => addTemplateMutation.mutate()}
+          variant="outline"
+          className="w-full border-dashed"
+          disabled={addTemplateMutation.isPending}
+        >
+          {addTemplateMutation.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="mr-2 h-4 w-4" />
+          )}
+          Add Template
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 

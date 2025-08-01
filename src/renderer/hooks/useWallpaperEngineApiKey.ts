@@ -6,7 +6,7 @@ const useWallpaperEngineApiKey = () => {
     queryKey: ["wallpaper-engine-api-key"],
     queryFn: async () =>
       await client.settings.get.query({
-        key: "wallpaper-engine:api-key",
+        key: "wallpaperEngine.apiKey",
         decrypt: true,
       }),
   });

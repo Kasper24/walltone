@@ -1,13 +1,17 @@
 import path from "path";
 import { promises as fs } from "fs";
-import { execute, killProcess, santize } from "../lib";
 import z from "zod";
 import { TRPCError } from "@trpc/server";
+import { execute, killProcess, santize } from "../lib";
 import { publicProcedure, router } from "..";
 import { caller } from "./base";
+import { color } from "chroma.ts";
 
 const SUPPORTED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"];
 const SUPPORTED_VIDEO_EXTENSIONS = [".mp4", ".mkv", ".webm", ".avi", ".mov"];
+
+const CAGE_INIT_TIME = 5;
+const CAGE_SCREENSHOT_PATH = "/tmp/walltone-wallpaper-screenshot.png";
 
 export interface BaseWallpaper {
   id: string;
@@ -52,7 +56,7 @@ export const wallpaperRouter = router({
       if (input.type === "image" || input.type === "all") {
         const imageWallpapers = await getMediaWallpapers(
           "image",
-          "image:wallpaper-folders",
+          "image.wallpaper-folders",
           SUPPORTED_IMAGE_EXTENSIONS
         );
         wallpapers.push(...imageWallpapers);
@@ -61,7 +65,7 @@ export const wallpaperRouter = router({
       if (input.type === "video" || input.type === "all") {
         const videoWallpapers = await getMediaWallpapers(
           "video",
-          "video:wallpaper-folders",
+          "video.wallpaper-folders",
           SUPPORTED_VIDEO_EXTENSIONS
         );
         wallpapers.push(...videoWallpapers);
@@ -125,26 +129,40 @@ export const wallpaperRouter = router({
       // Wait for processes to terminate
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Ensure the directory for the wallpaper exists
-      const outputPath = await getOutputPath(input.name, input.id);
-      const wallpaperOutputPath = path.join(outputPath, "wallpaper.png");
-      await fs.mkdir(outputPath, { recursive: true });
-
       switch (input.type) {
         case "image":
-          await setImageWallpaper(wallpaperOutputPath, input.path, input.monitors);
+          await copyWallpaperToDestinations(input.id, input.name, input.path);
+          await setImageWallpaper(input.path, input.monitors);
           break;
         case "video":
-          await setVideoWallpaper(
-            wallpaperOutputPath,
-            input.path,
-            input.monitors,
-            input.videoOptions
-          );
+          await screenshotWallpaperInCage(["mpv", "panscan=1.0", input.path]);
+          await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
+          await setVideoWallpaper(input.path, input.monitors, input.videoOptions);
           break;
         case "wallpaper-engine":
+          const assetsPath = await caller.settings.get({
+            key: "wallpaperEngine.assetsFolder",
+          });
+          if (!assetsPath)
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Wallpaper Engine assets folder is not set.",
+            });
+          await screenshotWallpaperInCage([
+            "linux-wallpaperengine",
+            "--silent",
+            "--fps",
+            "1",
+            "--assets-dir",
+            assetsPath,
+            "--window",
+            "0x0x1280x720",
+            input.path,
+          ]);
+          await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
+
           await setWallpaperEngineWallpaper(
-            wallpaperOutputPath,
+            assetsPath,
             input.path,
             input.monitors,
             input.wallpaperEngineOptions
@@ -161,41 +179,70 @@ export const wallpaperRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const folderPath = await getOutputPath(input.wallpaper.name, input.wallpaper.id);
-      const themePath = path.join(folderPath, "theme.json");
-
-      try {
-        // Ensure the directory for the theme exists
-        await fs.mkdir(folderPath, { recursive: true });
-        await fs.writeFile(
-          themePath,
-          JSON.stringify(
-            {
-              name: santize(input.wallpaper.name),
-              wallpaper: {
-                path: "wallpaper.png",
-                backend: input.wallpaper.type,
-                ...(input.wallpaper.type === "wallpaper-engine" && {
-                  workshopId: input.wallpaper.workshopId,
-                  file: input.wallpaper.file,
-                  type: input.wallpaper.sceneType,
-                }),
-              },
-              colors: input.theme,
-            },
-            null,
-            2
-          ),
-          "utf8"
-        );
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      const templates =
+        ((await caller.settings.get({
+          key: "theme.templates",
+        })) as { src: string; dest: string; postHook: string }[]) || [];
+      if (!templates) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Error writing file to ${themePath}: ${errorMessage}`,
-          cause: error,
+          code: "NOT_FOUND",
+          message: "Templates are not set.",
         });
       }
+
+      await Promise.all(
+        templates.map(async (tpl) => {
+          if (!tpl.src || !tpl.dest) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Invalid template configuration: ${JSON.stringify(tpl)}`,
+            });
+          }
+
+          try {
+            const content = await fs.readFile(tpl.src, "utf-8");
+            const rendered = await renderTemplate(content, {
+              wallpaper: input.wallpaper,
+              theme: input.theme,
+            });
+
+            if (tpl.postHook) {
+              try {
+                const [cmd, ...args] = tpl.postHook.split(" ");
+                await execute({ command: cmd, args });
+              } catch (error) {
+                const errorMessage =
+                  error instanceof Error ? error.message : "Unknown error occurred";
+                throw new TRPCError({
+                  code: "INTERNAL_SERVER_ERROR",
+                  message: `Error running post-hook command: ${tpl.postHook}: ${errorMessage}`,
+                  cause: error,
+                });
+              }
+            }
+
+            try {
+              await fs.mkdir(path.dirname(tpl.dest), { recursive: true });
+              await fs.writeFile(tpl.dest, rendered, "utf-8");
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : "Unknown error occurred";
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: `Error writing file to ${tpl.dest}: ${errorMessage}`,
+                cause: error,
+              });
+            }
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: `Error reading template file ${tpl.src}: ${errorMessage}`,
+              cause: error,
+            });
+          }
+        })
+      );
     }),
 });
 
@@ -219,21 +266,6 @@ const paginateData = (
   };
 };
 
-const getOutputPath = async (name: string, id: string) => {
-  const outputPath = (await caller.settings.get({
-    key: "theme:output-path",
-  })) as string;
-  if (!outputPath) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "Theme output path is not set.",
-    });
-  }
-
-  const sanitized = santize(`${name}-${id}`);
-  return path.join(outputPath, sanitized);
-};
-
 const getMediaWallpapers = async (
   mediaType: "image" | "video",
   settingsKey: string,
@@ -254,19 +286,17 @@ const getMediaWallpapers = async (
   for (const folder of folders) {
     try {
       const files = await searchForFiles(folder, fileTypes);
-      await Promise.all(
-        files.map(async (file) => {
-          wallpapers.push({
-            id: path.basename(file.path),
-            name: file.name,
-            path: file.path,
-            previewPath: mediaType !== "video" ? `image://${file.path}` : `video://${file.path}`,
-            dateAdded: Date.now(),
-            tags: [mediaType],
-            type: mediaType,
-          });
-        })
-      );
+      files.forEach(async (file) => {
+        wallpapers.push({
+          id: path.basename(file.path),
+          name: file.name,
+          path: file.path,
+          previewPath: mediaType !== "video" ? `image://${file.path}` : `video://${file.path}`,
+          dateAdded: Date.now(),
+          tags: [mediaType],
+          type: mediaType,
+        });
+      });
     } catch (error) {
       console.error(`Failed to search ${mediaType} files in ${folder}:`, error);
     }
@@ -301,7 +331,7 @@ const searchForFiles = async (
 const getWallpaperEngineWallpapers = async () => {
   const wallpapers: LibraryWallpaper[] = [];
   const folders = (await caller.settings.get({
-    key: "wallpaper-engine:wallpaper-folders",
+    key: "wallpaperEngine.wallpaperFolders",
   })) as string[];
   if (!folders || !Array.isArray(folders) || folders.length === 0) {
     throw new TRPCError({
@@ -395,12 +425,9 @@ const sortWallpapers = (wallpapers: LibraryWallpaper[], sorting: string) => {
 };
 
 const setImageWallpaper = async (
-  wallpaperOutputPath: string,
   imagePath: string,
   monitors: { name: string; scalingMethod?: string }[]
 ) => {
-  await fs.copyFile(imagePath, wallpaperOutputPath);
-
   await Promise.all(
     monitors.map(async (monitor) => {
       const args = [
@@ -417,7 +444,6 @@ const setImageWallpaper = async (
 };
 
 const setVideoWallpaper = async (
-  wallpaperOutputPath: string,
   videoPath: string,
   monitors: { name: string; scalingMethod?: string }[],
   options?: {
@@ -470,12 +496,11 @@ const setVideoWallpaper = async (
   // Add video path
   args.push(videoPath);
 
-  await screenshotWallpaperInCage(["mpv", "panscan=1.0", videoPath], wallpaperOutputPath);
   await execute({ command: "mpvpaper", args });
 };
 
 const setWallpaperEngineWallpaper = async (
-  wallpaperOutputPath: string,
+  assetsPath: string,
   wallpaperPath: string,
   monitors: { name: string; scalingMethod?: string }[],
   options?: {
@@ -490,15 +515,6 @@ const setWallpaperEngineWallpaper = async (
     noFullscreenPause?: boolean;
   }
 ) => {
-  const assetsPath = await caller.settings.get({
-    key: "wallpaper-engine:assets-folder",
-  });
-  if (!assetsPath)
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Wallpaper Engine assets folder is not set.",
-    });
-
   const args = [
     ...monitors.flatMap((monitor) => [
       "--screen-root",
@@ -512,7 +528,6 @@ const setWallpaperEngineWallpaper = async (
     assetsPath,
   ];
 
-  // Add Wallpaper Engine specific options
   if (options?.silent) {
     args.push("--silent");
   }
@@ -549,30 +564,53 @@ const setWallpaperEngineWallpaper = async (
     args.push("--no-fullscreen-pause");
   }
 
-  await screenshotWallpaperInCage(
-    [
-      "linux-wallpaperengine",
-      "--silent",
-      "--fps",
-      "1",
-      "--assets-dir",
-      assetsPath,
-      "--window",
-      "0x0x1280x720",
-      wallpaperPath,
-    ],
-    wallpaperOutputPath
-  );
   await execute({ command: "linux-wallpaperengine", args });
 };
 
-const screenshotWallpaperInCage = async (cmd: string[], wallpaperOutputPath: string) => {
-  const INIT_TIME = 5;
+const screenshotWallpaperInCage = async (cmd: string[]) => {
   const args = [
     "--",
     "sh",
     "-c",
-    `${cmd.join(" ")} & pid=$!; sleep ${INIT_TIME} && grim -g "0,0 1280x720" ${wallpaperOutputPath} && kill $pid`,
+    `${cmd.join(" ")} & pid=$!; sleep ${CAGE_INIT_TIME} && grim -g "0,0 1280x720" ${CAGE_SCREENSHOT_PATH} && kill $pid`,
   ];
   await execute({ command: "cage", args, env: { WLR_BACKENDS: "headless" } });
+};
+
+const copyWallpaperToDestinations = async (
+  wallpaperId: string,
+  wallpaperName: string,
+  wallpaperPath: string
+) => {
+  const wallpaperDestinations = (await caller.settings.get({
+    key: "theme.wallpaperCopyDestinations",
+  })) as string[];
+
+  await Promise.all(
+    wallpaperDestinations.map(async (destination) => {
+      destination = await renderTemplate(destination, {
+        id: santize(wallpaperId),
+        name: santize(wallpaperName),
+        path: wallpaperPath,
+      });
+      await fs.mkdir(path.dirname(destination), { recursive: true });
+      await fs.copyFile(wallpaperPath, destination);
+    })
+  );
+};
+
+const renderTemplate = async (content: string, context: Record<string, unknown>) => {
+  return content.replace(/\$\{([\s\S]+?)\}/g, (_, expr) => {
+    try {
+      const fn = new Function(...Object.keys(context), "color", `return (${expr})`);
+      return fn(...Object.values(context), color);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Failed to evaluate: ${expr}: ${errorMessage}`,
+        cause: error,
+      });
+    }
+  });
 };

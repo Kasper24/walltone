@@ -1,5 +1,4 @@
 import path from "path";
-import { statSync, createReadStream } from "node:fs";
 import {
   app,
   protocol,

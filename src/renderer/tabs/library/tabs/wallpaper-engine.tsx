@@ -20,7 +20,7 @@ const LibraryWallpaperEngineTab = () => {
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "wallpaper-engine:wallpaper-folders",
+          key: "wallpaperEngine.wallpaperFolders",
         },
         title: "Wallpaper Engine Library Configuration",
         description:

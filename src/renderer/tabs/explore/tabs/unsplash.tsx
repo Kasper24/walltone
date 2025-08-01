@@ -12,7 +12,7 @@ const ExploreUnsplashTab = () => {
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "unsplash:api-key",
+          key: "unsplash.apiKey",
         },
         title: "Unsplash API Key Required",
         description: "To browse Unsplash wallpapers, you need to configure your API key first.",

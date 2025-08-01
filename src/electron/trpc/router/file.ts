@@ -1,7 +1,7 @@
-import { dialog, shell } from "electron";
+import { shell } from "electron";
+import { getMainWindow } from "@electron/main";
 import z from "zod";
 import { publicProcedure, router } from "..";
-import { getMainWindow } from "@electron/main";
 
 export const fileRouter = router({
   download: publicProcedure.input(z.object({ url: z.string() })).mutation(async ({ input }) => {
@@ -19,19 +19,6 @@ export const fileRouter = router({
       });
     });
   }),
-
-  pickFolder: publicProcedure.mutation(async () => {
-    const result = await dialog.showOpenDialog({
-      properties: ["openDirectory"],
-    });
-
-    if (result.canceled) {
-      return null;
-    } else {
-      return result.filePaths[0];
-    }
-  }),
-
   openInExplorer: publicProcedure
     .input(z.object({ path: z.string() }))
     .mutation(async ({ input }) => {
