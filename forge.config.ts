@@ -9,7 +9,10 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses";
 
 const config: ForgeConfig = {
   packagerConfig: {
-    asar: true,
+    asar: {
+      // Enable ASAR and unpack native modules so they can load properly at runtime
+      unpack: "**/node_modules/{electron-store,keytar}/**/*",
+    },
     icon: "/assets/icon",
     electronZipDir: process.env.ELECTRON_FORGE_ELECTRON_ZIP_DIR,
   },
