@@ -26,6 +26,6 @@
       "@electron/*": ["./src/electron/*"]
     }
   },
-  "include": ["src", "forge.env.d.ts"],
+  "include": ["./*", "forge.env.d.ts"],
   "exclude": ["node_modules"]
 }
