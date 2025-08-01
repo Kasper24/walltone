@@ -59,6 +59,6 @@ pkgs.buildNpmPackage rec {
       }
 
     install -Dm644 walltone.desktop $out/share/applications/walltone.desktop
-    install -Dm644 assets/icon-monochrome.png $out/share/pixmaps/walltone.png
+    install -Dm644 assets/icon.png $out/share/pixmaps/walltone.png
   '';
 }

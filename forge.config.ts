@@ -10,7 +10,7 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses";
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    icon: "/assets/icon-monochrome",
+    icon: "/assets/icon",
     electronZipDir: process.env.ELECTRON_FORGE_ELECTRON_ZIP_DIR,
   },
   rebuildConfig: {},
@@ -19,7 +19,7 @@ const config: ForgeConfig = {
       name: "@electron-forge/maker-deb",
       config: {
         options: {
-          icon: "/assets/icon-monochrome.png",
+          icon: "/assets/icon.png",
         },
       },
     },
