@@ -2,7 +2,7 @@ import path from "path";
 import { promises as fs } from "fs";
 import z from "zod";
 import { TRPCError } from "@trpc/server";
-import { execute } from "@electron/main/lib";
+import { execute, killProcess } from "@electron/main/lib";
 import { publicProcedure, router } from "..";
 import { caller } from "./base";
 import { color } from "chroma.ts";
@@ -209,7 +209,7 @@ export const themeRouter = router({
             if (tpl.postHook) {
               try {
                 const [cmd, ...args] = tpl.postHook.split(" ");
-                await execute({ command: cmd, args });
+                await execute({ command: cmd, args, shell: true });
               } catch (error) {
                 const errorMessage =
                   error instanceof Error ? error.message : "Unknown error occurred";

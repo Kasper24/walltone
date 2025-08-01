@@ -4,12 +4,14 @@ const execute = ({
   command,
   args = [],
   env = {},
+  shell = false,
   logStdout = true,
   logStderr = true,
 }: {
   command: string;
   args?: string[];
   env?: NodeJS.ProcessEnv;
+  shell?: boolean;
   logStdout?: boolean;
   logStderr?: boolean;
 }): Promise<{ stdout: string; stderr: string }> => {
@@ -21,6 +23,7 @@ const execute = ({
         ...process.env,
         ...env,
       },
+      shell,
     });
 
     let stdout = "";
