@@ -2,8 +2,9 @@ import path from "path";
 import { app, BrowserWindow } from "electron";
 
 const createWindow = () => {
+  const iconPath = path.join(import.meta.dirname, "..", "..", "assets", "icon.png");
   const mainWindow = new BrowserWindow({
-    icon: "/assets/icon.png",
+    icon: iconPath,
     width: 800,
     height: 600,
     minWidth: 800,
