@@ -6,7 +6,7 @@ import LibraryWallpaperEngineTab from "@renderer/tabs/library/tabs/wallpaper-eng
 const LibraryTab = () => {
   return (
     <Tabs defaultValue="images" className="w-full">
-      <TabsList className="bg-background">
+      <TabsList className="bg-background space-x-2">
         <TabsTrigger
           value="images"
           className="bg-background hover:bg-background text-xl font-black"

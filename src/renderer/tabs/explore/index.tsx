@@ -8,7 +8,7 @@ import ExploreWallpaperEngineTab from "@renderer/tabs/explore/tabs/wallpaper-eng
 const ExploreTab = () => {
   return (
     <Tabs defaultValue="unsplash" className="w-full">
-      <TabsList className="bg-background">
+      <TabsList className="bg-background space-x-2">
         <TabsTrigger
           value="unsplash"
           className="bg-background hover:bg-background text-xl font-black"

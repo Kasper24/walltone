@@ -36,7 +36,7 @@ const TabsArea = () => {
       value={currentTab}
       onValueChange={(value) => setCurrentTab(value as "explore" | "wallpapers" | "settings")}
     >
-      <TabsList className="bg-background">
+      <TabsList className="bg-background space-x-2">
         <TabsTrigger
           value="explore"
           className="bg-background hover:bg-background text-3xl font-black"

@@ -63,6 +63,8 @@ const createWindow = () => {
     icon: "/assets/icon.png",
     width: 800,
     height: 600,
+    minWidth: 800,
+    minHeight: 600,
     webPreferences: {
       // devTools: process.env.NODE_ENV === "development",
       devTools: true,
