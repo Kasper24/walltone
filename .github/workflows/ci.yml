@@ -48,3 +48,31 @@ jobs:
 
       - name: Build Nix package
         run: nix build
+
+  arch-build:
+    name: Build Arch Linux Package
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm base-devel git namcap
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check PKGBUILD with namcap
+        # Run namcap to lint the PKGBUILD for common errors
+        run: namcap packaging/arch/PKGBUILD
+
+      - name: Build package
+        run: |
+          # makepkg cannot be run as root, so we create a builder user
+          useradd -m builder
+          # Give the builder user permissions for the repo
+          chown -R builder:builder .
+          # Run makepkg as the non-root user
+          sudo -u builder makepkg -sf --noconfirm
+        working-directory: ./packaging/arch
