@@ -1,7 +1,7 @@
 import path from "path";
 import type { ConfigEnv, UserConfig } from "vite";
 import { defineConfig, mergeConfig } from "vite";
-import { getBuildConfig, external, pluginHotRestart } from "./vite.base.config";
+import { getBuildConfig, external, pluginHotRestart } from "./vite.base.config.js";
 
 // https://vitejs.dev/config
 export default defineConfig((env) => {
