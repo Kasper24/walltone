@@ -19,6 +19,7 @@ export const fileRouter = router({
       });
     });
   }),
+
   openInExplorer: publicProcedure
     .input(z.object({ path: z.string() }))
     .mutation(async ({ input }) => {
