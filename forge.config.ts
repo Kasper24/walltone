@@ -7,12 +7,45 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
 
+import * as fs from "fs";
+import * as path from "path";
+import { spawn } from "child_process";
+
 const config: ForgeConfig = {
-  packagerConfig: {
-    asar: {
-      // Enable ASAR and unpack native modules so they can load properly at runtime
-      unpack: "**/node_modules/{electron-store,keytar}/**/*",
+  hooks: {
+    // Workaround for https://github.com/serialport/node-serialport/issues/2464
+    packageAfterPrune: async (_, buildPath) => {
+      const packageJson = JSON.parse(
+        fs.readFileSync(path.resolve(buildPath, "package.json")).toString()
+      );
+      packageJson.dependencies = {
+        "electron-store": "^10.1.0",
+        keytar: "^7.9.0",
+      };
+      fs.writeFileSync(path.resolve(buildPath, "package.json"), JSON.stringify(packageJson));
+
+      return new Promise((resolve, reject) => {
+        const npm = spawn("npm", ["install"], {
+          cwd: buildPath,
+          stdio: "inherit",
+          shell: true,
+        });
+
+        npm.on("close", (code) => {
+          if (0 === code) {
+            resolve();
+            return;
+          }
+
+          reject(`Process exited with code: ${code}`);
+        });
+
+        npm.on("error", reject);
+      });
     },
+  },
+  packagerConfig: {
+    asar: true,
     icon: "/assets/icon",
     electronZipDir: process.env.ELECTRON_FORGE_ELECTRON_ZIP_DIR,
   },
