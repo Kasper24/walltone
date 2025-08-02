@@ -15,6 +15,11 @@ const config: ForgeConfig = {
   hooks: {
     // Workaround for https://github.com/serialport/node-serialport/issues/2464
     packageAfterPrune: async (_, buildPath) => {
+      if (process.env.NIX_BUILD_TOP) {
+        // Skip in Nix builds
+        return;
+      }
+
       const packageJson = JSON.parse(
         fs.readFileSync(path.resolve(buildPath, "package.json")).toString()
       );

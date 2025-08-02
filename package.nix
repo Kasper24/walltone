@@ -1,33 +1,45 @@
-{ pkgs }:
+{
+  stdenv,
+  fetchurl,
+  buildNpmPackage,
+  libsecret,
+  pkg-config,
+  makeWrapper,
+  electron-bin,
+  electron,
+  swaybg,
+  mpvpaper,
+  linux-wallpaperengine,
+  cage,
+  grim,
+  wayland-utils,
+  lib,
+}:
 
 let
   electronCache =
-    { electron-bin }:
-    pkgs.stdenv.mkDerivation {
+    { electronBin }:
+    stdenv.mkDerivation {
       pname = "electron-cache";
-      inherit (electron-bin) src version;
+      inherit (electronBin) version src;
       dontUnpack = true;
       installPhase =
         let
-          # shasum not needed since we can overload the electron zip dir in forge config
-          shasum = builtins.hashString "sha256" (dirOf electron-bin.src.url);
-          zipName = baseNameOf electron-bin.src.url;
+          zipName = baseNameOf electronBin.src.url;
         in
         ''
-          # mkdir -p $out/${shasum}
-          # cp $src $out/${shasum}/${zipName}
           mkdir -p $out
           cp -r $src $out/${zipName}
         '';
     };
 in
-pkgs.buildNpmPackage rec {
+buildNpmPackage rec {
   pname = "walltone";
-  version = "0.1";
+  version = "unstable-2025-08-02";
 
   src = ./.;
 
-  npmDepsHash = "sha256-lycSXAHqXR3lyjhaZ9vrcc9WMD1vMM1mcGqlIse/afQ=";
+  npmDepsHash = "sha256-YuI3oi5kC/JrCoczHUygGJiEMin/6y3Abo0YZBggYcU=";
 
   dontNpmBuild = true;
   makeCacheWritable = true;
@@ -35,25 +47,40 @@ pkgs.buildNpmPackage rec {
   env = {
     ELECTRON_SKIP_BINARY_DOWNLOAD = 1;
     ELECTRON_FORGE_ELECTRON_ZIP_DIR = electronCache {
-      electron-bin = pkgs.electron_36-bin;
+      electronBin = electron-bin.overrideAttrs (oldAttrs: {
+        src = fetchurl {
+          url = "https://github.com/electron/electron/releases/download/v37.2.5/electron-v37.2.5-linux-x64.zip";
+          sha256 = "sha256-j7ueBRML3mDbl6BcB5aQOag+etuYhSUfkHJ60eBoS+c=";
+        };
+        version = "37.2.5";
+      });
     };
   };
+
+  buildInputs = [
+    libsecret
+  ];
+
+  nativeBuildInputs = [
+    pkg-config
+    makeWrapper
+  ];
 
   postBuild = ''
     npm run package
   '';
 
   postInstall = ''
-    makeWrapper ${pkgs.electron}/bin/electron $out/bin/${pname} \
+    makeWrapper ${lib.getExe electron} $out/bin/${pname} \
       --add-flags $out/lib/node_modules/${pname}/.vite/build/main.js \
       --prefix PATH : ${
-        pkgs.lib.makeBinPath [
-          pkgs.swaybg
-          pkgs.mpvpaper
-          pkgs.linux-wallpaperengine
-          pkgs.cage
-          pkgs.grim
-          pkgs.wayland-utils
+        lib.makeBinPath [
+          swaybg
+          mpvpaper
+          linux-wallpaperengine
+          cage
+          grim
+          wayland-utils
         ]
       }
 
