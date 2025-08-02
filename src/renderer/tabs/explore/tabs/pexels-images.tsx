@@ -2,7 +2,6 @@ import { ExternalLink, Key, RefreshCcw, Settings } from "lucide-react";
 import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
 import { useCurrentTab } from "@renderer/providers/current-tab-provider.js";
 import { client } from "@renderer/lib/trpc.js";
-import { pexelsPhotosSearch } from "@renderer/api/pexels.js";
 
 const ExplorePexelsImagesTab = () => {
   const { setCurrentTab } = useCurrentTab();
@@ -12,6 +11,7 @@ const ExplorePexelsImagesTab = () => {
       requiresConfiguration={{
         setting: {
           key: "pexels.apiKey",
+          decrypt: true,
         },
         title: "Pexels API Key Required",
         description: "To browse Pexels wallpapers, you need to configure your API key first.",
@@ -48,7 +48,8 @@ const ExplorePexelsImagesTab = () => {
       }}
       queryKeys={[`explore-pexels-images`]}
       queryFn={async ({ pageParam, query, appliedFilters, configValue }) =>
-        await pexelsPhotosSearch({
+        await client.api.pexels.search.query({
+          type: "photos",
           apiKey: configValue,
           page: pageParam,
           query,

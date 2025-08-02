@@ -37,226 +37,237 @@ export interface WallpaperData {
   nextPage: number | null;
 }
 
-export const themeRouter = router({
-  getWallpapers: publicProcedure
-    .input(
+const getWallpapesSchema = z.object({
+  type: z.enum(["image", "video", "wallpaper-engine", "all"]),
+  page: z.number().min(1).default(1),
+  limit: z.number().min(1).default(10),
+  query: z.string().optional(),
+  sorting: z.enum(["name", "date_added", "id"]).default("name"),
+  tags: z.array(z.string()).optional(),
+  matchAll: z.boolean().default(false),
+});
+
+const setWallpaperSchema = z.object({
+  type: z.enum(["image", "video", "wallpaper-engine"]),
+  id: z.string().min(1),
+  name: z.string().min(1),
+  path: z.string().min(1),
+  monitors: z
+    .array(
       z.object({
-        type: z.enum(["image", "video", "wallpaper-engine", "all"]),
-        page: z.number().min(1).default(1),
-        limit: z.number().min(1).default(10),
-        query: z.string().optional(),
-        sorting: z.enum(["name", "date_added", "id"]).default("name"),
-        tags: z.array(z.string()).optional(),
-        matchAll: z.boolean().default(false),
-      })
-    )
-    .query(async ({ input }) => {
-      const wallpapers: LibraryWallpaper[] = [];
-
-      if (input.type === "image" || input.type === "all") {
-        const imageWallpapers = await getMediaWallpapers(
-          "image",
-          "image.wallpaper-folders",
-          SUPPORTED_IMAGE_EXTENSIONS
-        );
-        wallpapers.push(...imageWallpapers);
-      }
-
-      if (input.type === "video" || input.type === "all") {
-        const videoWallpapers = await getMediaWallpapers(
-          "video",
-          "video.wallpaper-folders",
-          SUPPORTED_VIDEO_EXTENSIONS
-        );
-        wallpapers.push(...videoWallpapers);
-      }
-
-      if (input.type === "wallpaper-engine" || input.type === "all") {
-        const weWallpapers = await getWallpaperEngineWallpapers();
-        wallpapers.push(...weWallpapers);
-      }
-
-      const filteredWallpapers = filterWallpapers(
-        wallpapers,
-        input.query,
-        input.tags,
-        input.matchAll
-      );
-      const sortedWallpapers = sortWallpapers(filteredWallpapers, input.sorting);
-
-      return paginateData(sortedWallpapers, input.page, input.limit);
-    }),
-
-  setWallpaper: publicProcedure
-    .input(
-      z.object({
-        type: z.enum(["image", "video", "wallpaper-engine"]),
-        id: z.string().min(1),
         name: z.string().min(1),
-        path: z.string().min(1),
-        monitors: z
-          .array(
-            z.object({
-              name: z.string().min(1),
-              scalingMethod: z.string().optional(),
-            })
-          )
-          .min(1),
-        wallpaperEngineOptions: z
-          .object({
-            silent: z.boolean().optional(),
-            volume: z.number().min(0).max(100).optional(),
-            noAutomute: z.boolean().optional(),
-            noAudioProcessing: z.boolean().optional(),
-            fps: z.number().min(1).max(200).optional(),
-            clamping: z.enum(["clamp", "border", "repeat"]).optional(),
-            disableMouse: z.boolean().optional(),
-            disableParallax: z.boolean().optional(),
-            noFullscreenPause: z.boolean().optional(),
-          })
-          .optional(),
-        videoOptions: z
-          .object({
-            mute: z.boolean().optional(),
-          })
-          .optional(),
+        scalingMethod: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .min(1),
+  wallpaperEngineOptions: z
+    .object({
+      silent: z.boolean().optional(),
+      volume: z.number().min(0).max(100).optional(),
+      noAutomute: z.boolean().optional(),
+      noAudioProcessing: z.boolean().optional(),
+      fps: z.number().min(1).max(200).optional(),
+      clamping: z.enum(["clamp", "border", "repeat"]).optional(),
+      disableMouse: z.boolean().optional(),
+      disableParallax: z.boolean().optional(),
+      noFullscreenPause: z.boolean().optional(),
+    })
+    .optional(),
+  videoOptions: z
+    .object({
+      mute: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+const setThemeSchema = z.object({
+  wallpaper: z.any(),
+  theme: z.any(),
+});
+
+export const themeRouter = router({
+  searchWallpapers: publicProcedure.input(z.object(getWallpapesSchema)).query(async ({ input }) => {
+    const wallpapers: LibraryWallpaper[] = [];
+
+    if (input.type === "image" || input.type === "all") {
+      const imageWallpapers = await getMediaWallpapers(
+        "image",
+        "image.wallpaper-folders",
+        SUPPORTED_IMAGE_EXTENSIONS
+      );
+      wallpapers.push(...imageWallpapers);
+    }
+
+    if (input.type === "video" || input.type === "all") {
+      const videoWallpapers = await getMediaWallpapers(
+        "video",
+        "video.wallpaper-folders",
+        SUPPORTED_VIDEO_EXTENSIONS
+      );
+      wallpapers.push(...videoWallpapers);
+    }
+
+    if (input.type === "wallpaper-engine" || input.type === "all") {
+      const weWallpapers = await getWallpaperEngineWallpapers();
+      wallpapers.push(...weWallpapers);
+    }
+
+    const filteredWallpapers = filterWallpapers(
+      wallpapers,
+      input.query,
+      input.tags,
+      input.matchAll
+    );
+    const sortedWallpapers = sortWallpapers(filteredWallpapers, input.sorting);
+
+    return paginateData(sortedWallpapers, input.page, input.limit);
+  }),
+
+  setWallpaper: publicProcedure.input(setWallpaperSchema).mutation(async ({ input }) => {
+    killProcess("swaybg");
+    killProcess("mpvpaper");
+    killProcess("linux-wallpaperengine");
+    // Wait for processes to terminate
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    switch (input.type) {
+      case "image":
+        await copyWallpaperToDestinations(input.id, input.name, input.path);
+        await setImageWallpaper(input.path, input.monitors);
+        break;
+      case "video":
+        await screenshotWallpaperInCage(["mpv", "panscan=1.0", input.path]);
+        await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
+        await setVideoWallpaper(input.path, input.monitors, input.videoOptions);
+        break;
+      case "wallpaper-engine":
+        const assetsPath = await caller.settings.get({
+          key: "wallpaperEngine.assetsFolder",
+        });
+        if (!assetsPath)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Wallpaper Engine assets folder is not set.",
+          });
+        await screenshotWallpaperInCage([
+          "linux-wallpaperengine",
+          "--silent",
+          "--fps",
+          "1",
+          "--assets-dir",
+          assetsPath,
+          "--window",
+          "0x0x1280x720",
+          input.path,
+        ]);
+        await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
+
+        await setWallpaperEngineWallpaper(
+          assetsPath,
+          input.path,
+          input.monitors,
+          input.wallpaperEngineOptions
+        );
+        break;
+    }
+  }),
+
+  restoreWallpaperOnStart: publicProcedure.mutation(async () => {
+    const restoreOnStart = await caller.settings.get({
+      key: "theme.restoreOnStart",
+    });
+    if (!restoreOnStart) return;
+
+    const lastWallpaperCmd = (await caller.settings.get({
+      key: "theme.lastWallpaperCmd",
+    })) as { command: string; args: string[] } | undefined;
+
+    if (lastWallpaperCmd) {
       killProcess("swaybg");
       killProcess("mpvpaper");
       killProcess("linux-wallpaperengine");
-      // Wait for processes to terminate
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      execute(lastWallpaperCmd);
+    }
+  }),
 
-      switch (input.type) {
-        case "image":
-          await copyWallpaperToDestinations(input.id, input.name, input.path);
-          await setImageWallpaper(input.path, input.monitors);
-          break;
-        case "video":
-          await screenshotWallpaperInCage(["mpv", "panscan=1.0", input.path]);
-          await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
-          await setVideoWallpaper(input.path, input.monitors, input.videoOptions);
-          break;
-        case "wallpaper-engine":
-          const assetsPath = await caller.settings.get({
-            key: "wallpaperEngine.assetsFolder",
+  setTheme: publicProcedure.input(setThemeSchema).mutation(async ({ input }) => {
+    const templates =
+      ((await caller.settings.get({
+        key: "theme.templates",
+      })) as { src: string; dest: string; postHook: string }[]) || [];
+    if (!templates)
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Templates are not set.",
+      });
+
+    await Promise.all(
+      templates.map(async (tpl) => {
+        if (!tpl.src || !tpl.dest) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Invalid template configuration: ${JSON.stringify(tpl)}`,
           });
-          if (!assetsPath)
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: "Wallpaper Engine assets folder is not set.",
-            });
-          await screenshotWallpaperInCage([
-            "linux-wallpaperengine",
-            "--silent",
-            "--fps",
-            "1",
-            "--assets-dir",
-            assetsPath,
-            "--window",
-            "0x0x1280x720",
-            input.path,
-          ]);
-          await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
+        }
 
-          await setWallpaperEngineWallpaper(
-            assetsPath,
-            input.path,
-            input.monitors,
-            input.wallpaperEngineOptions
-          );
-          break;
-      }
-    }),
-
-  setTheme: publicProcedure
-    .input(
-      z.object({
-        wallpaper: z.any(),
-        theme: z.any(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const templates =
-        ((await caller.settings.get({
-          key: "theme.templates",
-        })) as { src: string; dest: string; postHook: string }[]) || [];
-      if (!templates)
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Templates are not set.",
-        });
-
-      await Promise.all(
-        templates.map(async (tpl) => {
-          if (!tpl.src || !tpl.dest) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Invalid template configuration: ${JSON.stringify(tpl)}`,
-            });
-          }
+        try {
+          const content = await fs.readFile(tpl.src, "utf-8");
+          const rendered = await renderString(content, {
+            wallpaper: {
+              id: santize(input.wallpaper.id),
+              name: santize(input.wallpaper.name),
+            },
+            theme: input.theme,
+          });
 
           try {
-            const content = await fs.readFile(tpl.src, "utf-8");
-            const rendered = await renderString(content, {
+            const destination = await renderString(tpl.dest, {
               wallpaper: {
                 id: santize(input.wallpaper.id),
                 name: santize(input.wallpaper.name),
               },
               theme: input.theme,
             });
+            await fs.mkdir(path.dirname(destination), { recursive: true });
+            await fs.writeFile(destination, rendered, "utf-8");
 
-            try {
-              const destination = await renderString(tpl.dest, {
-                wallpaper: {
-                  id: santize(input.wallpaper.id),
-                  name: santize(input.wallpaper.name),
-                },
-                theme: input.theme,
-              });
-              await fs.mkdir(path.dirname(destination), { recursive: true });
-              await fs.writeFile(destination, rendered, "utf-8");
-
-              if (tpl.postHook) {
-                try {
-                  const postHook = await renderString(tpl.postHook, {
-                    wallpaper: input.wallpaper,
-                    theme: input.theme,
-                  });
-                  const [cmd, ...args] = postHook.split(" ");
-                  await execute({ command: cmd, args, shell: true });
-                } catch (error) {
-                  const errorMessage =
-                    error instanceof Error ? error.message : "Unknown error occurred";
-                  throw new TRPCError({
-                    code: "INTERNAL_SERVER_ERROR",
-                    message: `Error running post-hook command: ${tpl.postHook}: ${errorMessage}`,
-                    cause: error,
-                  });
-                }
+            if (tpl.postHook) {
+              try {
+                const postHook = await renderString(tpl.postHook, {
+                  wallpaper: input.wallpaper,
+                  theme: input.theme,
+                });
+                const [cmd, ...args] = postHook.split(" ");
+                await execute({ command: cmd, args, shell: true });
+              } catch (error) {
+                const errorMessage =
+                  error instanceof Error ? error.message : "Unknown error occurred";
+                throw new TRPCError({
+                  code: "INTERNAL_SERVER_ERROR",
+                  message: `Error running post-hook command: ${tpl.postHook}: ${errorMessage}`,
+                  cause: error,
+                });
               }
-            } catch (error) {
-              const errorMessage =
-                error instanceof Error ? error.message : "Unknown error occurred";
-              throw new TRPCError({
-                code: "INTERNAL_SERVER_ERROR",
-                message: `Error writing file to ${tpl.dest}: ${errorMessage}`,
-                cause: error,
-              });
             }
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
             throw new TRPCError({
               code: "INTERNAL_SERVER_ERROR",
-              message: `Error reading template file ${tpl.src}: ${errorMessage}`,
+              message: `Error writing file to ${tpl.dest}: ${errorMessage}`,
               cause: error,
             });
           }
-        })
-      );
-    }),
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Error reading template file ${tpl.src}: ${errorMessage}`,
+            cause: error,
+          });
+        }
+      })
+    );
+  }),
 });
 
 const paginateData = (

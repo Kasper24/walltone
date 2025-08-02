@@ -97,7 +97,7 @@ export const useMonitorSelection = (scalingOptions?: { key: string; text: string
   const monitorsQuery = useQuery({
     queryKey: ["all-monitors"],
     queryFn: async () => {
-      return await client.monitor.getAll.query();
+      return await client.monitor.search.query();
     },
     staleTime: 1000 * 60 * 1,
   });

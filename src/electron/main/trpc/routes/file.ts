@@ -1,12 +1,15 @@
-import { shell } from "electron";
+import { BrowserWindow, shell } from "electron";
 import z from "zod";
-import { getMainWindow } from "@electron/main/index.js";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 
+const downloadSchema = z.object({
+  url: z.string().url(),
+});
+
 export const fileRouter = router({
-  download: publicProcedure.input(z.object({ url: z.string() })).mutation(async ({ input }) => {
+  download: publicProcedure.input(downloadSchema).mutation(async ({ input }) => {
     return new Promise<void>((resolve, reject) => {
-      const mainWindow = getMainWindow();
+      const mainWindow = BrowserWindow.getAllWindows()[0];
       mainWindow.webContents.downloadURL(input.url);
       mainWindow.webContents.session.once("will-download", (_event, item) => {
         item.once("done", (_event, state) => {

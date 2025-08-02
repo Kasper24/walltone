@@ -485,7 +485,7 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
         {templates?.length > 0 && (
           <div className="grid gap-3">
             {templates?.map((_, idx: number) => (
-              <div className="space-y-3">
+              <div className="space-y-3" key={idx}>
                 {/* Source file row */}
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />

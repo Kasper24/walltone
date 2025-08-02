@@ -1,3 +1,6 @@
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { type DownloadableWallpaper } from "@electron/main/trpc/routes/theme.js";
 
 interface UnsplashPhoto {
@@ -102,68 +105,73 @@ const transformPhotos = (photos: UnsplashPhoto[]): DownloadableWallpaper[] => {
   }));
 };
 
-export const unsplashSearch = async ({
-  apiKey,
-  query,
-  page = 1,
-  perPage = 30,
-  orderBy = "relevant",
-  orientation,
-  color,
-}: {
-  apiKey: string;
-  query: string;
-  page?: number;
-  perPage?: number;
-  orderBy?: "relevant" | "latest";
-  orientation?: "landscape" | "portrait" | "squarish";
-  color?:
-    | "black_and_white"
-    | "black"
-    | "white"
-    | "yellow"
-    | "orange"
-    | "red"
-    | "purple"
-    | "magenta"
-    | "green"
-    | "teal"
-    | "blue";
-}) => {
-  query = query || "wallpaper";
+const unsplashSearchParamsSchema = z.object({
+  apiKey: z.string().min(1, "API Key is required"),
+  query: z.string(),
+  page: z.number().min(1).optional().default(1),
+  perPage: z.number().optional().default(30),
+  orderBy: z.enum(["relevant", "latest"]).optional().default("relevant"),
+  orientation: z.enum(["landscape", "portrait", "squarish"]).optional(),
+  color: z
+    .enum([
+      "black_and_white",
+      "black",
+      "white",
+      "yellow",
+      "orange",
+      "red",
+      "purple",
+      "magenta",
+      "green",
+      "teal",
+      "blue",
+    ])
+    .optional(),
+});
 
-  const params = new URLSearchParams({
-    client_id: apiKey,
-    page: page.toString(),
-    per_page: perPage.toString(),
-    order_by: orderBy,
-  });
+export const unsplashRouter = router({
+  search: publicProcedure.input(unsplashSearchParamsSchema).query(async ({ input }) => {
+    const url = new URL("https://api.unsplash.com/search/photos");
+    const params = url.searchParams;
 
-  if (query) params.append("query", query);
-  if (orientation) params.append("orientation", orientation);
-  if (color) params.append("color", color);
+    params.set("client_id", input.apiKey);
+    params.set("page", input.page.toString());
+    params.set("per_page", input.perPage.toString());
+    params.set("order_by", input.orderBy);
+    params.set("query", input.query || "wallpaper");
+    if (input.orientation) params.set("orientation", input.orientation);
+    if (input.color) params.set("color", input.color);
 
-  const url = `https://api.unsplash.com/search/photos?${params}`;
+    try {
+      const response = await fetch(url.toString());
+      if (!response.ok)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Unsplash API request failed: ${response.statusText}`,
+        });
 
-  const response = await fetch(url);
+      const data: UnsplashSearchResult | UnsplashPhoto[] = await response.json();
 
-  if (!response.ok) {
-    throw new Error(`Unsplash API error: ${response.statusText}`);
-  }
+      // Normalize the response format
+      const photos = Array.isArray(data) ? data : data.results;
+      const total = Array.isArray(data) ? photos.length : data.total;
+      const totalPages = Array.isArray(data) ? Infinity : data.total_pages;
 
-  const data: UnsplashSearchResult | UnsplashPhoto[] = await response.json();
-
-  // Normalize the response format
-  const photos = Array.isArray(data) ? data : data.results;
-  const total = Array.isArray(data) ? photos.length : data.total;
-  const totalPages = Array.isArray(data) ? Infinity : data.total_pages;
-
-  return {
-    data: photos ? transformPhotos(photos) : [],
-    currentPage: page,
-    prevPage: page > 1 ? page - 1 : null,
-    nextPage: page < totalPages ? page + 1 : null,
-    total,
-    totalPages,
-  };
-};
+      return {
+        data: photos ? transformPhotos(photos) : [],
+        currentPage: input.page,
+        prevPage: input.page > 1 ? input.page - 1 : null,
+        nextPage: input.page < totalPages ? input.page + 1 : null,
+        total,
+        totalPages,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Pexels API request failed: ${message}`,
+        cause: error,
+      });
+    }
+  }),
+});

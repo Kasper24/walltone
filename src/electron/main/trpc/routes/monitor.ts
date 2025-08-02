@@ -15,7 +15,7 @@ export type Monitor = {
 };
 
 export const monitorRouter = router({
-  getAll: publicProcedure.query(async () => {
+  search: publicProcedure.query(async () => {
     try {
       const { stdout } = await execute({
         command: "wayland-info",
