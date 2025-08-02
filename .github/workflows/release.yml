@@ -1,0 +1,64 @@
+name: Build & Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-deb:
+    name: Build .deb package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm ci
+      - name: Build .deb package
+        run: npm run make -- --targets=@electron-forge/maker-deb
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/make/deb/*/*.deb
+
+  build-rpm:
+    name: Build .rpm package
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+    steps:
+      - name: Install build dependencies in container
+        run: dnf install -y nodejs npm git && dnf groupinstall -y "C Development Tools and Libraries"
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm ci
+      - name: Build .rpm package
+        run: npm run make -- --targets=@electron-forge/maker-rpm
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/make/rpm/*/*.rpm
+
+  build-zip:
+    name: Build .zip package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm ci
+      - name: Build .zip package
+        run: npm run make -- --targets=@electron-forge/maker-zip
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          # The path will be out/make/zip/linux/...
+          files: out/make/zip/linux/*.zip
