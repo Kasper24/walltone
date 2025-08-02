@@ -16,7 +16,7 @@
       system:
       let
         pkgs = import nixpkgs { inherit system; };
-        walltone = pkgs.callPackage ./package.nix { };
+        walltone = pkgs.callPackage ./packaging/nix/package.nix { };
       in
       {
         packages = {

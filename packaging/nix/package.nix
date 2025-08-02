@@ -37,7 +37,7 @@ buildNpmPackage rec {
   pname = "walltone";
   version = "unstable-2025-08-02";
 
-  src = ./.;
+  src = ../../.;
 
   npmDepsHash = "sha256-YuI3oi5kC/JrCoczHUygGJiEMin/6y3Abo0YZBggYcU=";
 
