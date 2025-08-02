@@ -50,6 +50,7 @@ const config: ForgeConfig = {
     },
   },
   packagerConfig: {
+    executableName: "walltone",
     asar: true,
     icon: "/assets/icon",
     electronZipDir: process.env.ELECTRON_FORGE_ELECTRON_ZIP_DIR,
