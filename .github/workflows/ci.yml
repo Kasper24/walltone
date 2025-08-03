@@ -8,6 +8,7 @@ on:
 
 jobs:
   lint-build-test:
+    name: Lint, Build, and Test
     runs-on: ubuntu-latest
 
     steps:
@@ -38,6 +39,7 @@ jobs:
         run: npm run package
 
   nix-build:
+    name: Build Nix Package
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -52,27 +54,14 @@ jobs:
   arch-build:
     name: Build Arch Linux Package
     runs-on: ubuntu-latest
-    container:
-      image: archlinux:latest
     steps:
-      - name: Install dependencies
-        run: |
-          pacman -Syu --noconfirm
-          pacman -S --noconfirm base-devel git namcap
-
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check PKGBUILD with namcap
-        # Run namcap to lint the PKGBUILD for common errors
-        run: namcap packaging/arch/PKGBUILD
-
-      - name: Build package
-        run: |
-          # makepkg cannot be run as root, so we create a builder user
-          useradd -m builder
-          # Give the builder user permissions for the repo
-          chown -R builder:builder .
-          # Run makepkg as the non-root user
-          sudo -u builder makepkg -sf --noconfirm
-        working-directory: ./packaging/arch
+      - name: Build Arch Linux package
+        uses: heyhusen/archlinux-package-action@v2
+        with:
+          path: packaging/arch
+          srcinfo: true
+          namcap: true
+          aur: true

@@ -60,5 +60,4 @@ jobs:
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
-          # The path will be out/make/zip/linux/...
           files: out/make/zip/linux/*.zip
