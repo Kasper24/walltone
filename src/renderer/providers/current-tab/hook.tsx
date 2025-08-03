@@ -19,4 +19,4 @@ const useCurrentTab = () => {
   return context;
 };
 
-export { useCurrentTab };
+export { useCurrentTab, CurrentTabContext };

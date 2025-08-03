@@ -115,6 +115,17 @@ const InputSetting = ({
     },
   });
 
+  const onOpenInExplorerMutation = useMutation({
+    mutationFn: async () => {
+      await client.file.openInExplorer.mutate({
+        path: localValue,
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   if (isPending) {
     return (
       <div className="flex gap-2">
@@ -206,15 +217,7 @@ const InputSetting = ({
         </Button>
       )}
       {filePicker && showOpenInExplorerButton && (
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() =>
-            client.file.openInExplorer.mutate({
-              path: localValue,
-            })
-          }
-        >
+        <Button size="sm" variant="ghost" onClick={() => onOpenInExplorerMutation.mutate()}>
           <ExternalLink className="h-4 w-4" />
         </Button>
       )}
