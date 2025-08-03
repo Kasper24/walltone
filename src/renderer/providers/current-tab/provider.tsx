@@ -1,6 +1,18 @@
 import * as React from "react";
-import { CurrentTabContext } from "./hook.js";
-import { type Tab } from "./types.js";
+
+export type Tab = "explore" | "wallpapers" | "settings";
+
+interface CurrentTabContextType {
+  currentTab: Tab;
+  setCurrentTab: (currentTab: Tab) => void;
+}
+
+const initialState: CurrentTabContextType = {
+  currentTab: "explore",
+  setCurrentTab: () => null,
+};
+
+const CurrentTabContext = React.createContext<CurrentTabContextType | undefined>(initialState);
 
 const CurrentTabProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentTab, setCurrentTab] = React.useState<Tab>("explore");
@@ -12,4 +24,4 @@ const CurrentTabProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export { CurrentTabProvider };
+export { CurrentTabContext, CurrentTabProvider };

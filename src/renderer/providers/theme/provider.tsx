@@ -1,5 +1,6 @@
 import React from "react";
-import { Theme } from "./types.js";
+
+type Theme = "dark" | "light" | "system";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
