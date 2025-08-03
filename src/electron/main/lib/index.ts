@@ -64,7 +64,7 @@ const killProcess = async (processName: string) => {
     await execute({ command: "pkill", args: ["-f", processName] });
     console.log(`Killed existing ${processName} processes`);
   } catch (error) {
-    console.log(`No ${processName} processes found or kill failed`);
+    console.log(`No ${processName} processes found or kill failed - ${error}`);
   }
 };
 

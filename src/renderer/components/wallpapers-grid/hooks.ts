@@ -2,7 +2,6 @@ import React from "react";
 import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useDebouncedCallback } from "use-debounce";
-import { BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
 import { client } from "@renderer/lib/trpc.js";
 import { AppliedFilters, ConfigurationRequirement, WallpapersGridProps } from "./types.js";
 
@@ -55,7 +54,7 @@ export const useConfiguration = (requiresConfiguration?: ConfigurationRequiremen
     queryKey: [`${requiresConfiguration?.setting.key}`],
     queryFn: async () => {
       return await client.settings.get.query({
-        key: requiresConfiguration!.setting.key as any,
+        key: requiresConfiguration!.setting.key,
         decrypt: requiresConfiguration!.setting.decrypt || false,
       });
     },
@@ -88,7 +87,7 @@ export const useWallpaperData = ({
   debouncedInputValue: string;
   sorting: string;
   appliedFilters: AppliedFilters;
-  configValue: any;
+  configValue: unknown;
   isConfigurationValid: boolean;
 }) => {
   const { ref, inView } = useInView();
@@ -115,7 +114,7 @@ export const useWallpaperData = ({
     if (inView) {
       query.fetchNextPage();
     }
-  }, [query.fetchNextPage, inView]);
+  }, [query, inView]);
 
   const allWallpapers = query.data?.pages.flatMap((page) => page.data ?? []) || [];
 
@@ -124,55 +123,4 @@ export const useWallpaperData = ({
     allWallpapers,
     infiniteScrollRef: ref,
   };
-};
-
-export const useContentRenderer = ({
-  isError,
-  error,
-  refetch,
-  failureCount,
-  isLoading,
-  isFetching,
-  allWallpapers,
-  debouncedInputValue,
-  clearSearch,
-  onWallpaperApply,
-  onWallpaperDownload,
-  scalingOptions,
-  infiniteScrollRef,
-}: {
-  isError: boolean;
-  error: Error | null;
-  refetch: () => void;
-  failureCount: number;
-  isLoading: boolean;
-  isFetching: boolean;
-  allWallpapers: BaseWallpaper[];
-  debouncedInputValue: string;
-  clearSearch: () => void;
-  onWallpaperApply?: WallpapersGridProps["onWallpaperApply"];
-  onWallpaperDownload?: WallpapersGridProps["onWallpaperDownload"];
-  scalingOptions?: { key: string; text: string }[];
-  infiniteScrollRef: (node?: Element | null | undefined) => void;
-}) => {
-  const renderContent = React.useCallback(() => {
-    // Content rendering logic will be moved to content components
-    return null;
-  }, [
-    isError,
-    error,
-    refetch,
-    failureCount,
-    isLoading,
-    allWallpapers,
-    isFetching,
-    debouncedInputValue,
-    clearSearch,
-    onWallpaperApply,
-    onWallpaperDownload,
-    scalingOptions,
-    infiniteScrollRef,
-  ]);
-
-  return { renderContent };
 };

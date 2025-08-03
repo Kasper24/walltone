@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useTheme } from "@renderer/providers/theme-provider.js";
+import { useTheme } from "@renderer/providers/theme/hook.js";
 import { Button } from "@renderer/components/ui/button.js";
 import { Input } from "@renderer/components/ui/input.js";
 import { Card, CardContent } from "@renderer/components/ui/card.js";

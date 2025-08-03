@@ -1,5 +1,5 @@
 import { ExternalLink, Key, RefreshCcw, Settings } from "lucide-react";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider.js";
+import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
 import { client } from "@renderer/lib/trpc.js";
 

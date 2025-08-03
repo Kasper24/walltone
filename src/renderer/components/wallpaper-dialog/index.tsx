@@ -17,6 +17,7 @@ import { Badge } from "@renderer/components/ui/badge.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs.js";
 import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
 import LoadingButton from "@renderer/components/ui/loading-button.js";
+import { Theme, ThemeTypes, ThemeVariants } from "@renderer/lib/theme/index.js";
 import {
   type OnWallpaperApply,
   type OnWallpaperDownload,
@@ -27,7 +28,8 @@ import {
   useThemeEditor,
   useWallpaperActions,
 } from "./hooks.js";
-import ApplyWallpaperDialog, { DynamicControlDefinition } from "./apply-dialog.js";
+import ApplyWallpaperDialog from "./apply-dialog.js";
+import { type DynamicControlDefinition } from "./types.js";
 
 const WallpaperDialog = ({
   wallpaper,
@@ -78,7 +80,11 @@ const WallpaperDialog = ({
         </div>
 
         <div className="flex flex-1 flex-col overflow-hidden">
-          <Tabs value={activeTheme} onValueChange={setActiveTheme} className="flex flex-1 flex-col">
+          <Tabs
+            value={activeTheme}
+            onValueChange={(value) => setActiveTheme(value as ThemeTypes)}
+            className="flex flex-1 flex-col"
+          >
             <TabsList className="mb-3 grid w-full flex-shrink-0 grid-cols-2">
               <TabsTrigger value="base16">Base 16</TabsTrigger>
               <TabsTrigger value="material">Material</TabsTrigger>
@@ -256,9 +262,9 @@ const ThemePanel = ({
   selectedColor,
   isLoading = false,
 }: {
-  theme?: any;
-  activeVariant: string;
-  setActiveVariant: (variant: string) => void;
+  theme?: Theme[ThemeTypes];
+  activeVariant: ThemeVariants;
+  setActiveVariant: (variant: ThemeVariants) => void;
   onColorSelect: (colorValue: string, colorKey: string) => void;
   selectedColor?: string;
   isLoading?: boolean;
@@ -329,8 +335,8 @@ const ThemeColors = ({
   onColorSelect,
   selectedColor,
 }: {
-  theme?: any;
-  activeVariant: string;
+  theme?: Theme[ThemeTypes];
+  activeVariant: ThemeVariants;
   onColorSelect: (colorValue: string, colorKey: string) => void;
   selectedColor?: string;
 }) => {
@@ -379,7 +385,7 @@ const WallpaperActions = ({
   controlDefinitions,
 }: {
   wallpaper: BaseWallpaper;
-  theme?: unknown;
+  theme?: Theme;
   onApply?: OnWallpaperApply;
   onDownload?: OnWallpaperDownload;
   scalingOptions?: { key: string; text: string }[];

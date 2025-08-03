@@ -41,7 +41,7 @@ interface PexelsVideo {
     name: string;
     url: string;
   };
-  video_files: Array<{
+  video_files: {
     id: number;
     quality: string;
     file_type: string;
@@ -49,12 +49,12 @@ interface PexelsVideo {
     height: number;
     fps: number;
     link: string;
-  }>;
-  video_pictures: Array<{
+  }[];
+  video_pictures: {
     id: number;
     nr: number;
     picture: string;
-  }>;
+  }[];
 }
 
 interface PexelsSearchResponse<T> {

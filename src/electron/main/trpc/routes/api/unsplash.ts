@@ -30,9 +30,66 @@ interface UnsplashPhoto {
   };
   likes: number;
   liked_by_user: boolean;
-  current_user_collections: any[];
-  sponsorship: any;
-  topic_submissions: Record<string, any>;
+  current_user_collections: {
+    id: number;
+    title: string;
+    published_at: string;
+    last_collected_at: string;
+    updated_at: string;
+    cover_photo: string | null;
+    user: string | null;
+  }[];
+  sponsorship: {
+    impression_urls: string[];
+    tagline: string;
+    tagline_url: string;
+    sponsor: {
+      id: string;
+      updated_at: string;
+      username: string;
+      name: string;
+      first_name: string;
+      last_name: string | null;
+      twitter_username: string | null;
+      portfolio_url: string | null;
+      bio: string | null;
+      location: string | null;
+      links: {
+        self: string;
+        html: string;
+        photos: string;
+        likes: string;
+        portfolio: string;
+      };
+      profile_image: {
+        small: string;
+        medium: string;
+        large: string;
+      };
+      instagram_username: string | null;
+      total_collections: number;
+      total_likes: number;
+      total_photos: number;
+      total_promoted_photos: number;
+      total_illustrations: number;
+      total_promoted_illustrations: number;
+      accepted_tos: boolean;
+      for_hire: boolean;
+      social: {
+        instagram_username: string | null;
+        portfolio_url: string | null;
+        twitter_username: string | null;
+        paypal_email: string | null;
+      };
+    };
+  };
+  topic_submissions: Record<
+    string,
+    {
+      status: string;
+    }
+  >;
+  z;
   user: {
     id: string;
     updated_at: string;
@@ -71,7 +128,7 @@ interface UnsplashPhoto {
       paypal_email: string | null;
     };
   };
-  tags: Array<{
+  tags: {
     type: string;
     title: string;
     source?: {
@@ -87,7 +144,7 @@ interface UnsplashPhoto {
       meta_description: string;
       cover_photo: UnsplashPhoto;
     };
-  }>;
+  }[];
 }
 
 interface UnsplashSearchResult {
@@ -141,6 +198,8 @@ export const unsplashRouter = router({
     params.set("query", input.query || "wallpaper");
     if (input.orientation) params.set("orientation", input.orientation);
     if (input.color) params.set("color", input.color);
+
+    console.log(`Unsplash API URL: ${url.toString()}`);
 
     try {
       const response = await fetch(url.toString());

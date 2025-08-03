@@ -2,15 +2,12 @@ import globals from "globals";
 import js from "@eslint/js";
 import eslintConfigPrettier from "eslint-config-prettier";
 import tseslint from "typescript-eslint";
-import onlyWarn from "eslint-plugin-only-warn";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import reactCompiler from "eslint-plugin-react-compiler";
 
 /**
- * A shared ESLint configuration for the repository.
- *
  * @type {import("eslint").Linter.Config}
  * */
 export default [
@@ -18,7 +15,10 @@ export default [
   eslintConfigPrettier,
   ...tseslint.configs.recommended,
   {
-    files: ["**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}"],
+    ignores: [".vite/**"],
+  },
+  {
+    files: ["**/*.{ts,tsx}"],
     ...react.configs.flat.recommended,
     languageOptions: {
       ...react.configs.flat.recommended.languageOptions,
@@ -28,40 +28,26 @@ export default [
       },
     },
     rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
       "react/react-in-jsx-scope": "off",
-    },
-  },
-  {
-    plugins: {
-      "react-refresh": reactRefresh,
-    },
-    rules: {
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-    },
-  },
-  {
-    files: ["**/*.{js,jsx}"],
-    plugins: { "react-hooks": reactHooks },
-    // ...
-    rules: {
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
+      "react-compiler/react-compiler": "warn",
     },
-  },
-  {
-    files: ["**/*.{js,jsx}"],
-    plugins: { "react-compiler": reactCompiler },
-    // ...
-    rules: {
-      "react-compiler/react-compiler": "error",
-    },
-  },
-  {
     plugins: {
-      onlyWarn,
+      "react-refresh": reactRefresh,
+      "react-hooks": reactHooks,
+      "react-compiler": reactCompiler,
     },
   },
   {
-    ignores: [".vite/**"],
+    files: ["**/ui/**/*.ts", "**/ui/**/*.tsx", "**/tools/theme-provider.tsx"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
   },
 ];

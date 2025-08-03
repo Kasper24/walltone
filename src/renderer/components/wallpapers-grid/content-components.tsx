@@ -24,8 +24,8 @@ import { Button } from "@renderer/components/ui/button.js";
 import { Badge } from "@renderer/components/ui/badge.js";
 import { Separator } from "@renderer/components/ui/separator.js";
 import WallpaperDialog from "@renderer/components/wallpaper-dialog/index.js";
-import { type DynamicControlDefinition } from "@renderer/components/wallpaper-dialog/apply-dialog.js";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider.js";
+import { type DynamicControlDefinition } from "@renderer/components/wallpaper-dialog/types.js";
+import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import { cn } from "@renderer/lib/cn.js";
 import { ConfigurationRequirement, OnWallpaperApply, OnWallpaperDownload } from "./types.js";
 
@@ -37,7 +37,7 @@ export const ConfigurationScreen = ({
   refetch,
 }: {
   requirement: ConfigurationRequirement;
-  configValue?: any;
+  configValue?: unknown;
   isPending: boolean;
   isError: boolean;
   refetch: () => void;

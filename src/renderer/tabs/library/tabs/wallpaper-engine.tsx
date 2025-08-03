@@ -1,11 +1,6 @@
 import { Folder, RefreshCcw, Settings } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { DialogClose } from "@renderer/components/ui/dialog.js";
 import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
-import LoadingButton from "@renderer/components/ui/loading-button.js";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider.js";
-import useWallpaperEngineApiKey from "@renderer/hooks/useWallpaperEngineApiKey.js";
+import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import { client } from "@renderer/lib/trpc.js";
 
 const LibraryWallpaperEngineTab = () => {
@@ -52,7 +47,7 @@ const LibraryWallpaperEngineTab = () => {
           type: "wallpaper-engine",
           page: pageParam,
           limit: 50,
-          sorting: sorting as any,
+          sorting: sorting,
           query,
           tags,
           matchAll: appliedFilters?.booleans.matchall,
@@ -298,36 +293,6 @@ const LibraryWallpaperEngineTab = () => {
         });
       }}
     />
-  );
-};
-
-const UnsubscribeButton = ({ id }: { id: string }) => {
-  const { data: apiKey } = useWallpaperEngineApiKey();
-  const unsubscribe = useMutation({
-    mutationFn: () => {
-      return client.api.wallpaperEngine.unsubscribe.mutate({
-        apiKey: apiKey as string,
-        id,
-      });
-    },
-    onSuccess: () => {
-      toast.success("Successfully unsubscribed");
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  return (
-    <DialogClose asChild>
-      <LoadingButton
-        isLoading={unsubscribe.isPending}
-        variant="destructive"
-        onClick={() => unsubscribe.mutate()}
-      >
-        Unsubscribe
-      </LoadingButton>
-    </DialogClose>
   );
 };
 

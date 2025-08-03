@@ -6,6 +6,7 @@ import { color } from "chroma.ts";
 import { execute, killProcess, santize } from "@electron/main/lib/index.js";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { caller } from "./base.js";
+import { settingKeySchema } from "./settings.js";
 
 const SUPPORTED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"];
 const SUPPORTED_VIDEO_EXTENSIONS = [".mp4", ".mkv", ".webm", ".avi", ".mov"];
@@ -37,7 +38,7 @@ export interface WallpaperData {
   nextPage: number | null;
 }
 
-const getWallpapesSchema = z.object({
+const searchWallpapesSchema = z.object({
   type: z.enum(["image", "video", "wallpaper-engine", "all"]),
   page: z.number().min(1).default(1),
   limit: z.number().min(1).default(10),
@@ -86,13 +87,13 @@ const setThemeSchema = z.object({
 });
 
 export const themeRouter = router({
-  searchWallpapers: publicProcedure.input(z.object(getWallpapesSchema)).query(async ({ input }) => {
+  searchWallpapers: publicProcedure.input(searchWallpapesSchema).query(async ({ input }) => {
     const wallpapers: LibraryWallpaper[] = [];
 
     if (input.type === "image" || input.type === "all") {
       const imageWallpapers = await getMediaWallpapers(
         "image",
-        "image.wallpaper-folders",
+        "image.wallpaperFolders",
         SUPPORTED_IMAGE_EXTENSIONS
       );
       wallpapers.push(...imageWallpapers);
@@ -101,7 +102,7 @@ export const themeRouter = router({
     if (input.type === "video" || input.type === "all") {
       const videoWallpapers = await getMediaWallpapers(
         "video",
-        "video.wallpaper-folders",
+        "video.wallpaperFolders",
         SUPPORTED_VIDEO_EXTENSIONS
       );
       wallpapers.push(...videoWallpapers);
@@ -140,7 +141,7 @@ export const themeRouter = router({
         await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
         await setVideoWallpaper(input.path, input.monitors, input.videoOptions);
         break;
-      case "wallpaper-engine":
+      case "wallpaper-engine": {
         const assetsPath = await caller.settings.get({
           key: "wallpaperEngine.assetsFolder",
         });
@@ -169,6 +170,7 @@ export const themeRouter = router({
           input.wallpaperEngineOptions
         );
         break;
+      }
     }
   }),
 
@@ -292,12 +294,12 @@ const paginateData = (
 
 const getMediaWallpapers = async (
   mediaType: "image" | "video",
-  settingsKey: string,
+  settingsKey: z.infer<typeof settingKeySchema>,
   fileTypes: string[]
 ) => {
   const wallpapers: LibraryWallpaper[] = [];
   const folders = (await caller.settings.get({
-    key: settingsKey as any,
+    key: settingsKey,
   })) as string[];
 
   if (!folders || !Array.isArray(folders) || folders.length === 0) {

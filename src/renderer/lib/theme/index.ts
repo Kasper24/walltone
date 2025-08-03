@@ -2,15 +2,17 @@ import * as chroma from "chroma.ts";
 import generateBase16Theme from "./base16.js";
 import generateMaterialTheme from "./material.js";
 
-export interface ThemeInterface {
-  name: string;
-  polarities: {
-    name: string;
-    colors: {
-      name: string;
-      color: chroma.Color;
-    }[];
-  }[];
+export type ThemeTypes = "base16" | "material";
+export type ThemeVariants = "dark" | "light";
+export interface Theme {
+  base16: {
+    dark: Record<string, string>;
+    light: Record<string, string>;
+  };
+  material: {
+    dark: Record<string, string>;
+    light: Record<string, string>;
+  };
 }
 
 const generateThemes = async (mediaElement: HTMLImageElement | HTMLVideoElement) => {

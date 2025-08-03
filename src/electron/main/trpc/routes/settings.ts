@@ -16,14 +16,28 @@ const filePicker = async (type: "file" | "folder"): Promise<string | null> => {
   return result.filePaths[0];
 };
 
-const getNestedValue = (obj: any, path: (string | number)[]): any => {
-  return path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
+const getNestedValue = (obj: unknown, path: (string | number)[]): unknown => {
+  return path.reduce((acc: unknown, key: string | number) => {
+    if (typeof acc === "object" && acc !== null) {
+      return (acc as Record<string | number, unknown>)[key];
+    }
+    return undefined;
+  }, obj);
 };
 
-const setValue = async (key: string, value: any, encrypt: boolean) => {
+const setValue = async (key: string, value: unknown, encrypt: boolean) => {
   try {
-    if (encrypt) await keytar.setPassword("walltone", key, value);
-    else store.set(key, value);
+    if (encrypt) {
+      if (typeof value !== "string")
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Value for encrypted setting '${key}' must be a string.`,
+        });
+
+      await keytar.setPassword("walltone", key, value as string);
+    } else {
+      store.set(key, value);
+    }
   } catch (error) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
@@ -33,7 +47,7 @@ const setValue = async (key: string, value: any, encrypt: boolean) => {
   }
 };
 
-const keySchema = z.enum([
+export const settingKeySchema = z.enum([
   "unsplash.apiKey",
   "pexels.apiKey",
   "wallpaperEngine.apiKey",
@@ -48,13 +62,13 @@ const keySchema = z.enum([
 ]);
 
 const getSchema = z.object({
-  key: keySchema,
+  key: settingKeySchema,
   path: z.array(z.union([z.string(), z.number()])).optional(),
   decrypt: z.boolean().default(false),
 });
 
 const setSchema = z.object({
-  key: keySchema,
+  key: settingKeySchema,
   path: z.array(z.union([z.string(), z.number()])).optional(),
   value: z.any().optional(),
   filePicker: z.enum(["file", "folder"]).optional(),
@@ -62,7 +76,7 @@ const setSchema = z.object({
 });
 
 const deleteSchema = z.object({
-  key: keySchema,
+  key: settingKeySchema,
   path: z.array(z.union([z.string(), z.number()])).optional(),
   index: z.number().int().nonnegative(),
 });

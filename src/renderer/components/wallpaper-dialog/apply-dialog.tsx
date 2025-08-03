@@ -26,25 +26,11 @@ import { Label } from "@renderer/components/ui/label.js";
 import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
 import { OnWallpaperApply } from "@renderer/components/wallpapers-grid/types.js";
 import { useMonitorSelection, useWallpaperActions } from "./hooks.js";
-
-// Add new types for dynamic controls
-export interface DynamicControlDefinition {
-  type: "range" | "boolean" | "select";
-  key: string;
-  title: string;
-  description?: string;
-  defaultValue?: any;
-  options?: {
-    min?: number;
-    max?: number;
-    step?: number;
-    values?: { key: string; text: string }[];
-  };
-}
-
-export interface ApplyDialogValues {
-  [key: string]: any;
-}
+import {
+  DynamicControlDefinition,
+  DynamicControlValues,
+  SetDynamicControlValues,
+} from "./types.js";
 
 const ApplyWallpaperDialog = ({
   wallpaper,
@@ -72,9 +58,8 @@ const ApplyWallpaperDialog = ({
 
   const { applyMutation } = useWallpaperActions(wallpaper);
 
-  // Initialize dynamic control values
-  const [controlValues, setControlValues] = React.useState<ApplyDialogValues>(() => {
-    const initialValues: ApplyDialogValues = {};
+  const [controlValues, setControlValues] = React.useState<DynamicControlValues>(() => {
+    const initialValues: DynamicControlValues = {};
     controlDefinitions?.forEach((control) => {
       initialValues[control.key] = control.defaultValue;
     });
@@ -423,8 +408,8 @@ const DynamicControls = ({
   setControlValues,
 }: {
   controlDefinitions: DynamicControlDefinition[];
-  controlValues: ApplyDialogValues;
-  setControlValues: React.Dispatch<React.SetStateAction<ApplyDialogValues>>;
+  controlValues: DynamicControlValues;
+  setControlValues: SetDynamicControlValues;
 }) => {
   return (
     <Card>
@@ -456,16 +441,16 @@ const DynamicControl = ({
   onChange,
 }: {
   control: DynamicControlDefinition;
-  value: any;
-  onChange: (value: any) => void;
+  value: string | number | boolean;
+  onChange: (value: string | number | boolean) => void;
 }) => {
   switch (control.type) {
     case "range":
-      return <RangeControl control={control} value={value} onChange={onChange} />;
+      return <RangeControl control={control} value={value as number} onChange={onChange} />;
     case "boolean":
-      return <BooleanControl control={control} value={value} onChange={onChange} />;
+      return <BooleanControl control={control} value={value as boolean} onChange={onChange} />;
     case "select":
-      return <SelectControl control={control} value={value} onChange={onChange} />;
+      return <SelectControl control={control} value={value as string} onChange={onChange} />;
     default:
       return null;
   }
