@@ -20,12 +20,12 @@ const initialState: ThemeProviderContextType = {
 
 const ThemeProviderContext = React.createContext<ThemeProviderContextType>(initialState);
 
-export function ThemeProvider({
+const ThemeProvider = ({
   children,
   defaultTheme = "dark",
   storageKey = "vite-ui-theme",
   ...props
-}: ThemeProviderProps) {
+}: ThemeProviderProps) => {
   const [theme, setTheme] = React.useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   );
@@ -60,12 +60,6 @@ export function ThemeProvider({
       {children}
     </ThemeProviderContext.Provider>
   );
-}
-
-export const useTheme = () => {
-  const context = React.useContext(ThemeProviderContext);
-
-  if (context === undefined) throw new Error("useTheme must be used within a ThemeProvider");
-
-  return context;
 };
+
+export { ThemeProviderContext, ThemeProvider };

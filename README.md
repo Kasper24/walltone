@@ -1,157 +1,177 @@
 # Walltone
 
-A modern wallpaper manager for Linux that supports static images, videos, and dynamic Wallpaper Engine content. Built with Electron, React, and TypeScript for a beautiful desktop experience.
+**Walltone** is a modern wallpaper and theme manager for Linux, supporting images, videos, and dynamic Wallpaper Engine content.
+It automatically generates beautiful color themes from your wallpapers, and lets you browse, download, and apply wallpapers from popular online sources.
 
 ![Walltone Screenshot](./assets//screenshot.png)
 
-## ✨ Features
+---
 
-### 🖼️ Multi-Format Support
-- **Static Images**: JPG, PNG, WebP, and more with swaybg backend
-- **Video Wallpapers**: MP4, MKV, WebM with mpvpaper backend
-- **Wallpaper Engine**: Full support for Steam Workshop dynamic wallpapers
+## 🚀 Features
 
-### 🖥️ Multi-Monitor Management
-- Individual wallpaper configuration per display
-- Visual monitor layout with click-to-select interface
-- Backend-specific scaling options (fill, fit, stretch, center, tile, crop)
+- **Multi-Format Wallpapers:**
+  - Static images (JPG, PNG, WebP, etc.) via swaybg
+  - Video wallpapers (MP4, MKV, WebM) via mpvpaper
+  - Animated wallpapers from Wallpaper Engine (Steam Workshop)
 
-### 🎛️ Dynamic Controls
-- **Video Controls**: Mute audio, scaling options
-- **Wallpaper Engine**: Volume control, FPS limiting, audio processing toggles, mouse/parallax disabling, fullscreen pause control, texture clamping modes
-- **Image Controls**: Scaling method selection per backend
+- **Online Sources:**
+  - Browse and download from [Pexels](https://pexels.com), [Unsplash](https://unsplash.com), [Wallhaven](https://wallhaven.cc), and Wallpaper Engine
 
-### 🌐 Download Sources
-- **Pexels**: High-quality stock photography
-- **Unsplash**: Professional photography community
-- **Wallhaven**: Curated wallpaper collection
-- **Wallpaper Engine**: Steam Workshop dynamic wallpapers
-- **Local Library**: Scan and manage local folders
+- **Theme Generation:**
+  - Auto-generates Base16 and Material You color schemes (light & dark) from any wallpaper
+  - Fine-tune colors with a built-in color picker
+  - Export themes for use in other apps
 
-### 🔍 Advanced Organization
-- Tag-based filtering system for Wallpaper Engine content
-- Search across all wallpaper sources
-- Sort by name, date, popularity, or custom criteria
-- Boolean filters for advanced searching
+- **Template Engine:**
+  - Use templates with placeholders like `${theme.base16.dark.base00}`
+  - Supports full JS evaluation (e.g. `${chroma.color(theme.material.dark.primary).darken(0.3)}`)
 
-### 🎨 Theme Generation
-- **Base16 Themes**: Generate dark and light Base16 color schemes from wallpapers
-- **Material Themes**: Extract Material Design color palettes
-- **Color Editing**: Fine-tune generated colors with built-in color picker
-- **Theme Export**: Save themes to files for use in other applications
+- **Multi-Monitor Support:**
+  - Configure wallpapers per display
+  - Visual monitor layout and scaling options
 
-## 🚀 Quick Start
+- **Dynamic Controls:**
+  - Video: mute, scaling, etc.
+  - Wallpaper Engine: volume, FPS, audio, parallax, fullscreen pause, texture clamping
+
+- **Advanced Organization:**
+  - Tag-based filtering, search, and sorting
+  - Boolean filters for complex queries
+
+- **Screenshot Utility:**
+  - Automatically takes a screenshot of video or animated wallpapers
+  - Use static images for login managers, GRUB, etc.
+
+---
+
+## 🛠️ Installation
 
 ### Prerequisites
 
 **System Requirements:**
-- Linux distribution (Wayland)
+
+- Linux distribution
 - Node.js 18+ and npm/yarn
-- One or more wallpaper backends:
-  - [`swaybg`](https://github.com/swaywm/swaybg) - for static images
-  - [`mpvpaper`](https://github.com/GhostNaN/mpvpaper) - for video wallpapers
-  - [`linux-wallpaperengine`](https://github.com/catsout/wallpaper-engine-kde-plugin) - for Wallpaper Engine
-  - [`cage`](https://github.com/cage-kiosk/cage) -  runs wallpapers in an isolated, invisible Wayland session specifically so we can screenshot them without affecting the user’s desktop
-  - [`grim`](https://github.com/emersion/grim) - takes a screenshot of the wallpaper running inside cage
-  - [`wayland-info`](https://gitlab.freedesktop.org/wayland/wayland-utils/) - used to query Wayland compositor outputs protocol
+- [`swaybg`](https://github.com/swaywm/swaybg) - for static images
+- [`mpvpaper`](https://github.com/GhostNaN/mpvpaper) - for video wallpapers
+- [`linux-wallpaperengine`](https://github.com/catsout/wallpaper-engine-kde-plugin) - for Wallpaper Engine
+- [`cage`](https://github.com/cage-kiosk/cage) -  runs wallpapers in an isolated, invisible Wayland session specifically so we can screenshot them without affecting the user’s desktop
+- [`grim`](https://github.com/emersion/grim) - takes a screenshot of the wallpaper running inside cage
+- [`wayland-info`](https://gitlab.freedesktop.org/wayland/wayland-utils/) - used to query Wayland compositor outputs protocol
 
-### Installation
+### Arch Linux (AUR)
 
-```bash
-# Clone the repository
-git clone https://github.com/your-username/walltone.git
-cd walltone
+Walltone is available as [`walltone-git`](https://aur.archlinux.org/packages/walltone-git) on the AUR.
 
-# Install dependencies
-npm install
+```sh
+# With an AUR helper (yay, paru, etc.)
+yay -S walltone-git
 
-# Start the development server
-npm run start
+# Or manually
+git clone https://aur.archlinux.org/walltone-git.git
+cd walltone-git
+makepkg -si
 ```
 
-### First Setup
+---
 
-1. **Add Wallpaper Folders**: Go to Settings → Library and add folders containing your wallpapers
-2. **Configure API Keys**: Add API keys for online sources (Pexels, Unsplash, Wallhaven)
-3. **Set Wallpaper Engine Assets Path** (optional): Add your Wallpaper Engine assets path and API key
+### Nix (Flake)
+
+Walltone provides a Nix flake for easy installation.
+
+```sh
+# Install system-wide (NixOS)
+nix profile install github:Kasper24/walltone
+
+# Or run directly
+nix run github:Kasper24/walltone
+```
+
+#### Using the flake in your own configuration
+
+Add to your `flake.nix` inputs:
+
+```nix
+inputs.walltone.url = "github:Kasper24/walltone";
+```
+
+Then use in your configuration:
+
+```nix
+environment.systemPackages = [ inputs.walltone.packages.${pkgs.system}.default ];
+```
+
+---
+
+## 🐧 Other Distributions
+
+Walltone can be built from source on any Linux system:
+
+```sh
+git clone https://github.com/Kasper24/walltone.git
+cd walltone
+npm install
+npm run make
+```
+
+---
 
 ## 📖 Usage Guide
 
-### Applying Wallpapers
+### 1. Initial Setup
 
-1. **Browse** your library or online sources using the navigation tabs
-2. **Search and Filter** using the search bar and filter options
-3. **Click** on any wallpaper to open the preview dialog
-4. **Configure** monitors and scaling in the Apply dialog
-5. **Adjust** dynamic controls (volume, FPS, etc.) if available for the wallpaper type
-6. **Apply** to selected displays
+To get the most out of Walltone, a one-time setup is recommended:
 
-### Theme Generation
+- **Add Local Folders**: Go to `Settings` → `Library` to add directories where your wallpapers are stored.
+- **Configure Online Sources**: In `Settings`, add your API keys for Pexels, Unsplash, and Wallhaven to unlock their vast libraries.
+- **Enable Wallpaper Engine** (Optional):
+    1. First, install Wallpaper Engine on Steam.
+    2. Get a [Steam Web API Key](https://steamcommunity.com/dev/apikey).
+    3. In `Settings` → `Wallpaper Engine`, enter your API key.
+    4. Set the paths for your Steam workshop folder (`~/.steam/steam/steamapps/workshop/content/431960`) and Wallpaper Engine assets folder (`~/.steam/steam/steamapps/common/wallpaper_engine/assets`).
 
-1. **Open** any wallpaper in the preview dialog
-2. **Switch** to theme generation tabs (Base16 or Material)
-3. **Edit colors** by clicking on individual color swatches
-4. **Save themes** to files for use in other applications
+### 2. Core Workflow: Find, Apply, and Theme
 
-### Managing Your Library
+Your daily workflow is a simple three-step process:
 
-```bash
-# Recommended folder structure
-~/Wallpapers/
-├── Images/           # Static wallpapers
-├── Videos/           # Video wallpapers
-└── WallpaperEngine/  # Steam Workshop content
-```
+1. **Find Your Wallpaper**:
+    - **Browse** your local library or online sources using the main tabs.
+    - **Search and filter** to quickly find what you're looking for.
 
-### Wallpaper Engine Setup
+2. **Preview and Configure**:
+    - **Click** any wallpaper to open the detailed preview dialog.
+    - **Assign** the wallpaper to specific monitors and adjust scaling options.
+    - **Tweak** dynamic controls like volume or FPS for video and Wallpaper Engine content.
 
-1. Install Wallpaper Engine on Steam
-2. Get a [Steam Web API Key](https://steamcommunity.com/dev/apikey)
-3. Add the key in Settings → Wallpaper Engine
-4. Set your Steam workshop folder path
+3. **Apply and Generate a Theme**:
+    - **Apply** the wallpaper to your selected displays.
+    - **Switch** to the `Base16` or `Material You` tabs in the preview dialog to see the auto-generated color scheme.
+    - **Customize** colors with the built-in color picker and export the theme for your other applications.
 
-## ⚙️ Configuration
-
-### Settings Overview
-
-| Category | Options |
-|----------|---------|
-| **Library** | Local folder paths, scan settings |
-| **Wallpaper Engine** | API key, assets folder, workshop path |
-| **Online Sources** | API keys for Pexels, Unsplash, Wallhaven |
-| **Display** | Default scaling, monitor preferences |
-| **Interface** | Theme, startup behavior |
-
-### Advanced Configuration
-
-**Supported Image Formats:**
-- JPEG/JPG, PNG, WebP, BMP, TIFF, GIF (static)
-
-**Supported Video Formats:**
-- MP4, MKV, WebM, AVI, MOV
+---
 
 ## 🏗️ Development
 
 ### Project Structure
 
+```text
+├── src/
+│   ├── electron/                # Main process & backend logic
+│   │   ├── main/                # Electron entry point & main logic
+│   │   │   └── trpc/            # tRPC API routes and procedures
+│   │   └── preload/             # Scripts that run before the web page is loaded
+│   └── renderer/                # React frontend (UI)
+│       ├── assets/              # Static assets (icons, fonts)
+│       ├── components/          # Reusable UI components
+│       ├── hooks/               # Custom React hooks
+│       ├── lib/                 # Frontend utility functions
+│       ├── styles/              # Global styles and Tailwind CSS config
+│       └── tabs/                # Components for each main application tab
+├── forge.config.ts              # Electron Forge build & packaging config
+├── vite.*.config.ts             # Vite configurations for different parts of the app
+├── package.json                 # Project dependencies and scripts
+└── README.md                    # This file
 ```
-src/
-├── electron/          # Main process & backend
-│   ├── main.ts        # Electron entry point
-│   └── trpc/          # API routes and business logic
-├── renderer/          # React frontend
-│   ├── components/    # Reusable UI components
-│   ├── tabs/          # Main application views
-│   └── hooks/         # Custom React hooks
-└── shared/            # Shared types and utilities
-```
-
-### Tech Stack
-
-- **Frontend**: React 19, TypeScript, TailwindCSS, Shadcn/ui
-- **Backend**: Electron, tRPC, Zod validation
-- **State Management**: TanStack Query
-- **Build Tools**: Vite, Electron Forge
 
 ### Development Commands
 
@@ -160,54 +180,19 @@ src/
 npm run start
 
 # Build for production
-npm run make
+npm run package
 
-# Run tests
-npm run test
-npm run test:e2e
+# Formatting checks
+npm run format:check
 
-# Lint and format
-npm run format
+# Linting checks
+npm run lint:check
+
+# Typing checks
+npm run link:types
 ```
 
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Wallpapers not applying:**
-```bash
-# Check if required backends are installed
-which swaybg mpvpaper linux-wallpaperengine
-
-# Check permissions
-ls -la ~/.config/walltone/
-```
-
-**Video wallpapers not working:**
-```bash
-# Install mpvpaper
-sudo pacman -S mpvpaper  # Arch
-sudo apt install mpvpaper  # Ubuntu/Debian
-```
-
-**Wallpaper Engine issues:**
-- Verify Steam API key is valid
-- Check workshop folder permissions
-- Ensure `linux-wallpaperengine` is in PATH
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit issues and pull requests.
-
-### Development Guidelines
-
-- Follow TypeScript best practices
-- Add tests for new features
-- Update documentation for API changes
-- Use conventional commits
-- Test on different Linux distributions
-
-## 🛠️ Built With
+### 🛠️ Built With
 
 - **[Electron](https://electronjs.org)** - Desktop application framework
 - **[React](https://reactjs.org)** - User interface library
@@ -216,15 +201,14 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 - **[TypeScript](https://typescriptlang.org)** - Type safety
 - **[tRPC](https://trpc.io)** - End-to-end typesafe APIs
 
-## 📝 License
+---
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 🤝 Contributing
 
-## 🙏 Acknowledgments
+Contributions and feedback are welcome!
+Open an issue or pull request, or join the discussion.
 
-- [swaybg](https://github.com/swaywm/swaybg) - Wayland wallpaper tool
-- [mpvpaper](https://github.com/GhostNaN/mpvpaper) - Video wallpaper support
-- [linux-wallpaperengine](https://github.com/catsout/wallpaper-engine-kde-plugin) - Wallpaper Engine compatibility
+---
 
 ## 📬 Support
 
@@ -233,6 +217,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-<p align="center">
-  Made with ❤️ for the Linux desktop community
-</p>
+## 📝 License
+
+This project is licensed under the GPL License - see the [LICENSE](LICENSE) file for details.

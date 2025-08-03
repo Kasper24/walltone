@@ -8,6 +8,7 @@ on:
 
 jobs:
   lint-build-test:
+    name: Lint, Build, and Test
     runs-on: ubuntu-latest
 
     steps:
@@ -38,6 +39,7 @@ jobs:
         run: npm run package
 
   nix-build:
+    name: Build Nix Package
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -48,3 +50,18 @@ jobs:
 
       - name: Build Nix package
         run: nix build
+
+  arch-build:
+    name: Build Arch Linux Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Arch Linux package
+        uses: heyhusen/archlinux-package-action@v2
+        with:
+          path: packaging/arch
+          srcinfo: true
+          namcap: true
+          aur: true

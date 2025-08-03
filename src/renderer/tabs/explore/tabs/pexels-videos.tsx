@@ -1,9 +1,7 @@
-import React from "react";
 import { ExternalLink, Key, RefreshCcw, Settings } from "lucide-react";
-import WallpapersGrid from "@renderer/components/wallpapers-grid";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider";
-import { client } from "@renderer/lib/trpc";
-import { pexelsVideosSearch } from "@renderer/api/pexels";
+import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
+import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
+import { client } from "@renderer/lib/trpc.js";
 
 const ExplorePexelsVideosTab = () => {
   const { setCurrentTab } = useCurrentTab();
@@ -13,6 +11,7 @@ const ExplorePexelsVideosTab = () => {
       requiresConfiguration={{
         setting: {
           key: "pexels.apiKey",
+          decrypt: true,
         },
         title: "Pexels API Key Required",
         description: "To browse Pexels wallpapers, you need to configure your API key first.",
@@ -48,8 +47,9 @@ const ExplorePexelsVideosTab = () => {
         ],
       }}
       queryKeys={[`explore-pexels-videos`]}
-      queryFn={async ({ pageParam, query, sorting, appliedFilters, configValue }) =>
-        await pexelsVideosSearch({
+      queryFn={async ({ pageParam, query, appliedFilters, configValue }) =>
+        await client.api.pexels.search.query({
+          type: "videos",
           apiKey: configValue,
           page: pageParam,
           query,

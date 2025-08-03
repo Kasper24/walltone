@@ -1,15 +1,14 @@
-import React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs";
-import ExploreUnsplashTab from "@renderer/tabs/explore/tabs/unsplash";
-import ExplorePexelsImagesTab from "@renderer/tabs/explore/tabs/pexels-images";
-import ExplorePexelsVideosTab from "@renderer/tabs/explore/tabs/pexels-videos";
-import ExploreWallhavenTab from "@renderer/tabs/explore/tabs/wallhaven";
-import ExploreWallpaperEngineTab from "@renderer/tabs/explore/tabs/wallpaper-engine";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs.js";
+import ExploreUnsplashTab from "@renderer/tabs/explore/tabs/unsplash.js";
+import ExplorePexelsImagesTab from "@renderer/tabs/explore/tabs/pexels-images.js";
+import ExplorePexelsVideosTab from "@renderer/tabs/explore/tabs/pexels-videos.js";
+import ExploreWallhavenTab from "@renderer/tabs/explore/tabs/wallhaven.js";
+import ExploreWallpaperEngineTab from "@renderer/tabs/explore/tabs/wallpaper-engine.js";
 
 const ExploreTab = () => {
   return (
     <Tabs defaultValue="unsplash" className="w-full">
-      <TabsList className="bg-background">
+      <TabsList className="bg-background space-x-2">
         <TabsTrigger
           value="unsplash"
           className="bg-background hover:bg-background text-xl font-black"

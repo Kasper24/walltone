@@ -1,13 +1,12 @@
-import React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs";
-import LibraryImageTab from "@renderer/tabs/library/tabs/image";
-import LibraryVideoTab from "@renderer/tabs/library/tabs/video";
-import LibraryWallpaperEngineTab from "@renderer/tabs/library/tabs/wallpaper-engine";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs.js";
+import LibraryImageTab from "@renderer/tabs/library/tabs/image.js";
+import LibraryVideoTab from "@renderer/tabs/library/tabs/video.js";
+import LibraryWallpaperEngineTab from "@renderer/tabs/library/tabs/wallpaper-engine.js";
 
 const LibraryTab = () => {
   return (
     <Tabs defaultValue="images" className="w-full">
-      <TabsList className="bg-background">
+      <TabsList className="bg-background space-x-2">
         <TabsTrigger
           value="images"
           className="bg-background hover:bg-background text-xl font-black"

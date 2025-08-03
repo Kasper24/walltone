@@ -2,6 +2,7 @@ import React from "react";
 import { Palette, Save, Wallpaper, Copy, X, PaletteIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Slider } from "@uiw/react-color";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
 import {
   DialogContent,
   DialogDescription,
@@ -9,17 +10,26 @@ import {
   DialogTitle,
   DialogTrigger,
   Dialog,
-} from "@renderer/components/ui/dialog";
-import { Button } from "@renderer/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card";
-import { Badge } from "@renderer/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs";
-import { ScrollArea } from "@renderer/components/ui/scroll-area";
-import LoadingButton from "@renderer/components/ui/loading-button";
-import { BaseWallpaper } from "@electron/main/trpc/routes/theme";
-import { OnWallpaperApply, OnWallpaperDownload } from "../wallpapers-grid/types";
-import { useThemeGeneration, useColorEditor, useThemeEditor, useWallpaperActions } from "./hooks";
-import ApplyWallpaperDialog, { DynamicControlDefinition } from "./apply-dialog";
+} from "@renderer/components/ui/dialog.js";
+import { Button } from "@renderer/components/ui/button.js";
+import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card.js";
+import { Badge } from "@renderer/components/ui/badge.js";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs.js";
+import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
+import LoadingButton from "@renderer/components/ui/loading-button.js";
+import { Theme, ThemeTypes, ThemeVariants } from "@renderer/lib/theme/index.js";
+import {
+  type OnWallpaperApply,
+  type OnWallpaperDownload,
+} from "@renderer/components/wallpapers-grid/types.js";
+import {
+  useThemeGeneration,
+  useColorEditor,
+  useThemeEditor,
+  useWallpaperActions,
+} from "./hooks.js";
+import ApplyWallpaperDialog from "./apply-dialog.js";
+import { type DynamicControlDefinition } from "./types.js";
 
 const WallpaperDialog = ({
   wallpaper,
@@ -70,7 +80,11 @@ const WallpaperDialog = ({
         </div>
 
         <div className="flex flex-1 flex-col overflow-hidden">
-          <Tabs value={activeTheme} onValueChange={setActiveTheme} className="flex flex-1 flex-col">
+          <Tabs
+            value={activeTheme}
+            onValueChange={(value) => setActiveTheme(value as ThemeTypes)}
+            className="flex flex-1 flex-col"
+          >
             <TabsList className="mb-3 grid w-full flex-shrink-0 grid-cols-2">
               <TabsTrigger value="base16">Base 16</TabsTrigger>
               <TabsTrigger value="material">Material</TabsTrigger>
@@ -248,9 +262,9 @@ const ThemePanel = ({
   selectedColor,
   isLoading = false,
 }: {
-  theme?: any;
-  activeVariant: string;
-  setActiveVariant: (variant: string) => void;
+  theme?: Theme[ThemeTypes];
+  activeVariant: ThemeVariants;
+  setActiveVariant: (variant: ThemeVariants) => void;
   onColorSelect: (colorValue: string, colorKey: string) => void;
   selectedColor?: string;
   isLoading?: boolean;
@@ -321,8 +335,8 @@ const ThemeColors = ({
   onColorSelect,
   selectedColor,
 }: {
-  theme?: any;
-  activeVariant: string;
+  theme?: Theme[ThemeTypes];
+  activeVariant: ThemeVariants;
   onColorSelect: (colorValue: string, colorKey: string) => void;
   selectedColor?: string;
 }) => {
@@ -371,7 +385,7 @@ const WallpaperActions = ({
   controlDefinitions,
 }: {
   wallpaper: BaseWallpaper;
-  theme?: unknown;
+  theme?: Theme;
   onApply?: OnWallpaperApply;
   onDownload?: OnWallpaperDownload;
   scalingOptions?: { key: string; text: string }[];

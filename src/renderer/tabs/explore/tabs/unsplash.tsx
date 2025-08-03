@@ -1,9 +1,7 @@
-import React from "react";
 import { ExternalLink, Key, RefreshCcw, Settings } from "lucide-react";
-import WallpapersGrid from "@renderer/components/wallpapers-grid";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider";
-import { client } from "@renderer/lib/trpc";
-import { unsplashSearch } from "@renderer/api/unsplash";
+import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
+import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
+import { client } from "@renderer/lib/trpc.js";
 
 const ExploreUnsplashTab = () => {
   const { setCurrentTab } = useCurrentTab();
@@ -13,6 +11,7 @@ const ExploreUnsplashTab = () => {
       requiresConfiguration={{
         setting: {
           key: "unsplash.apiKey",
+          decrypt: true,
         },
         title: "Unsplash API Key Required",
         description: "To browse Unsplash wallpapers, you need to configure your API key first.",
@@ -49,11 +48,11 @@ const ExploreUnsplashTab = () => {
       }}
       queryKeys={[`explore-unsplash`]}
       queryFn={async ({ pageParam, query, sorting, appliedFilters, configValue }) =>
-        await unsplashSearch({
+        await client.api.unsplash.search.query({
           apiKey: configValue,
           page: pageParam,
           query,
-          orderBy: sorting as any,
+          orderBy: sorting,
           ...appliedFilters?.strings,
         })
       }

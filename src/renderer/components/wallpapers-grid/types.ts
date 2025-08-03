@@ -1,11 +1,12 @@
 import { LucideIcon } from "lucide-react";
-import { RouterInputs } from "@electron/main/trpc/routes/base";
-import { BaseWallpaper, WallpaperData } from "@electron/main/trpc/routes/theme";
+import { RouterInputs } from "@electron/main/trpc/routes/base.js";
+import { BaseWallpaper, WallpaperData } from "@electron/main/trpc/routes/theme.js";
+import { DynamicControlValues } from "@renderer/components/wallpaper-dialog/types.js";
 
 export type OnWallpaperApply = (
   wallpaper: BaseWallpaper,
   monitorConfigs: { name: string; scalingMethod: string }[],
-  controlValues?: { [key: string]: any }
+  controlValues?: DynamicControlValues
 ) => Promise<void>;
 
 export type OnWallpaperDownload = (wallpaper: BaseWallpaper) => Promise<void>;
@@ -47,20 +48,6 @@ export interface ConfigurationRequirement {
   }[];
 }
 
-export interface DynamicControlDefinition {
-  type: "range" | "boolean" | "select";
-  key: string;
-  title: string;
-  description?: string;
-  defaultValue?: any;
-  options?: {
-    min?: number;
-    max?: number;
-    step?: number;
-    values?: { key: string; text: string }[];
-  };
-}
-
 export interface WallpapersGridProps {
   queryKeys: string[];
   queryFn: (params: {
@@ -68,7 +55,7 @@ export interface WallpapersGridProps {
     query: string;
     sorting: string;
     appliedFilters?: AppliedFilters;
-    configValue?: any;
+    configValue?: unknown;
   }) => Promise<WallpaperData>;
   queryEnabled?: boolean;
   sortingOptions?: {
@@ -83,5 +70,5 @@ export interface WallpapersGridProps {
   onWallpaperApply?: OnWallpaperApply;
   onWallpaperDownload?: OnWallpaperDownload;
   requiresConfiguration?: ConfigurationRequirement;
-  controlDefinitions?: DynamicControlDefinition[];
+  controlDefinitions?: DynamicControlValue[];
 }

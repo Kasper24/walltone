@@ -1,13 +1,21 @@
 import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import generateThemes from "@renderer/lib/theme";
-import { client } from "@renderer/lib/trpc";
-import { BaseWallpaper } from "@electron/main/trpc/routes/theme";
-import { OnWallpaperApply, OnWallpaperDownload } from "../wallpapers-grid/types";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
+import {
+  type OnWallpaperApply,
+  type OnWallpaperDownload,
+} from "@renderer/components/wallpapers-grid/types.js";
+import generateThemes, {
+  ThemeTypes,
+  ThemeVariants,
+  type Theme,
+} from "@renderer/lib/theme/index.js";
+import { client } from "@renderer/lib/trpc.js";
+import { DynamicControlValues } from "./types.js";
 
 export const useThemeGeneration = () => {
-  const [theme, setTheme] = React.useState<any>();
+  const [theme, setTheme] = React.useState<Theme | undefined>();
 
   const generateThemeFromImage = React.useCallback(
     async (element: HTMLImageElement | HTMLVideoElement) => {
@@ -51,9 +59,9 @@ export const useColorEditor = () => {
   };
 };
 
-export const useThemeEditor = (theme: any, selectedColorKey: string | undefined) => {
-  const [activeTheme, setActiveTheme] = React.useState<string>("base16");
-  const [activeVariant, setActiveVariant] = React.useState<string>("dark");
+export const useThemeEditor = (theme: Theme | undefined, selectedColorKey: string | undefined) => {
+  const [activeTheme, setActiveTheme] = React.useState<ThemeTypes>("base16");
+  const [activeVariant, setActiveVariant] = React.useState<ThemeVariants>("dark");
 
   const updateThemeColor = React.useCallback(
     (newColor: string) => {
@@ -94,7 +102,7 @@ export const useMonitorSelection = (scalingOptions?: { key: string; text: string
   const monitorsQuery = useQuery({
     queryKey: ["all-monitors"],
     queryFn: async () => {
-      return await client.monitor.getAll.query();
+      return await client.monitor.search.query();
     },
     staleTime: 1000 * 60 * 1,
   });
@@ -187,7 +195,7 @@ export const useWallpaperActions = (wallpaper: BaseWallpaper) => {
   });
 
   const setThemeMutation = useMutation({
-    mutationFn: async (theme: any) => {
+    mutationFn: async (theme: GeneratedTheme) => {
       await client.theme.setTheme.mutate({
         wallpaper: wallpaper,
         theme: theme,
@@ -208,8 +216,8 @@ export const useWallpaperActions = (wallpaper: BaseWallpaper) => {
       controlValues,
     }: {
       onApply: OnWallpaperApply;
-      monitorConfigs: Array<{ name: string; scalingMethod: string }>;
-      controlValues?: { [key: string]: any };
+      monitorConfigs: { name: string; scalingMethod: string }[];
+      controlValues?: DynamicControlValues;
     }) => {
       return await onApply(wallpaper, monitorConfigs, controlValues);
     },

@@ -1,31 +1,26 @@
 import React from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useTheme } from "@renderer/providers/theme-provider";
 import {
   FileText,
   ExternalLink,
   EyeIcon,
   EyeOffIcon,
   Folder,
-  Image,
   Loader2,
-  Monitor,
   Plus,
-  Settings,
   Trash2,
   Moon,
   Sun,
-  Palette,
-  LucideIcon,
   Terminal,
 } from "lucide-react";
-import { Button } from "@renderer/components/ui/button";
-import { Input } from "@renderer/components/ui/input";
-import { Card, CardContent } from "@renderer/components/ui/card";
-import { Switch } from "@renderer/components/ui/switch";
 import { toast } from "sonner";
-import { client } from "@renderer/lib/trpc";
-import { RouterInputs } from "@electron/main/trpc/routes/base";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTheme } from "@renderer/providers/theme/hook.js";
+import { Button } from "@renderer/components/ui/button.js";
+import { Input } from "@renderer/components/ui/input.js";
+import { Card, CardContent } from "@renderer/components/ui/card.js";
+import { Switch } from "@renderer/components/ui/switch.js";
+import { client } from "@renderer/lib/trpc.js";
+import { RouterInputs } from "@electron/main/trpc/routes/base.js";
 
 type SettingKey = RouterInputs["settings"]["get"]["key"];
 
@@ -93,6 +88,7 @@ const InputSetting = ({
         key: settingKey,
         path: nestedSettingPath,
         value: value,
+        encrypt,
       });
     },
     onSuccess: () => {
@@ -113,6 +109,17 @@ const InputSetting = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKey });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const onOpenInExplorerMutation = useMutation({
+    mutationFn: async () => {
+      await client.file.openInExplorer.mutate({
+        path: localValue,
+      });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -210,15 +217,7 @@ const InputSetting = ({
         </Button>
       )}
       {filePicker && showOpenInExplorerButton && (
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() =>
-            client.file.openInExplorer.mutate({
-              path: localValue,
-            })
-          }
-        >
+        <Button size="sm" variant="ghost" onClick={() => onOpenInExplorerMutation.mutate()}>
           <ExternalLink className="h-4 w-4" />
         </Button>
       )}
@@ -489,7 +488,7 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
         {templates?.length > 0 && (
           <div className="grid gap-3">
             {templates?.map((_, idx: number) => (
-              <div className="space-y-3">
+              <div className="space-y-3" key={idx}>
                 {/* Source file row */}
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />

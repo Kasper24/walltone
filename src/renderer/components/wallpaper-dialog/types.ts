@@ -3,7 +3,7 @@ export interface DynamicControlDefinition {
   key: string;
   title: string;
   description?: string;
-  defaultValue?: any;
+  defaultValue?: string | number | boolean;
   options?: {
     min?: number;
     max?: number;
@@ -12,8 +12,10 @@ export interface DynamicControlDefinition {
   };
 }
 
-export interface ApplyDialogValues {
-  [key: string]: any;
+export interface DynamicControlValues {
+  [key: string]: string | number | boolean | undefined;
 }
 
-export type SetApplyDialogValues = React.Dispatch<React.SetStateAction<ApplyDialogValues>>;
+export type SetDynamicControlValues = React.Dispatch<
+  React.SetStateAction<string | number | boolean>
+>;

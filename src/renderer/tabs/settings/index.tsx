@@ -1,15 +1,15 @@
 import React from "react";
-import { Image, Monitor, Settings, Palette, LucideIcon } from "lucide-react";
-import { ScrollArea } from "@renderer/components/ui/scroll-area";
-import { Card, CardHeader, CardContent, CardTitle } from "@renderer/components/ui/card";
-import { RouterInputs } from "@electron/main/trpc/routes/base";
+import { Monitor, Settings, Palette, LucideIcon } from "lucide-react";
+import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
+import { Card, CardHeader, CardContent, CardTitle } from "@renderer/components/ui/card.js";
+import { RouterInputs } from "@electron/main/trpc/routes/base.js";
 import {
   InputSetting,
   BooleanSetting,
   FolderListSetting,
   ThemeSetting,
   TemplateListSetting,
-} from "./components";
+} from "./components.js";
 
 type SettingKey = RouterInputs["settings"]["get"]["key"];
 
@@ -68,82 +68,61 @@ const SETTINGS_CONFIG: SettingsSection[] = [
     ],
   },
   {
-    title: "Unsplash",
-    description: "Configure Unsplash integration",
+    title: "API",
+    description: "Configure API integrations",
     icon: Monitor,
     settings: [
       {
         key: "unsplash.apiKey",
         title: "Unsplash API Key",
-        description: "Required for downloading wallpapers from Unsplash",
+        description: "Required for retrieving wallpapers from Unsplash",
         type: "encrypted",
         placeholder: "Enter your Unsplash API key",
       },
-    ],
-  },
-  {
-    title: "Pexels",
-    description: "Configure Pexels integration",
-    icon: Monitor,
-    settings: [
       {
         key: "pexels.apiKey",
         title: "Pexels API Key",
-        description: "Required for downloading wallpapers from Unsplash",
+        description: "Required for retrieving wallpapers from Pexels",
         type: "encrypted",
-        placeholder: "Enter your Unsplash API key",
+        placeholder: "Enter your Pexels API key",
+      },
+      {
+        key: "wallpaperEngine.apiKey",
+        title: "Steam API Key",
+        description: "Required for retrieving wallpapers from Wallpaper Engine",
+        type: "encrypted",
+        placeholder: "Enter your Steam API key",
       },
     ],
   },
   {
-    title: "Wallpaper Engine",
-    description: "Configure Wallpaper Engine integration",
+    title: "Wallpapers Assets",
+    description: "",
     icon: Monitor,
     settings: [
       {
-        key: "wallpaperEngine.apiKey",
-        title: "Steam API Key",
-        description: "Required for downloading wallpapers from Steam Workshop",
-        type: "encrypted",
-        placeholder: "Enter your Steam API key",
+        key: "image.wallpaperFolders",
+        title: "Image Wallpaper Folders",
+        description: "Local folders containing wallpaper images",
+        type: "folder-list",
+      },
+      {
+        key: "video.wallpaperFolders",
+        title: "Video Wallpaper Folders",
+        description: "Local folders containing wallpaper videos",
+        type: "folder-list",
       },
       {
         key: "wallpaperEngine.assetsFolder",
-        title: "Assets Path",
+        title: "Wallpaper Engine Assets Path",
         description: "Location of Wallpaper Engine assets",
         type: "folder",
         placeholder: "Enter Wallpaper Engine assets folder",
       },
       {
         key: "wallpaperEngine.wallpaperFolders",
-        title: "Wallpaper Folders",
+        title: "Wallpaper Engine Wallpaper Folders",
         description: "Additional folders to scan for wallpapers",
-        type: "folder-list",
-      },
-    ],
-  },
-  {
-    title: "Images",
-    description: "Configure local image sources",
-    icon: Image,
-    settings: [
-      {
-        key: "image.wallpaperFolders",
-        title: "Wallpaper Folders",
-        description: "Local folders containing wallpaper images",
-        type: "folder-list",
-      },
-    ],
-  },
-  {
-    title: "Videos",
-    description: "Configure local video sources",
-    icon: Image,
-    settings: [
-      {
-        key: "video.wallpaperFolders",
-        title: "Wallpaper Folders",
-        description: "Local folders containing wallpaper videos",
         type: "folder-list",
       },
     ],

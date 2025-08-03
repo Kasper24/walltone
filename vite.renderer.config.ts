@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import type { ConfigEnv, UserConfig } from "vite";
 import { defineConfig } from "vite";
-import { pluginExposeRenderer } from "./vite.base.config";
+import { pluginExposeRenderer } from "./vite.base.config.js";
 
 // https://vitejs.dev/config
 export default defineConfig((env) => {

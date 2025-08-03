@@ -1,86 +1,21 @@
-import path from "path";
-import { fileURLToPath } from "url";
-import {
-  app,
-  protocol,
-  net,
-  Tray,
-  Menu,
-  nativeImage,
-  BrowserWindow,
-  globalShortcut,
-} from "electron";
+import { app, BrowserWindow, globalShortcut } from "electron";
 import { createIPCHandler } from "electron-trpc-experimental/main";
-import { appRouter, caller } from "@electron/main/trpc/routes/base";
-import { execute, killProcess } from "./lib";
+import { appRouter } from "@electron/main/trpc/routes/base.js";
+import { registerProtocols } from "./setup/protocols.js";
+import { createTray } from "./setup/tray.js";
+import { createWindow } from "./setup/window.js";
 
 let isQuitting = false;
-let mainWindow: BrowserWindow;
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-protocol.registerSchemesAsPrivileged([
-  {
-    scheme: "video",
-    privileges: {
-      bypassCSP: true,
-      standard: true,
-      stream: true,
-    },
-  },
-]);
-
-async function restoreWallpaperOnStart() {
-  const restoreOnStart = await caller.settings.get({
-    key: "theme.restoreOnStart",
-  });
-
-  if (restoreOnStart) {
-    const lastWallpaperCmd = (await caller.settings.get({
-      key: "theme.lastWallpaperCmd",
-    })) as { command: string; args: string[] };
-    if (lastWallpaperCmd) {
-      killProcess("swaybg");
-      killProcess("mpvpaper");
-      killProcess("linux-wallpaperengine");
-      execute({
-        command: lastWallpaperCmd.command,
-        args: lastWallpaperCmd.args,
-      });
-    }
-  }
-}
-
-const createWindow = () => {
-  protocol.handle("image", async (request) => {
-    const filePath = request.url.replace(`image://`, "file://");
-    return await net.fetch(filePath);
-  });
-
-  protocol.registerFileProtocol("video", (req, callback) => {
-    const pathToMedia = decodeURI(req.url.replace("video://", ""));
-    callback(pathToMedia);
-  });
-
-  mainWindow = new BrowserWindow({
-    icon: "/assets/icon.png",
-    width: 800,
-    height: 600,
-    webPreferences: {
-      // devTools: process.env.NODE_ENV === "development",
-      devTools: true,
-      contextIsolation: true,
-      nodeIntegration: true,
-      nodeIntegrationInSubFrames: false,
-      webSecurity: false,
-      preload: path.join(__dirname, "preload.js"),
-    },
-    titleBarStyle: "hidden",
-  });
+const initializeApp = () => {
+  const mainWindow = createWindow();
   createTray(mainWindow);
 
   createIPCHandler({ router: appRouter, windows: [mainWindow] });
-  restoreWallpaperOnStart();
+
+  mainWindow.once("ready-to-show", () => {
+    mainWindow.show();
+  });
 
   mainWindow.on("close", function (event) {
     if (!isQuitting) {
@@ -96,45 +31,42 @@ const createWindow = () => {
   globalShortcut.register("CommandOrControl+V", () => {
     mainWindow.webContents.paste();
   });
+};
 
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+  process.exit(0);
+}
+
+app.on("second-instance", () => {
+  // Someone tried to run a second instance; we should focus our window.
+  const mainWindow = BrowserWindow.getAllWindows()[0];
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
   }
-};
+});
 
-const createTray = (mainWindow: BrowserWindow) => {
-  const icon = nativeImage.createFromPath(path.join(__dirname, "..", "..", "assets", "icon.png"));
-  const tray = new Tray(icon);
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: "Show App",
-      click: function () {
-        mainWindow.show();
-      },
-    },
-    {
-      label: "Quit",
-      click: function () {
-        app.exit();
-      },
-    },
-  ]);
-  tray.setTitle("Walltone");
-  tray.setToolTip("Walltone");
-  tray.setContextMenu(contextMenu);
-};
+app.on("activate", () => {
+  const mainWindow = BrowserWindow.getAllWindows()[0];
+  mainWindow?.show();
+});
 
-export const getMainWindow = () => {
-  if (!mainWindow) {
-    throw new Error("Main window is not created yet.");
-  }
-  return mainWindow;
-};
+app.on("web-contents-created", (_, contents) => {
+  contents.on("will-navigate", (event) => {
+    event.preventDefault();
+  });
 
-app.whenReady().then(createWindow);
+  contents.setWindowOpenHandler(() => {
+    return { action: "deny" };
+  });
+});
 
 app.on("before-quit", function () {
   isQuitting = true;
 });
+
+registerProtocols();
+
+app.whenReady().then(initializeApp);

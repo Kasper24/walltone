@@ -1,17 +1,7 @@
-import React from "react";
 import { Folder, RefreshCcw, Settings } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { DialogClose } from "@renderer/components/ui/dialog";
-import WallpapersGrid from "@renderer/components/wallpapers-grid";
-import LoadingButton from "@renderer/components/ui/loading-button";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider";
-import useWallpaperEngineApiKey from "@renderer/hooks/useWallpaperEngineApiKey";
-import { client } from "@renderer/lib/trpc";
-import {
-  wallpaperEngineGetTags,
-  wallpaperEngineWorkshopItemUnsubscribe,
-} from "@renderer/api/wallpaper-engine";
+import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
+import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
+import { client } from "@renderer/lib/trpc.js";
 
 const LibraryWallpaperEngineTab = () => {
   const { setCurrentTab } = useCurrentTab();
@@ -53,11 +43,11 @@ const LibraryWallpaperEngineTab = () => {
       queryFn={async ({ pageParam, query, sorting, appliedFilters }) => {
         const tags = Object.entries(appliedFilters?.arrays || {}).flatMap(([_, values]) => values);
 
-        return await client.theme.getWallpapers.query({
+        return await client.theme.searchWallpapers.query({
           type: "wallpaper-engine",
           page: pageParam,
           limit: 50,
-          sorting: sorting as any,
+          sorting: sorting,
           query,
           tags,
           matchAll: appliedFilters?.booleans.matchall,
@@ -74,7 +64,150 @@ const LibraryWallpaperEngineTab = () => {
         { key: "fit", text: "Fit" },
         { key: "fill", text: "Fill" },
       ]}
-      filterDefinitions={wallpaperEngineGetTags() as any}
+      filterDefinitions={[
+        {
+          type: "boolean",
+          title: "matchAll",
+        },
+        {
+          type: "multiple",
+          title: "Types",
+          values: ["Scene", "Video", "Web", "Application"],
+        },
+        {
+          type: "multiple",
+          title: "Age",
+          values: ["Everyone", "Questionable", "Mature"],
+        },
+        {
+          type: "multiple",
+          title: "Genres",
+          values: [
+            "Abstract",
+            "Animal",
+            "Anime",
+            "Cartoon",
+            "CGI",
+            "Cyberpunk",
+            "Fantasy",
+            "Game",
+            "Girls",
+            "Guys",
+            "Landscape",
+            "Medieval",
+            "Memes",
+            "MMD",
+            "Music",
+            "Nature",
+            "Pixel art",
+            "Relaxing",
+            "Retro",
+            "Sci-Fi",
+            "Sports",
+            "Technology",
+            "Television",
+            "Vehicle",
+            "Unspecified",
+          ],
+        },
+        {
+          type: "multiple",
+          title: "Resolutions",
+          values: [
+            "Standard Definition",
+            "1280 x 720",
+            "1366 x 768",
+            "1920 x 1080",
+            "2560 x 1440",
+            "3840 x 2160",
+            "Ultrawide Standard Definition",
+            "Ultrawide 2560 x 1080",
+            "Ultrawide 3440 x 1440",
+            "Dual Standard Definition",
+            "Dual 3840 x 1080",
+            "Dual 5120 x 1440",
+            "Dual 3840 x 2160",
+            "Triple Standard Definition",
+            "Triple 4096 x 768",
+            "Triple 5760 x 1080",
+            "Triple 7680 x 1440",
+            "Triple 11520 x 2160",
+            "Portrait Standard Definition",
+            "Portrait 720 x 1280",
+            "Portrait 1080 x 1920",
+            "Portrait 1440 x 2560",
+            "Portrait 2160 x 3840",
+            "Other resolution",
+            "Dynamic resolution",
+          ],
+        },
+        {
+          type: "multiple",
+          title: "Categories",
+          values: ["Wallpaper", "Preset", "Asset"],
+        },
+        {
+          type: "multiple",
+          title: "Asset Types",
+          values: [
+            "Particle",
+            "Image",
+            "Sound",
+            "Model",
+            "Text",
+            "Sprite",
+            "Fullscreen",
+            "Composite",
+            "Script",
+            "Effect",
+          ],
+        },
+        {
+          type: "multiple",
+          title: "Asset Genres",
+          values: [
+            "Audio Visualizer",
+            "Background",
+            "Character",
+            "Clock",
+            "Fire",
+            "Interactive",
+            "Magic",
+            "Post Processing",
+            "Smoke",
+            "Space",
+          ],
+        },
+        {
+          type: "multiple",
+          title: "Script Types",
+          values: [
+            "Boolean",
+            "Number",
+            "Vec2",
+            "Vec3",
+            "Vec4",
+            "String",
+            "No Animation",
+            "Oversized",
+          ],
+        },
+        {
+          type: "multiple",
+          title: "Miscellaneous",
+          values: [
+            "Approved",
+            "Audio responsive",
+            "Customizable",
+            "Puppet Warp",
+            "HDR",
+            "Video Texture",
+            "Asset Pack",
+            "Media Integration",
+            "3D",
+          ],
+        },
+      ]}
       controlDefinitions={[
         {
           type: "boolean",
@@ -160,33 +293,6 @@ const LibraryWallpaperEngineTab = () => {
         });
       }}
     />
-  );
-};
-
-const UnsubscribeButton = ({ id }: { id: string }) => {
-  const { data: apiKey } = useWallpaperEngineApiKey();
-  const unsubscribe = useMutation({
-    mutationFn: () => {
-      return wallpaperEngineWorkshopItemUnsubscribe(id, apiKey as string);
-    },
-    onSuccess: () => {
-      toast.success("Successfully unsubscribed");
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  return (
-    <DialogClose asChild>
-      <LoadingButton
-        isLoading={unsubscribe.isPending}
-        variant="destructive"
-        onClick={() => unsubscribe.mutate()}
-      >
-        Unsubscribe
-      </LoadingButton>
-    </DialogClose>
   );
 };
 

@@ -1,8 +1,7 @@
-import React from "react";
 import { Folder, RefreshCcw, Settings } from "lucide-react";
-import WallpapersGrid from "@renderer/components/wallpapers-grid";
-import { useCurrentTab } from "@renderer/providers/current-tab-provider";
-import { client } from "@renderer/lib/trpc";
+import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
+import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
+import { client } from "@renderer/lib/trpc.js";
 
 const LibraryImageTab = () => {
   const { setCurrentTab } = useCurrentTab();
@@ -41,7 +40,7 @@ const LibraryImageTab = () => {
       }}
       queryKeys={["library-image"]}
       queryFn={async ({ pageParam, query }) =>
-        await client.theme.getWallpapers.query({
+        await client.theme.searchWallpapers.query({
           type: "image",
           page: pageParam,
           limit: 20,

@@ -1,13 +1,53 @@
-import { dialog, safeStorage } from "electron";
-import settings from "electron-settings";
+import { dialog } from "electron";
 import Store from "electron-store";
+import keytar from "keytar";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { publicProcedure, router } from "..";
+import { publicProcedure, router } from "@electron/main/trpc/index.js";
 
 const store = new Store({ name: "settings" });
 
-const keySchema = z.enum([
+const filePicker = async (type: "file" | "folder"): Promise<string | null> => {
+  const result = await dialog.showOpenDialog({
+    properties: [type === "folder" ? "openDirectory" : "openFile"],
+  });
+
+  if (result.canceled) return null;
+  return result.filePaths[0];
+};
+
+const getNestedValue = (obj: unknown, path: (string | number)[]): unknown => {
+  return path.reduce((acc: unknown, key: string | number) => {
+    if (typeof acc === "object" && acc !== null) {
+      return (acc as Record<string | number, unknown>)[key];
+    }
+    return undefined;
+  }, obj);
+};
+
+const setValue = async (key: string, value: unknown, encrypt: boolean) => {
+  try {
+    if (encrypt) {
+      if (typeof value !== "string")
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Value for encrypted setting '${key}' must be a string.`,
+        });
+
+      await keytar.setPassword("walltone", key, value as string);
+    } else {
+      store.set(key, value);
+    }
+  } catch (error) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: `Failed to set setting ${key}`,
+      cause: error,
+    });
+  }
+};
+
+export const settingKeySchema = z.enum([
   "unsplash.apiKey",
   "pexels.apiKey",
   "wallpaperEngine.apiKey",
@@ -21,176 +61,130 @@ const keySchema = z.enum([
   "theme.lastWallpaperCmd",
 ]);
 
-const filePicker = async (type: "file" | "folder"): Promise<string | null> => {
-  const result = await dialog.showOpenDialog({
-    properties: [type === "folder" ? "openDirectory" : "openFile"],
-  });
+const getSchema = z.object({
+  key: settingKeySchema,
+  path: z.array(z.union([z.string(), z.number()])).optional(),
+  decrypt: z.boolean().default(false),
+});
 
-  if (result.canceled) return null;
-  return result.filePaths[0];
-};
+const setSchema = z.object({
+  key: settingKeySchema,
+  path: z.array(z.union([z.string(), z.number()])).optional(),
+  value: z.any().optional(),
+  filePicker: z.enum(["file", "folder"]).optional(),
+  encrypt: z.boolean().default(false),
+});
 
-const getNestedValue = (obj: any, path: (string | number)[]): any => {
-  return path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
-};
-
-const setValue = async (key: string, value: any, encrypt: boolean) => {
-  try {
-    if (encrypt && safeStorage.isEncryptionAvailable()) {
-      const encryptedValue = safeStorage.encryptString(value);
-      store.set(key, encryptedValue.toString("base64"));
-    } else {
-      store.set(key, value);
-    }
-  } catch (error) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: `Failed to set setting ${key}`,
-      cause: error,
-    });
-  }
-};
+const deleteSchema = z.object({
+  key: settingKeySchema,
+  path: z.array(z.union([z.string(), z.number()])).optional(),
+  index: z.number().int().nonnegative(),
+});
 
 export const settingsRouter = router({
-  get: publicProcedure
-    .input(
-      z.object({
-        key: keySchema,
-        path: z.array(z.union([z.string(), z.number()])).optional(),
-        decrypt: z.boolean().default(false),
-      })
-    )
-    .query(async ({ input }) => {
-      try {
-        let settingValue = store.get(input.key);
-        if (input.path) settingValue = getNestedValue(settingValue, input.path);
+  get: publicProcedure.input(getSchema).query(async ({ input }) => {
+    try {
+      if (input.decrypt) return await keytar.getPassword("walltone", input.key);
 
-        if (!settingValue) return null;
+      let settingValue = store.get(input.key);
+      if (input.path) settingValue = getNestedValue(settingValue, input.path);
 
-        if (input.decrypt && safeStorage.isEncryptionAvailable())
-          return safeStorage.decryptString(Buffer.from(settingValue as string, "base64"));
-        return settingValue;
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to get value ${input.key}`,
-          cause: error,
-        });
-      }
-    }),
+      if (!settingValue) return null;
 
-  set: publicProcedure
-    .input(
-      z.object({
-        key: keySchema,
-        path: z.array(z.union([z.string(), z.number()])).optional(),
-        value: z.any().optional(),
-        filePicker: z.enum(["file", "folder"]).optional(),
-        encrypt: z.boolean().default(false),
-      })
-    )
-    .mutation(async ({ input }) => {
-      try {
-        let settingValue = store.get(input.key);
-        const newValue =
-          input.value ?? (input.filePicker ? await filePicker(input.filePicker) : null);
+      return settingValue;
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Failed to get value ${input.key}`,
+        cause: error,
+      });
+    }
+  }),
 
-        if (input.path) {
-          const path = [...input.path];
-          const lastKey = path.pop() as string | number;
-          const nestedValue = getNestedValue(settingValue, path);
+  set: publicProcedure.input(setSchema).mutation(async ({ input }) => {
+    try {
+      const settingValue = store.get(input.key);
+      const newValue =
+        input.value ?? (input.filePicker ? await filePicker(input.filePicker) : null);
 
-          if (Array.isArray(nestedValue) && typeof lastKey === "number") {
-            nestedValue[lastKey] = newValue;
-          } else if (
-            typeof nestedValue === "object" &&
-            nestedValue !== null &&
-            typeof lastKey === "string"
-          ) {
-            (nestedValue as Record<string, unknown>)[lastKey] = newValue;
-          } else {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Invalid path for setting ${input.key}`,
-            });
-          }
+      if (input.path) {
+        const path = [...input.path];
+        const lastKey = path.pop() as string | number;
+        const nestedValue = getNestedValue(settingValue, path);
 
-          await setValue(input.key, settingValue, input.encrypt);
+        if (Array.isArray(nestedValue) && typeof lastKey === "number") {
+          nestedValue[lastKey] = newValue;
+        } else if (
+          typeof nestedValue === "object" &&
+          nestedValue !== null &&
+          typeof lastKey === "string"
+        ) {
+          (nestedValue as Record<string, unknown>)[lastKey] = newValue;
         } else {
-          await setValue(input.key, newValue, input.encrypt);
-        }
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to set value to ${input.key}`,
-          cause: error,
-        });
-      }
-    }),
-
-  add: publicProcedure
-    .input(
-      z.object({
-        key: keySchema,
-        path: z.array(z.union([z.string(), z.number()])).optional(),
-        value: z.any().optional(),
-        filePicker: z.enum(["file", "folder"]).optional(),
-        encrypt: z.boolean().default(false),
-      })
-    )
-    .mutation(async ({ input }) => {
-      try {
-        let settingValue = store.get(input.key) || [];
-        if (input.path) settingValue = getNestedValue(settingValue, input.path);
-
-        if (!Array.isArray(settingValue)) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: `Setting ${input.key} is not an array`,
+            message: `Invalid path for setting ${input.key}`,
           });
         }
 
-        const newValue =
-          input.value ?? (input.filePicker ? await filePicker(input.filePicker) : null);
-        settingValue.push(newValue);
         await setValue(input.key, settingValue, input.encrypt);
-      } catch (error) {
+      } else {
+        await setValue(input.key, newValue, input.encrypt);
+      }
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Failed to set value to ${input.key}`,
+        cause: error,
+      });
+    }
+  }),
+
+  add: publicProcedure.input(z.object(setSchema)).mutation(async ({ input }) => {
+    try {
+      let settingValue = store.get(input.key) || [];
+      if (input.path) settingValue = getNestedValue(settingValue, input.path);
+
+      if (!Array.isArray(settingValue)) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to add value to ${input.key}`,
-          cause: error,
+          code: "BAD_REQUEST",
+          message: `Setting ${input.key} is not an array`,
         });
       }
-    }),
 
-  delete: publicProcedure
-    .input(
-      z.object({
-        key: keySchema,
-        path: z.array(z.union([z.string(), z.number()])).optional(),
-        index: z.number().int().nonnegative(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      try {
-        let settingValue = store.get(input.key);
-        if (input.path) settingValue = getNestedValue(settingValue, input.path);
+      const newValue =
+        input.value ?? (input.filePicker ? await filePicker(input.filePicker) : null);
+      settingValue.push(newValue);
+      await setValue(input.key, settingValue, input.encrypt);
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Failed to add value to ${input.key}`,
+        cause: error,
+      });
+    }
+  }),
 
-        if (!Array.isArray(settingValue)) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Setting ${input.key} is not an array`,
-          });
-        }
+  delete: publicProcedure.input(deleteSchema).mutation(async ({ input }) => {
+    try {
+      let settingValue = store.get(input.key);
+      if (input.path) settingValue = getNestedValue(settingValue, input.path);
 
-        settingValue.splice(input.index, 1);
-        await setValue(input.key, settingValue, false);
-      } catch (error) {
+      if (!Array.isArray(settingValue)) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to delete value ${input.key}`,
-          cause: error,
+          code: "BAD_REQUEST",
+          message: `Setting ${input.key} is not an array`,
         });
       }
-    }),
+
+      settingValue.splice(input.index, 1);
+      await setValue(input.key, settingValue, false);
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Failed to delete value ${input.key}`,
+        cause: error,
+      });
+    }
+  }),
 });

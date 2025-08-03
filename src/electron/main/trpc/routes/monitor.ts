@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
-import { publicProcedure, router } from "..";
-import { execute } from "@electron/main/lib";
+import { publicProcedure, router } from "@electron/main/trpc/index.js";
+import { execute } from "@electron/main/lib/index.js";
 
 export type Monitor = {
   name: string;
@@ -15,7 +15,7 @@ export type Monitor = {
 };
 
 export const monitorRouter = router({
-  getAll: publicProcedure.query(async () => {
+  search: publicProcedure.query(async () => {
     try {
       const { stdout } = await execute({
         command: "wayland-info",

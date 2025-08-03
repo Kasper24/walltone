@@ -1,23 +1,27 @@
-import React from "react";
 import { RefreshCw } from "lucide-react";
-import { Input } from "@renderer/components/ui/input";
+import { Input } from "@renderer/components/ui/input.js";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@renderer/components/ui/select";
-import { Button } from "@renderer/components/ui/button";
+} from "@renderer/components/ui/select.js";
+import { Button } from "@renderer/components/ui/button.js";
 import {
   useWallpaperSearch,
   useWallpaperFilters,
   useConfiguration,
   useWallpaperData,
-} from "./hooks";
-import { FilterSheet } from "./filter-components";
-import { ConfigurationScreen, WallpaperGrid } from "./content-components";
-import { WallpapersGridProps, AppliedFilters, SetAppliedFilters, FilterDefinition } from "./types";
+} from "./hooks.js";
+import { FilterSheet } from "./filter-components.js";
+import { ConfigurationScreen, WallpaperGrid } from "./content-components.js";
+import {
+  WallpapersGridProps,
+  AppliedFilters,
+  SetAppliedFilters,
+  FilterDefinition,
+} from "./types.js";
 
 const WallpaperGridControls = ({
   inputValue,

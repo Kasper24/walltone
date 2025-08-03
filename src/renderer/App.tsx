@@ -1,12 +1,12 @@
-import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "@renderer/providers/theme-provider";
-import { Toaster } from "@renderer/components/ui/sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs";
-import ExploreTab from "@renderer/tabs/explore";
-import SettingsTab from "@renderer/tabs/settings";
-import LibraryTab from "@renderer/tabs/library";
-import { CurrentTabProvider, useCurrentTab } from "./providers/current-tab-provider";
+import { ThemeProvider } from "@renderer/providers/theme/provider.js";
+import { Toaster } from "@renderer/components/ui/sonner.js";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs.js";
+import ExploreTab from "@renderer/tabs/explore/index.js";
+import SettingsTab from "@renderer/tabs/settings/index.js";
+import LibraryTab from "@renderer/tabs/library/index.js";
+import { CurrentTabProvider } from "./providers/current-tab/provider.js";
+import { useCurrentTab } from "./providers/current-tab/hook.js";
 
 const queryClient = new QueryClient();
 
@@ -35,9 +35,9 @@ const TabsArea = () => {
       defaultValue="explore"
       className="w-full"
       value={currentTab}
-      onValueChange={setCurrentTab}
+      onValueChange={(value) => setCurrentTab(value as "explore" | "wallpapers" | "settings")}
     >
-      <TabsList className="bg-background">
+      <TabsList className="bg-background space-x-2">
         <TabsTrigger
           value="explore"
           className="bg-background hover:bg-background text-3xl font-black"

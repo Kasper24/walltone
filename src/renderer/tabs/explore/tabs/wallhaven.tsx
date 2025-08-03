@@ -1,14 +1,13 @@
-import React from "react";
-import WallpapersGrid from "@renderer/components/wallpapers-grid";
-import { wallhavenSearch, WallhavenSorting } from "@renderer/api/wallhaven";
-import { client } from "@renderer/lib/trpc";
+import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
+import { client } from "@renderer/lib/trpc.js";
+import { WallhavenSorting } from "@electron/main/trpc/routes/api/wallhaven.js";
 
 const ExploreWallhavenTab = () => {
   return (
     <WallpapersGrid
       queryKeys={[`explore-wallhaven`]}
       queryFn={async ({ pageParam, query, sorting, appliedFilters }) =>
-        await wallhavenSearch({
+        await client.api.wallhaven.search.query({
           page: pageParam,
           query,
           sorting: sorting as WallhavenSorting,
