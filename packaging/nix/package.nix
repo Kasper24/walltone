@@ -3,6 +3,13 @@
   fetchurl,
   buildNpmPackage,
   libsecret,
+  pixman,
+  cairo,
+  pango,
+  libjpeg,
+  libpng,
+  librsvg,
+  giflib,
   pkg-config,
   makeWrapper,
   electron-bin,
@@ -59,6 +66,15 @@ buildNpmPackage rec {
 
   buildInputs = [
     libsecret
+
+    # Node-Canvas dependencies
+    pixman
+    cairo
+    pango
+    libjpeg
+    libpng
+    librsvg
+    giflib
   ];
 
   nativeBuildInputs = [
