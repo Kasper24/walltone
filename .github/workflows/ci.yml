@@ -27,7 +27,7 @@ jobs:
         run: npm run lint:check
 
       - name: Type check
-        run: npm run lint:types
+        run: npm run ts:check
 
       - name: Format check (Prettier)
         run: npm run format:check

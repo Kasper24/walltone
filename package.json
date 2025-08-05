@@ -15,9 +15,9 @@
   "scripts": {
     "lint-staged": "lint-staged",
     "prepare": "husky",
-    "lint:types": "tsc --noEmit",
     "lint:check": "eslint --max-warnings=0",
     "lint:fix": "eslint --fix",
+    "ts:check": "tsc --noEmit",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,css,yaml}\"",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,css,yaml}\"",
     "start": "electron-forge start",
