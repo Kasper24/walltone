@@ -370,6 +370,7 @@ interface SliderSettingProps {
 
 const SliderSetting = ({ settingKey, min = 0, max = 1, step = 0.01 }: SliderSettingProps) => {
   const queryClient = useQueryClient();
+  const [localValue, setLocalValue] = React.useState(0);
 
   const {
     data: value,
@@ -379,6 +380,10 @@ const SliderSetting = ({ settingKey, min = 0, max = 1, step = 0.01 }: SliderSett
     queryKey: [settingKey],
     queryFn: async () => await client.settings.get.query({ key: settingKey }),
   });
+
+  React.useEffect(() => {
+    setLocalValue(value ?? 0);
+  }, [value]);
 
   const setValueMutation = useMutation({
     mutationFn: async (newValue: number) => {
@@ -394,6 +399,9 @@ const SliderSetting = ({ settingKey, min = 0, max = 1, step = 0.01 }: SliderSett
       toast.error(error.message);
     },
   });
+  const setValueMutationDebounced = useDebouncedCallback((value) => {
+    setValueMutation.mutate(value);
+  }, 500);
 
   if (isPending) {
     return (
@@ -410,14 +418,17 @@ const SliderSetting = ({ settingKey, min = 0, max = 1, step = 0.01 }: SliderSett
   return (
     <div className="flex items-center gap-4">
       <Slider
-        value={[value ?? 0]}
-        onValueChange={(vals) => setValueMutation.mutate(vals[0])}
+        value={[localValue]}
+        onValueChange={(vals) => {
+          setLocalValue(vals[0]);
+          setValueMutationDebounced(vals[0]);
+        }}
         min={min}
         max={max}
         step={step}
         disabled={setValueMutation.isPending}
       />
-      <span className="text-muted-foreground w-12 text-sm">{value?.toFixed(2)}</span>
+      <span className="text-muted-foreground w-12 text-sm">{localValue?.toFixed(2)}</span>
     </div>
   );
 };
