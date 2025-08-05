@@ -3,6 +3,7 @@ import { promises as fs } from "fs";
 import { Worker } from "worker_threads";
 import z from "zod";
 import { TRPCError } from "@trpc/server";
+import { color } from "chroma.ts";
 import { execute, santize, renderString } from "@electron/main/lib/index.js";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { caller } from "@electron/main/trpc/routes/base.js";
@@ -84,6 +85,30 @@ export type ThemeType = "base16" | "material";
 export type ThemePolarity = "dark" | "light";
 export type Theme = z.infer<typeof themeSchema>;
 
+function themeToChroma<T>(theme: T): T {
+  if (typeof theme === "string" && /^#[0-9a-fA-F]{6}$/.test(theme)) {
+    const c = color(theme);
+    c.toString = () => c.hex();
+    return c as unknown as T;
+  }
+
+  if (Array.isArray(theme)) {
+    return theme.map((item) => themeToChroma(item)) as unknown as T;
+  }
+
+  if (typeof theme === "object" && theme !== null) {
+    const result = {} as { [K in keyof T]: T[K] };
+    for (const key in theme) {
+      if (Object.prototype.hasOwnProperty.call(theme, key)) {
+        result[key as keyof T] = themeToChroma(theme[key as keyof T]);
+      }
+    }
+    return result as T;
+  }
+
+  return theme;
+}
+
 export const themeRouter = router({
   generate: publicProcedure
     .input(generateSchema)
@@ -141,19 +166,21 @@ export const themeRouter = router({
           const content = await fs.readFile(tpl.src, "utf-8");
           const rendered = await renderString(content, {
             wallpaper: {
+              ...input.wallpaper,
               id: santize(input.wallpaper.id),
               name: santize(input.wallpaper.name),
             },
-            theme: input.theme,
+            theme: themeToChroma(input.theme),
           });
 
           try {
             const destination = await renderString(tpl.dest, {
               wallpaper: {
+                ...input.wallpaper,
                 id: santize(input.wallpaper.id),
                 name: santize(input.wallpaper.name),
               },
-              theme: input.theme,
+              theme: themeToChroma(input.theme),
             });
             await fs.mkdir(path.dirname(destination), { recursive: true });
             await fs.writeFile(destination, rendered, "utf-8");
@@ -161,8 +188,12 @@ export const themeRouter = router({
             if (tpl.postHook) {
               try {
                 const postHook = await renderString(tpl.postHook, {
-                  wallpaper: input.wallpaper,
-                  theme: input.theme,
+                  wallpaper: {
+                    ...input.wallpaper,
+                    id: santize(input.wallpaper.id),
+                    name: santize(input.wallpaper.name),
+                  },
+                  theme: themeToChroma(input.theme),
                 });
                 const [cmd, ...args] = postHook.split(" ");
                 await execute({ command: cmd, args, shell: true });
