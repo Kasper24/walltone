@@ -428,7 +428,19 @@ const SliderSetting = ({ settingKey, min = 0, max = 1, step = 0.01 }: SliderSett
         step={step}
         disabled={setValueMutation.isPending}
       />
-      <span className="text-muted-foreground w-12 text-sm">{localValue?.toFixed(2)}</span>
+      <Input
+        className="w-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        type="number"
+        value={localValue}
+        min={min}
+        max={max}
+        step={step}
+        onChange={(e) => {
+          const val = Number(e.target.value);
+          setLocalValue(val);
+          setValueMutationDebounced(val);
+        }}
+      />
     </div>
   );
 };
