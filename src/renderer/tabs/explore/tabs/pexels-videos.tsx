@@ -50,7 +50,7 @@ const ExplorePexelsVideosTab = () => {
       queryFn={async ({ pageParam, query, appliedFilters, configValue }) =>
         await client.api.pexels.search.query({
           type: "videos",
-          apiKey: configValue,
+          apiKey: configValue!,
           page: pageParam,
           query,
           ...appliedFilters?.strings,

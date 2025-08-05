@@ -5,7 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { execute, killProcess, santize, renderString } from "@electron/main/lib/index.js";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { caller } from "./base.js";
-import { type SettingKey } from "./settings.js";
+import { type SettingsSchema, type SettingKey } from "./settings.js";
 
 const SUPPORTED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"];
 const SUPPORTED_VIDEO_EXTENSIONS = [".mp4", ".mkv", ".webm", ".avi", ".mov"];
@@ -14,12 +14,14 @@ const CAGE_INIT_TIME = 5;
 const CAGE_SCREENSHOT_PATH = "/tmp/walltone-wallpaper-screenshot.png";
 
 export interface BaseWallpaper {
+  type: "image" | "video" | "wallpaper-engine" | "api";
   id: string;
   name: string;
   previewPath: string;
 }
 
-export interface DownloadableWallpaper extends BaseWallpaper {
+export interface ApiWallpaper extends BaseWallpaper {
+  type: "api";
   downloadUrl: string;
 }
 
@@ -567,9 +569,9 @@ const copyWallpaperToDestinations = async (
   wallpaperName: string,
   wallpaperPath: string
 ) => {
-  const wallpaperDestinations = await caller.settings.get({
-    key: "themeOutput.copyWallpaperTo",
-  });
+  const wallpaperDestinations = (await caller.settings.get({
+    key: "themeOutput.wallpaperCopyDestinations",
+  })) as SettingsSchema["themeOutput"]["wallpaperCopyDestinations"];
 
   await Promise.all(
     wallpaperDestinations.map(async (destination) => {

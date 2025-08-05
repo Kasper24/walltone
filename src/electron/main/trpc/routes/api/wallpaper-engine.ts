@@ -72,6 +72,7 @@ interface WallpaperEngineWorkshopSearchResponse {
 
 const transformWallpapers = (wallpapers: WallpaperEngineWorkshopItem[]): BaseWallpaper[] => {
   return wallpapers.map((wallpaper) => ({
+    type: "api",
     id: wallpaper.publishedfileid,
     name: wallpaper.title,
     previewPath: wallpaper.preview_url,

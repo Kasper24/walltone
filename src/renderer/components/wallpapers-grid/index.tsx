@@ -1,5 +1,6 @@
 import { RefreshCw } from "lucide-react";
 import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
+import { type SettingKey } from "@electron/main/trpc/routes/settings.js";
 import { Input } from "@renderer/components/ui/input.js";
 import {
   Select,
@@ -24,7 +25,7 @@ import {
   FilterDefinition,
 } from "./types.js";
 
-const WallpaperGridControls = ({
+const WallpaperGridControls = <TSorting extends string>({
   inputValue,
   onInputChange,
   onSortingChange,
@@ -36,8 +37,8 @@ const WallpaperGridControls = ({
 }: {
   inputValue: string;
   onInputChange: (value: string) => void;
-  onSortingChange: (value: string) => void;
-  sortingOptions?: { key: string; text: string }[];
+  onSortingChange: (value: TSorting) => void;
+  sortingOptions?: { key: TSorting; text: string }[];
   filterDefinitions?: FilterDefinition[];
   appliedFilters: AppliedFilters;
   setAppliedFilters: SetAppliedFilters;
@@ -79,7 +80,11 @@ const WallpaperGridControls = ({
   );
 };
 
-const WallpapersGrid = <T extends BaseWallpaper>({
+const WallpapersGrid = <
+  T extends BaseWallpaper,
+  TSorting extends string,
+  TConfigKey extends SettingKey,
+>({
   queryKeys,
   queryFn,
   queryEnabled = true,
@@ -90,7 +95,7 @@ const WallpapersGrid = <T extends BaseWallpaper>({
   onWallpaperDownload,
   requiresConfiguration,
   controlDefinitions,
-}: WallpapersGridProps<T>) => {
+}: WallpapersGridProps<T, TSorting, TConfigKey>) => {
   const { inputValue, setInputValue, debouncedInputValue, handleSearch, clearSearch } =
     useWallpaperSearch();
 
@@ -130,9 +135,7 @@ const WallpapersGrid = <T extends BaseWallpaper>({
     return (
       <ConfigurationScreen
         requirement={requiresConfiguration}
-        configValue={configValue}
         isPending={isConfigPending}
-        isError={isConfigError}
         refetch={refetchConfig}
       />
     );

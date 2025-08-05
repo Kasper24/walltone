@@ -17,7 +17,7 @@ type MaterialPixel = number;
 type QuantizePixel = [number, number, number];
 type QuantizeLib = "material" | "quantize";
 
-const getImageBytesFromSrc = async (imageSrc: string) => {
+const getBytesFromImageSrc = async (imageSrc: string) => {
   const image = await loadImage(imageSrc);
   const canvas = createCanvas(image.width, image.height);
   const context = canvas.getContext("2d");
@@ -83,8 +83,11 @@ export const generateThemes = async (
   quantizeLib: QuantizeLib,
   base16Settings: Base16Settings
 ) => {
-  const bytes = await getImageBytesFromSrc(imageSrc);
-  const pixels = getPixelsFromBytes(bytes, 1, quantizeLib);
+  const bytes = await getBytesFromImageSrc(imageSrc);
+  const pixels =
+    quantizeLib === "material"
+      ? (getPixelsFromBytes(bytes, 1, "material") as MaterialPixel[])
+      : (getPixelsFromBytes(bytes, 1, "quantize") as QuantizePixel[]);
   const primaryColor = getPrimaryColorFromPixels(pixels, quantizeLib);
   const palette = getPaletteFromPixels(pixels, 128, quantizeLib);
 

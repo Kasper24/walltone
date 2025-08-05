@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { type DownloadableWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
+import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
 
 interface UnsplashPhoto {
   id: string;
@@ -152,8 +152,9 @@ interface UnsplashSearchResult {
   results: UnsplashPhoto[];
 }
 
-const transformPhotos = (photos: UnsplashPhoto[]): DownloadableWallpaper[] => {
+const transformWallpapers = (photos: UnsplashPhoto[]): ApiWallpaper[] => {
   return photos.map((photo) => ({
+    type: "api",
     id: photo.id,
     name: photo.alt_description || photo.description || `Photo by ${photo.user.name}`,
     previewPath: photo.urls.regular,
@@ -214,7 +215,7 @@ export const unsplashRouter = router({
       const totalPages = Array.isArray(data) ? Infinity : data.total_pages;
 
       return {
-        data: photos ? transformPhotos(photos) : [],
+        data: photos ? transformWallpapers(photos) : [],
         currentPage: input.page,
         prevPage: input.page > 1 ? input.page - 1 : null,
         nextPage: input.page < totalPages ? input.page + 1 : null,

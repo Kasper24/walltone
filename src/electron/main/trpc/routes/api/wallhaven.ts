@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { type DownloadableWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
+import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
 
 export type WallhavenSorting = "date_added" | "random" | "views" | "favorites" | "toplist";
 export type WallhavenCategory = "general" | "anime" | "people";
@@ -58,8 +58,9 @@ const convertPurity = (purity: WallhavenPurity[]): string => {
   return `${sfw ? "1" : "0"}${sketchy ? "1" : "0"}${nsfw ? "1" : "0"}`;
 };
 
-const transformWallpaper = (wallpapers: WallhavenWallpaper[]): DownloadableWallpaper[] => {
+const transformWallpapers = (wallpapers: WallhavenWallpaper[]): ApiWallpaper[] => {
   return wallpapers.map((wallpaper) => ({
+    type: "api",
     id: wallpaper.id,
     name: wallpaper.id,
     previewPath: wallpaper.thumbs.large,
@@ -112,7 +113,7 @@ export const wallhavenRouter = router({
       const totalPages = Math.ceil(data.meta.total / data.meta.per_page);
 
       return {
-        data: transformWallpaper(data.data),
+        data: transformWallpapers(data.data),
         currentPage: data.meta.current_page,
         prevPage: data.meta.current_page > 1 ? data.meta.current_page - 1 : null,
         nextPage: data.meta.current_page < totalPages ? data.meta.current_page + 1 : null,

@@ -1,5 +1,4 @@
 import * as chroma from "chroma.ts";
-
 import { type SettingsSchema } from "@electron/main/trpc/routes/settings.js";
 
 type Base16Settings = SettingsSchema["themeGeneration"]["base16"];

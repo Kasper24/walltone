@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { v4 as uuidv4 } from "uuid";
-import { SettingKey } from "@electron/main/trpc/routes/settings.js";
+import { type SettingKey, type SettingsSchema } from "@electron/main/trpc/routes/settings.js";
 import { useTheme } from "@renderer/providers/theme/hook.js";
 import { Button } from "@renderer/components/ui/button.js";
 import { Input } from "@renderer/components/ui/input.js";
@@ -32,7 +32,7 @@ import {
 import { client } from "@renderer/lib/trpc.js";
 import { useDebouncedCallback } from "use-debounce";
 
-const Error = ({ settingKey }: { settingKey: SettingKey }) => {
+const Error = ({ settingKey }: { settingKey: SettingKey | string }) => {
   const queryClient = useQueryClient();
 
   return (
@@ -69,7 +69,7 @@ const ThemeSetting = () => {
 };
 
 interface InputSettingProps {
-  settingKey: SettingKey;
+  settingKey: SettingKey | string;
   encrypt?: boolean;
   filePicker?: "file" | "folder";
   placeholder?: string;
@@ -285,7 +285,7 @@ const BooleanSetting = ({ settingKey }: { settingKey: SettingKey }) => {
 };
 
 interface DropdownSettingProps {
-  settingKey: SettingKey;
+  settingKey: SettingKey | string;
   options: { value: string; label: string }[];
   placeholder?: string;
 }
@@ -362,7 +362,7 @@ const DropdownSetting = ({
 };
 
 interface SliderSettingProps {
-  settingKey: SettingKey;
+  settingKey: SettingKey | string;
   min?: number;
   max?: number;
   step?: number;
@@ -452,7 +452,7 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
     data: paths,
     isPending,
     isError,
-  } = useQuery({
+  } = useQuery<string[]>({
     queryKey: [settingKey],
     queryFn: async () => {
       return await client.settings.get.query({
@@ -462,7 +462,7 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
   });
 
   const pathsWithId = React.useMemo(
-    () => paths?.map((path) => ({ ...path, id: uuidv4() })),
+    () => paths?.map((path) => ({ id: uuidv4(), value: path })),
     [paths]
   );
 
@@ -510,7 +510,7 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
   return (
     <Card>
       <CardContent className="space-y-3">
-        {pathsWithId?.map((path: { id: string; value: string }, index: number) => (
+        {pathsWithId?.map((path, index: number) => (
           <div className="flex gap-2" key={path.id}>
             <InputSetting
               settingKey={`${settingKey}[${index}]`}
@@ -564,7 +564,7 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
     data: templates,
     isPending,
     isError,
-  } = useQuery({
+  } = useQuery<SettingsSchema["themeOutput"]["templates"]>({
     queryKey: [settingKey],
     queryFn: async () => {
       return await client.settings.get.query({ key: settingKey });
@@ -572,7 +572,7 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
   });
 
   const templatesWithId = React.useMemo(
-    () => templates?.map((tpl) => ({ ...tpl, id: uuidv4() })),
+    () => templates?.map((tpl) => ({ id: uuidv4(), ...tpl })),
     [templates]
   );
 
@@ -618,7 +618,7 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
   return (
     <Card className="space-y-3">
       <CardContent className="space-y-3">
-        {templatesWithId?.length > 0 && (
+        {templatesWithId && templatesWithId?.length > 0 && (
           <div className="grid gap-3">
             {templatesWithId?.map((tpl, index: number) => (
               <div className="space-y-3" key={tpl.id}>

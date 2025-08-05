@@ -50,7 +50,7 @@ const ExplorePexelsImagesTab = () => {
       queryFn={async ({ pageParam, query, appliedFilters, configValue }) =>
         await client.api.pexels.search.query({
           type: "photos",
-          apiKey: configValue,
+          apiKey: configValue!,
           page: pageParam,
           query,
           ...appliedFilters?.strings,

@@ -1,10 +1,11 @@
 import { LucideIcon } from "lucide-react";
-import { BaseWallpaper, WallpaperData } from "@electron/main/trpc/routes/wallpaper.js";
+import { type DotNotationValueOf } from "node_modules/conf/dist/source/types.js";
+import { type BaseWallpaper, type WallpaperData } from "@electron/main/trpc/routes/wallpaper.js";
+import { type SettingKey, type SettingsSchema } from "@electron/main/trpc/routes/settings.js";
 import {
   DynamicControlDefinition,
   DynamicControlValues,
 } from "@renderer/components/wallpaper-dialog/types.js";
-import { SettingKey } from "@electron/main/trpc/routes/settings.js";
 
 export type OnWallpaperApply<T extends BaseWallpaper> = (
   wallpaper: T,
@@ -32,9 +33,9 @@ export interface AppliedFilters {
 
 export type SetAppliedFilters = React.Dispatch<React.SetStateAction<AppliedFilters>>;
 
-export interface ConfigurationRequirement {
+export interface ConfigurationRequirement<TConfigKey extends SettingKey> {
   setting: {
-    key: SettingKey;
+    key: TConfigKey;
     decrypt?: boolean;
   };
   title: string;
@@ -51,18 +52,22 @@ export interface ConfigurationRequirement {
   }[];
 }
 
-export interface WallpapersGridProps<T extends BaseWallpaper> {
+export interface WallpapersGridProps<
+  T extends BaseWallpaper,
+  TSorting extends string,
+  TConfigKey extends SettingKey,
+> {
   queryKeys: string[];
   queryFn: (params: {
     pageParam: number;
     query: string;
-    sorting: string;
+    sorting: TSorting;
     appliedFilters?: AppliedFilters;
-    configValue?: unknown;
+    configValue?: DotNotationValueOf<SettingsSchema, TConfigKey>;
   }) => Promise<WallpaperData<T>>;
   queryEnabled?: boolean;
   sortingOptions?: {
-    key: string;
+    key: TSorting;
     text: string;
   }[];
   filterDefinitions?: FilterDefinition[];
@@ -72,6 +77,6 @@ export interface WallpapersGridProps<T extends BaseWallpaper> {
   }[];
   onWallpaperApply?: OnWallpaperApply<T>;
   onWallpaperDownload?: OnWallpaperDownload<T>;
-  requiresConfiguration?: ConfigurationRequirement;
+  requiresConfiguration?: ConfigurationRequirement<TConfigKey>;
   controlDefinitions?: DynamicControlDefinition[];
 }

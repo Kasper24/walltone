@@ -54,10 +54,8 @@ export interface SettingsSchema {
       args: string[];
     };
   };
-}
 
-export interface SecretsSchema {
-  apiKeys: {
+  apiKeys?: {
     pexels: string;
     unsplash: string;
     wallpaperEngine: string;
@@ -157,7 +155,7 @@ type PathContinuation<T> = T extends (infer E)[]
     ? `.${Paths<T>}`
     : "";
 
-export type SettingKey = Paths<SettingsSchema> | Paths<SecretsSchema>;
+export type SettingKey = Paths<SettingsSchema>;
 
 const store = new Conf<SettingsSchema>({
   projectName: "walltone",

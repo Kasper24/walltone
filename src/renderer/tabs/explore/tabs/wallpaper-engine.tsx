@@ -51,7 +51,7 @@ const ExploreWallpaperEngineTab = () => {
         const tags = Object.entries(appliedFilters?.arrays || {}).flatMap(([_, values]) => values);
 
         return await client.api.wallpaperEngine.search.query({
-          apiKey: configValue as string,
+          apiKey: configValue!,
           page: pageParam,
           query,
           sorting,

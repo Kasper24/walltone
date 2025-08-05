@@ -3,8 +3,10 @@ import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useDebouncedCallback } from "use-debounce";
 import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
+import { type SettingKey, type SettingsSchema } from "@electron/main/trpc/routes/settings.js";
 import { client } from "@renderer/lib/trpc.js";
 import { AppliedFilters, ConfigurationRequirement, WallpapersGridProps } from "./types.js";
+import { DotNotationValueOf } from "node_modules/conf/dist/source/types.js";
 
 export const useWallpaperSearch = () => {
   const [inputValue, setInputValue] = React.useState("");
@@ -28,8 +30,12 @@ export const useWallpaperSearch = () => {
   };
 };
 
-export const useWallpaperFilters = (sortingOptions?: { key: string; text: string }[]) => {
-  const [sorting, setSorting] = React.useState(sortingOptions?.[0]?.key || "");
+export const useWallpaperFilters = <TSorting extends string>(
+  sortingOptions?: { key: TSorting; text: string }[]
+) => {
+  const [sorting, setSorting] = React.useState<TSorting>(
+    sortingOptions?.[0]?.key ?? ("" as TSorting)
+  );
   const [appliedFilters, setAppliedFilters] = React.useState<AppliedFilters>({
     arrays: {},
     strings: {},
@@ -44,7 +50,9 @@ export const useWallpaperFilters = (sortingOptions?: { key: string; text: string
   };
 };
 
-export const useConfiguration = (requiresConfiguration?: ConfigurationRequirement) => {
+export const useConfiguration = <TConfigKey extends SettingKey>(
+  requiresConfiguration?: ConfigurationRequirement<TConfigKey>
+) => {
   const {
     data: configValue,
     isPending: isConfigPending,
@@ -72,7 +80,11 @@ export const useConfiguration = (requiresConfiguration?: ConfigurationRequiremen
   };
 };
 
-export const useWallpaperData = <T extends BaseWallpaper>({
+export const useWallpaperData = <
+  TWallpaper extends BaseWallpaper,
+  TSorting extends string,
+  TConfigKey extends SettingKey,
+>({
   queryKeys,
   queryFn,
   queryEnabled,
@@ -83,12 +95,12 @@ export const useWallpaperData = <T extends BaseWallpaper>({
   isConfigurationValid,
 }: {
   queryKeys: string[];
-  queryFn: WallpapersGridProps<T>["queryFn"];
+  queryFn: WallpapersGridProps<TWallpaper, TSorting, TConfigKey>["queryFn"];
   queryEnabled: boolean;
   debouncedInputValue: string;
-  sorting: string;
+  sorting: TSorting;
   appliedFilters: AppliedFilters;
-  configValue: unknown;
+  configValue: DotNotationValueOf<SettingsSchema, TConfigKey>;
   isConfigurationValid: boolean;
 }) => {
   const { ref, inView } = useInView();

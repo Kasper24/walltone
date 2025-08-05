@@ -11,6 +11,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
+import { type SettingKey } from "@electron/main/trpc/routes/settings.js";
 import { Dialog, DialogTrigger } from "@renderer/components/ui/dialog.js";
 import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
 import {
@@ -29,17 +30,13 @@ import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import { cn } from "@renderer/lib/cn.js";
 import { ConfigurationRequirement, OnWallpaperApply, OnWallpaperDownload } from "./types.js";
 
-export const ConfigurationScreen = ({
+export const ConfigurationScreen = <TConfigKey extends SettingKey>({
   requirement,
-  configValue,
   isPending,
-  isError,
   refetch,
 }: {
-  requirement: ConfigurationRequirement;
-  configValue?: unknown;
+  requirement: ConfigurationRequirement<TConfigKey>;
   isPending: boolean;
-  isError: boolean;
   refetch: () => void;
 }) => {
   if (isPending) {
