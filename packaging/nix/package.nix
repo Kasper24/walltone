@@ -46,7 +46,7 @@ buildNpmPackage rec {
 
   src = ../../.;
 
-  npmDepsHash = "sha256-VlDOLuyr1qE2zTlXYdzBI1VsAzZMVDfODWyUTaNJCKA";
+  npmDepsHash = "sha256-FFjuVmBpg8pfB1Wrz8GPWEY3bqQVHH3b5luBxIp5dvw=";
 
   dontNpmBuild = true;
   makeCacheWritable = true;
