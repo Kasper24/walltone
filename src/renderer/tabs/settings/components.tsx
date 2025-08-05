@@ -32,6 +32,107 @@ import {
 import { client } from "@renderer/lib/trpc.js";
 import { useDebouncedCallback } from "use-debounce";
 
+function useSettings<T>({
+  settingKey,
+  encrypted = false,
+}: {
+  settingKey: SettingKey | string;
+  encrypted?: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const [localValue, setLocalValue] = React.useState<T | undefined>();
+
+  const {
+    data: value,
+    isPending,
+    isError,
+  } = useQuery({
+    queryKey: [settingKey],
+    queryFn: async () => await client.settings.get.query({ key: settingKey, decrypt: encrypted }),
+  });
+
+  React.useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const setValueMutation = useMutation({
+    mutationFn: async (newValue: T) => {
+      await client.settings.set.mutate({
+        key: settingKey,
+        value: newValue,
+        encrypt: encrypted,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [settingKey] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const setValueMutationDebounced = useDebouncedCallback((value) => {
+    setValueMutation.mutate(value);
+  }, 200);
+
+  const addTemplateMutation = useMutation({
+    mutationFn: async (value: unknown) => {
+      await client.settings.add.mutate({
+        key: settingKey,
+        value,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [settingKey] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (index: number) => {
+      await client.settings.delete.mutate({ key: settingKey, index });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [settingKey] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const onBrowseFolderMutation = useMutation({
+    mutationFn: async (type: "file" | "folder") => {
+      await client.settings.set.mutate({
+        key: settingKey,
+        filePicker: type,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [settingKey] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const onChange = (value: T) => {
+    setLocalValue(value);
+    setValueMutationDebounced(value);
+  };
+
+  return {
+    isPending,
+    isError,
+    value: localValue,
+    onChange,
+    onAdd: addTemplateMutation.mutate,
+    onDelete: deleteTemplateMutation.mutate,
+    onBrowseFolder: onBrowseFolderMutation.mutate,
+  };
+}
+
 const Error = ({ settingKey }: { settingKey: SettingKey | string }) => {
   const queryClient = useQueryClient();
 
@@ -70,7 +171,7 @@ const ThemeSetting = () => {
 
 interface InputSettingProps {
   settingKey: SettingKey | string;
-  encrypt?: boolean;
+  encrypted?: boolean;
   filePicker?: "file" | "folder";
   placeholder?: string;
   showOpenInExplorerButton?: boolean;
@@ -79,70 +180,20 @@ interface InputSettingProps {
 const InputSetting = ({
   settingKey,
   placeholder = "",
-  encrypt = false,
+  encrypted = false,
   filePicker,
   showOpenInExplorerButton = false,
 }: InputSettingProps) => {
-  const queryClient = useQueryClient();
-  const [localValue, setLocalValue] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
-
-  const {
-    data: value,
-    isPending,
-    isError,
-  } = useQuery({
-    queryKey: [settingKey],
-    queryFn: async () =>
-      await client.settings.get.query({
-        key: settingKey,
-        decrypt: encrypt,
-      }),
-  });
-
-  React.useEffect(() => {
-    setLocalValue(value ?? "");
-  }, [value]);
-
-  const setValueMutation = useMutation({
-    mutationFn: async (value: string) => {
-      await client.settings.set.mutate({
-        key: settingKey,
-        value: value,
-        encrypt,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [settingKey] });
-    },
-    onError: (error) => {
-      setLocalValue(value ?? "");
-      toast.error(error.message);
-    },
-  });
-  const setValueMutationDebounced = useDebouncedCallback((value) => {
-    setValueMutation.mutate(value);
-  }, 500);
-
-  const onBrowseFolderMutation = useMutation({
-    mutationFn: async () => {
-      await client.settings.set.mutate({
-        key: settingKey,
-        filePicker,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [settingKey] });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
+  const { isPending, isError, value, onChange, onBrowseFolder } = useSettings({
+    settingKey,
+    encrypted,
   });
 
   const onOpenInExplorerMutation = useMutation({
     mutationFn: async () => {
       await client.file.openInExplorer.mutate({
-        path: localValue,
+        path: value as string,
       });
     },
     onError: (error) => {
@@ -175,18 +226,17 @@ const InputSetting = ({
     <div className="flex flex-1 gap-2">
       <div className="relative flex-1">
         <Input
-          value={localValue}
-          type={encrypt && !showPassword ? "password" : "text"}
+          value={value as string}
+          type={encrypted && !showPassword ? "password" : "text"}
           placeholder={placeholder}
           onChange={(e) => {
-            setLocalValue(e.target.value);
-            setValueMutationDebounced(e.target.value);
+            onChange(e.target.value);
           }}
         />
-        {setValueMutation.isPending && (
+        {isPending && (
           <Loader2 className="text-muted-foreground absolute top-1/2 right-2 h-4 w-4 -translate-y-1/2 animate-spin" />
         )}
-        {encrypt && (
+        {encrypted && (
           <Button
             type="button"
             variant="ghost"
@@ -208,10 +258,10 @@ const InputSetting = ({
         <Button
           size="sm"
           variant="ghost"
-          disabled={setValueMutation.isPending}
-          onClick={() => onBrowseFolderMutation.mutate()}
+          disabled={isPending}
+          onClick={() => onBrowseFolder(filePicker)}
         >
-          {setValueMutation.isPending ? (
+          {isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Folder className="h-4 w-4" />
@@ -228,35 +278,7 @@ const InputSetting = ({
 };
 
 const BooleanSetting = ({ settingKey }: { settingKey: SettingKey }) => {
-  const queryClient = useQueryClient();
-
-  const {
-    data: value,
-    isPending,
-    isError,
-  } = useQuery({
-    queryKey: [settingKey],
-    queryFn: async () => {
-      return await client.settings.get.query({
-        key: settingKey,
-      });
-    },
-  });
-
-  const setValueMutation = useMutation({
-    mutationFn: async (value: boolean) => {
-      await client.settings.set.mutate({
-        key: settingKey,
-        value: value,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [settingKey] });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  const { isPending, isError, value, onChange } = useSettings({ settingKey });
 
   if (isPending) {
     return (
@@ -276,10 +298,10 @@ const BooleanSetting = ({ settingKey }: { settingKey: SettingKey }) => {
     <div className="flex items-center gap-3">
       <Switch
         checked={isEnabled}
-        onCheckedChange={(checked) => setValueMutation.mutate(checked)}
-        disabled={setValueMutation.isPending}
+        onCheckedChange={(checked) => onChange(checked)}
+        disabled={isPending}
       />
-      {setValueMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+      {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
     </div>
   );
 };
@@ -295,35 +317,7 @@ const DropdownSetting = ({
   options,
   placeholder = "Select an option",
 }: DropdownSettingProps) => {
-  const queryClient = useQueryClient();
-
-  const {
-    data: value,
-    isPending,
-    isError,
-  } = useQuery({
-    queryKey: [settingKey],
-    queryFn: async () => {
-      return await client.settings.get.query({
-        key: settingKey,
-      });
-    },
-  });
-
-  const setValueMutation = useMutation({
-    mutationFn: async (newValue: string) => {
-      await client.settings.set.mutate({
-        key: settingKey,
-        value: newValue,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [settingKey] });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  const { isPending, isError, value, onChange } = useSettings({ settingKey });
 
   if (isPending) {
     return (
@@ -342,13 +336,13 @@ const DropdownSetting = ({
 
   return (
     <Select
-      value={value ?? ""}
-      onValueChange={(newValue) => setValueMutation.mutate(newValue)}
-      disabled={setValueMutation.isPending}
+      value={value as string}
+      onValueChange={(newValue) => onChange(newValue)}
+      disabled={isPending}
     >
       <SelectTrigger>
         <SelectValue placeholder={placeholder} />
-        {setValueMutation.isPending && <Loader2 className="ml-auto h-4 w-4 animate-spin" />}
+        {isPending && <Loader2 className="ml-auto h-4 w-4 animate-spin" />}
       </SelectTrigger>
       <SelectContent>
         {options.map((option) => (
@@ -369,39 +363,7 @@ interface SliderSettingProps {
 }
 
 const SliderSetting = ({ settingKey, min = 0, max = 1, step = 0.01 }: SliderSettingProps) => {
-  const queryClient = useQueryClient();
-  const [localValue, setLocalValue] = React.useState(0);
-
-  const {
-    data: value,
-    isPending,
-    isError,
-  } = useQuery({
-    queryKey: [settingKey],
-    queryFn: async () => await client.settings.get.query({ key: settingKey }),
-  });
-
-  React.useEffect(() => {
-    setLocalValue(value ?? 0);
-  }, [value]);
-
-  const setValueMutation = useMutation({
-    mutationFn: async (newValue: number) => {
-      await client.settings.set.mutate({
-        key: settingKey,
-        value: newValue,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [settingKey] });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-  const setValueMutationDebounced = useDebouncedCallback((value) => {
-    setValueMutation.mutate(value);
-  }, 500);
+  const { isPending, isError, value, onChange } = useSettings({ settingKey });
 
   if (isPending) {
     return (
@@ -418,27 +380,25 @@ const SliderSetting = ({ settingKey, min = 0, max = 1, step = 0.01 }: SliderSett
   return (
     <div className="flex items-center gap-4">
       <Slider
-        value={[localValue]}
+        value={[value as number]}
         onValueChange={(vals) => {
-          setLocalValue(vals[0]);
-          setValueMutationDebounced(vals[0]);
+          onChange(vals[0]);
         }}
         min={min}
         max={max}
         step={step}
-        disabled={setValueMutation.isPending}
+        disabled={isPending}
       />
       <Input
         className="w-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         type="number"
-        value={localValue}
+        value={value as number}
         min={min}
         max={max}
         step={step}
         onChange={(e) => {
           const val = Number(e.target.value);
-          setLocalValue(val);
-          setValueMutationDebounced(val);
+          onChange(val);
         }}
       />
     </div>
@@ -446,55 +406,12 @@ const SliderSetting = ({ settingKey, min = 0, max = 1, step = 0.01 }: SliderSett
 };
 
 const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
-  const queryClient = useQueryClient();
-
-  const {
-    data: paths,
-    isPending,
-    isError,
-  } = useQuery<string[]>({
-    queryKey: [settingKey],
-    queryFn: async () => {
-      return await client.settings.get.query({
-        key: settingKey,
-      });
-    },
-  });
+  const { isPending, isError, value, onAdd, onDelete } = useSettings<string[]>({ settingKey });
 
   const pathsWithId = React.useMemo(
-    () => paths?.map((path) => ({ id: uuidv4(), value: path })),
-    [paths]
+    () => value?.map((path) => ({ id: uuidv4(), value: path })),
+    [value]
   );
-
-  const addPathMutation = useMutation({
-    mutationFn: async () => {
-      await client.settings.add.mutate({
-        filePicker: "folder",
-        key: settingKey,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [settingKey] });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const deletePathMutation = useMutation({
-    mutationFn: async (index: number) => {
-      await client.settings.delete.mutate({
-        key: settingKey,
-        index,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [settingKey] });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
 
   if (isPending) {
     return (
@@ -507,6 +424,7 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
   if (isError) {
     return <Error settingKey={settingKey} />;
   }
+
   return (
     <Card>
       <CardContent className="space-y-3">
@@ -521,9 +439,9 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
               size="sm"
               variant="ghost"
               className="text-destructive hover:text-destructive"
-              onClick={() => deletePathMutation.mutate(index)}
+              onClick={() => onDelete(index)}
             >
-              {deletePathMutation.isPending ? (
+              {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Trash2 className="h-4 w-4" />
@@ -532,7 +450,7 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
           </div>
         ))}
 
-        {(!paths || paths?.length === 0) && (
+        {(!pathsWithId || pathsWithId?.length === 0) && (
           <div className="text-muted-foreground py-8 text-center">
             <Folder className="mx-auto mb-2 h-8 w-8 opacity-50" />
             <p className="text-sm">No folders added yet</p>
@@ -540,12 +458,12 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
         )}
 
         <Button
-          onClick={() => addPathMutation.mutate()}
+          onClick={() => onAdd("")}
           variant="outline"
           className="w-full border-dashed"
-          disabled={addPathMutation.isPending}
+          disabled={isPending}
         >
-          {addPathMutation.isPending ? (
+          {isPending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
             <Plus className="mr-2 h-4 w-4" />
@@ -558,50 +476,16 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
 };
 
 const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
-  const queryClient = useQueryClient();
-
-  const {
-    data: templates,
-    isPending,
-    isError,
-  } = useQuery<SettingsSchema["themeOutput"]["templates"]>({
-    queryKey: [settingKey],
-    queryFn: async () => {
-      return await client.settings.get.query({ key: settingKey });
-    },
+  const { isPending, isError, value, onAdd, onDelete } = useSettings<
+    SettingsSchema["themeOutput"]["templates"]
+  >({
+    settingKey,
   });
 
   const templatesWithId = React.useMemo(
-    () => templates?.map((tpl) => ({ id: uuidv4(), ...tpl })),
-    [templates]
+    () => value?.map((tpl) => ({ id: uuidv4(), ...tpl })),
+    [value]
   );
-
-  const addTemplateMutation = useMutation({
-    mutationFn: async () => {
-      await client.settings.add.mutate({
-        key: settingKey,
-        value: { src: "", dest: "", postHook: "" },
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [settingKey] });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const deleteTemplateMutation = useMutation({
-    mutationFn: async (index: number) => {
-      await client.settings.delete.mutate({ key: settingKey, index });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [settingKey] });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
 
   if (isPending) {
     return (
@@ -660,9 +544,9 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
                 <Button
                   className="w-full flex-1"
                   variant="destructive"
-                  onClick={() => deleteTemplateMutation.mutate(index)}
+                  onClick={() => onDelete(index)}
                 >
-                  {deleteTemplateMutation.isPending ? (
+                  {isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <Trash2 className="mr-2 h-4 w-4" />
@@ -680,12 +564,12 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
           </div>
         )}
         <Button
-          onClick={() => addTemplateMutation.mutate()}
+          onClick={() => onAdd({ src: "", dest: "", postHook: "" })}
           variant="outline"
           className="w-full border-dashed"
-          disabled={addTemplateMutation.isPending}
+          disabled={isPending}
         >
-          {addTemplateMutation.isPending ? (
+          {isPending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
             <Plus className="mr-2 h-4 w-4" />

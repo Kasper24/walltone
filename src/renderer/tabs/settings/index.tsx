@@ -328,7 +328,7 @@ const SettingField = ({ setting }: { setting: SettingConfig }) => {
         <InputSetting
           settingKey={setting.settingKey}
           placeholder={setting.placeholder || ""}
-          encrypt
+          encrypted
         />
       );
     case "boolean":
