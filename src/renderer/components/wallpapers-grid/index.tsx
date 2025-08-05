@@ -1,4 +1,5 @@
 import { RefreshCw } from "lucide-react";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
 import { Input } from "@renderer/components/ui/input.js";
 import {
   Select,
@@ -78,7 +79,7 @@ const WallpaperGridControls = ({
   );
 };
 
-const WallpapersGrid = ({
+const WallpapersGrid = <T extends BaseWallpaper>({
   queryKeys,
   queryFn,
   queryEnabled = true,
@@ -89,7 +90,7 @@ const WallpapersGrid = ({
   onWallpaperDownload,
   requiresConfiguration,
   controlDefinitions,
-}: WallpapersGridProps) => {
+}: WallpapersGridProps<T>) => {
   // Custom hooks for state management
   const { inputValue, setInputValue, debouncedInputValue, handleSearch, clearSearch } =
     useWallpaperSearch();

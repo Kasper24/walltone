@@ -82,7 +82,8 @@ const config: ForgeConfig = {
         fs.readFileSync(path.resolve(buildPath, "package.json")).toString()
       );
       packageJson.dependencies = {
-        "electron-store": "^10.1.0",
+        canvas: "^3.1.2",
+        conf: "^14.0.0",
         keytar: "^7.9.0",
       };
       fs.writeFileSync(path.resolve(buildPath, "package.json"), JSON.stringify(packageJson));

@@ -13,9 +13,7 @@ export interface DynamicControlDefinition {
 }
 
 export interface DynamicControlValues {
-  [key: string]: string | number | boolean | undefined;
+  [key: string]: string | number | boolean;
 }
 
-export type SetDynamicControlValues = React.Dispatch<
-  React.SetStateAction<string | number | boolean>
->;
+export type SetDynamicControlValues = React.Dispatch<DynamicControlValues>;

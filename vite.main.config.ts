@@ -17,6 +17,17 @@ export default defineConfig((env) => {
       },
       rollupOptions: {
         external,
+        input: {
+          main: path.resolve(__dirname, "src/electron/main/index.ts"),
+          ["theme-generator"]: path.resolve(
+            __dirname,
+            "src/electron/main/trpc/routes/theme/generator/index.ts"
+          ),
+        },
+        output: {
+          entryFileNames: "[name].js",
+          format: "esm",
+        },
       },
     },
     plugins: [pluginHotRestart("restart")],

@@ -7,8 +7,9 @@ export const builtins = ["electron", ...builtinModules.map((m) => [m, `node:${m}
 
 export const external = [
   ...builtins,
-  "electron-store",
+  "conf",
   "keytar",
+  "canvas",
   // ...Object.keys("dependencies" in pkg ? (pkg.dependencies as Record<string, unknown>) : {}),
 ];
 

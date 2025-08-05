@@ -1,34 +1,89 @@
 import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
+import type { ThemeType, ThemePolarity, Theme } from "@electron/main/trpc/routes/theme/index.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
 import {
   type OnWallpaperApply,
   type OnWallpaperDownload,
 } from "@renderer/components/wallpapers-grid/types.js";
-import generateThemes, {
-  ThemeTypes,
-  ThemeVariants,
-  type Theme,
-} from "@renderer/lib/theme/index.js";
+
 import { client } from "@renderer/lib/trpc.js";
 import { DynamicControlValues } from "./types.js";
 
-export const useThemeGeneration = () => {
+export const getSrcForThemeGeneration = (imageSrc: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    if (imageSrc.startsWith("video://")) {
+      const video = document.createElement("video");
+      video.src = imageSrc;
+      video.crossOrigin = "anonymous"; // Required for canvas security
+      video.muted = true;
+
+      const onSeeked = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            return reject(new Error("Could not get 2D canvas context."));
+          }
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          // The dataURL is a base64 string representing the image.
+          const dataUrl = canvas.toDataURL("image/png");
+          resolve(dataUrl);
+        } catch (e) {
+          reject(e);
+        } finally {
+          // Clean up to prevent memory leaks.
+          video.removeEventListener("seeked", onSeeked);
+          video.removeEventListener("error", onError);
+        }
+      };
+
+      const onError = (e: Event | string) => {
+        reject(new Error(`Failed to load video for theme generation: ${e}`));
+        video.removeEventListener("seeked", onSeeked);
+        video.removeEventListener("error", onError);
+      };
+
+      video.addEventListener("seeked", onSeeked);
+      video.addEventListener("error", onError);
+
+      // Once the video metadata is loaded, we can seek to a frame.
+      video.onloadedmetadata = () => {
+        video.currentTime = 1; // Seek to the 1-second mark.
+      };
+
+      video.load();
+    } else {
+      resolve(imageSrc);
+    }
+  });
+};
+
+export const useThemeGeneration = (imageSrc: string, enabled: boolean) => {
   const [theme, setTheme] = React.useState<Theme | undefined>();
 
-  const generateThemeFromImage = React.useCallback(
-    async (element: HTMLImageElement | HTMLVideoElement) => {
-      const generatedTheme = await generateThemes(element);
-      setTheme(generatedTheme);
+  const { data } = useQuery({
+    queryKey: ["theme", imageSrc],
+    enabled,
+    queryFn: async () => {
+      return await client.theme.generate.query({
+        imageSrc: await getSrcForThemeGeneration(imageSrc),
+      });
     },
-    []
-  );
+  });
+
+  React.useEffect(() => {
+    if (data) {
+      setTheme(data);
+    }
+  }, [data]);
 
   return {
     theme,
     setTheme,
-    generateThemeFromImage,
   };
 };
 
@@ -60,8 +115,8 @@ export const useColorEditor = () => {
 };
 
 export const useThemeEditor = (theme: Theme | undefined, selectedColorKey: string | undefined) => {
-  const [activeTheme, setActiveTheme] = React.useState<ThemeTypes>("base16");
-  const [activeVariant, setActiveVariant] = React.useState<ThemeVariants>("dark");
+  const [activeTheme, setActiveTheme] = React.useState<ThemeType>("base16");
+  const [activeVariant, setActiveVariant] = React.useState<ThemePolarity>("dark");
 
   const updateThemeColor = React.useCallback(
     (newColor: string) => {
@@ -181,9 +236,9 @@ export const useMonitorSelection = (scalingOptions?: { key: string; text: string
   };
 };
 
-export const useWallpaperActions = (wallpaper: BaseWallpaper) => {
+export const useWallpaperActions = <T extends BaseWallpaper>(wallpaper: T) => {
   const downloadMutation = useMutation({
-    mutationFn: async (onDownload: OnWallpaperDownload) => {
+    mutationFn: async (onDownload: OnWallpaperDownload<T>) => {
       return await onDownload(wallpaper);
     },
     onSuccess: () => {
@@ -195,8 +250,8 @@ export const useWallpaperActions = (wallpaper: BaseWallpaper) => {
   });
 
   const setThemeMutation = useMutation({
-    mutationFn: async (theme: GeneratedTheme) => {
-      await client.theme.setTheme.mutate({
+    mutationFn: async (theme: Theme) => {
+      await client.theme.set.mutate({
         wallpaper: wallpaper,
         theme: theme,
       });
@@ -215,7 +270,7 @@ export const useWallpaperActions = (wallpaper: BaseWallpaper) => {
       monitorConfigs,
       controlValues,
     }: {
-      onApply: OnWallpaperApply;
+      onApply: OnWallpaperApply<T>;
       monitorConfigs: { name: string; scalingMethod: string }[];
       controlValues?: DynamicControlValues;
     }) => {

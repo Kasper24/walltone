@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
 
 interface WallpaperEngineWorkshopItem {
   result: number;
@@ -81,6 +81,7 @@ const transformWallpapers = (wallpapers: WallpaperEngineWorkshopItem[]): BaseWal
 const searchSchema = z.object({
   apiKey: z.string().min(1, "API Key is required"),
   page: z.number().min(1),
+  perPage: z.number().min(1).optional().default(100),
   query: z.string().optional(),
   tags: z.array(z.string()).optional(),
   sorting: z.string().optional(),
@@ -94,8 +95,6 @@ const subscriptionSchema = z.object({
 
 export const wallpaperEngineRouter = router({
   search: publicProcedure.input(searchSchema).query(async ({ input }) => {
-    const ITEMS_PER_PAGE = 100;
-
     const url = new URL("https://api.steampowered.com/IPublishedFileService/QueryFiles/v1");
     const params = url.searchParams;
 
@@ -103,7 +102,7 @@ export const wallpaperEngineRouter = router({
     params.set("creator_appid", "431960");
     params.set("appid", "431960");
     params.set("page", `${input.page}`);
-    params.set("numperpage", `${ITEMS_PER_PAGE}`);
+    params.set("numperpage", `${input.perPage}`);
     params.set("format", "json");
     params.set("return_tags", "true");
     params.set("return_previews", "true");
@@ -124,7 +123,7 @@ export const wallpaperEngineRouter = router({
         });
 
       const data: WallpaperEngineWorkshopSearchResponse = await response.json();
-      const numberOfPages = Math.ceil(data.response.total / ITEMS_PER_PAGE);
+      const numberOfPages = Math.ceil(data.response.total / input.perPage);
 
       return {
         data: data.response.publishedfiledetails

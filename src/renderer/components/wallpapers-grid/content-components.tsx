@@ -10,7 +10,7 @@ import {
   Settings,
   CheckCircle2,
 } from "lucide-react";
-import { BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
+import { BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
 import { Dialog, DialogTrigger } from "@renderer/components/ui/dialog.js";
 import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
 import {
@@ -147,22 +147,24 @@ export const ConfigurationScreen = ({
   return null;
 };
 
-export const Wallpaper = ({
+export const Wallpaper = <T extends BaseWallpaper>({
   wallpaper,
   onWallpaperApply,
   onWallpaperDownload,
   scalingOptions,
   controlDefinitions,
 }: {
-  wallpaper: BaseWallpaper;
-  onWallpaperApply?: OnWallpaperApply;
-  onWallpaperDownload?: OnWallpaperDownload;
+  wallpaper: T;
+  onWallpaperApply?: OnWallpaperApply<T>;
+  onWallpaperDownload?: OnWallpaperDownload<T>;
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
 }) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+
   return (
     <div key={wallpaper.id} className="group relative overflow-hidden rounded-lg">
-      <Dialog>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="flex w-full">
           {wallpaper.type !== "video" ? (
             <img
@@ -196,6 +198,7 @@ export const Wallpaper = ({
           onDownload={onWallpaperDownload}
           scalingOptions={scalingOptions}
           controlDefinitions={controlDefinitions}
+          isOpen={isOpen}
         />
       </Dialog>
     </div>
@@ -429,7 +432,7 @@ export const EmptyWallpapers = ({
   );
 };
 
-export const WallpaperGrid = ({
+export const WallpaperGrid = <T extends BaseWallpaper>({
   isError,
   error,
   refetch,
@@ -451,11 +454,11 @@ export const WallpaperGrid = ({
   failureCount: number;
   isLoading: boolean;
   isFetching: boolean;
-  allWallpapers: BaseWallpaper[];
+  allWallpapers: T[];
   debouncedInputValue: string;
   clearSearch: () => void;
-  onWallpaperApply?: OnWallpaperApply;
-  onWallpaperDownload?: OnWallpaperDownload;
+  onWallpaperApply?: OnWallpaperApply<T>;
+  onWallpaperDownload?: OnWallpaperDownload<T>;
   scalingOptions?: { key: string; text: string }[];
   infiniteScrollRef: (node?: Element | null | undefined) => void;
   controlDefinitions?: DynamicControlDefinition[];

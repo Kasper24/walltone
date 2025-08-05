@@ -40,7 +40,7 @@ const LibraryVideoTab = () => {
       }}
       queryKeys={["library-video"]}
       queryFn={async ({ pageParam, query }) =>
-        await client.theme.searchWallpapers.query({
+        await client.wallpaper.search.query({
           type: "video",
           page: pageParam,
           limit: 20,
@@ -68,7 +68,7 @@ const LibraryVideoTab = () => {
         },
       ]}
       onWallpaperApply={async (wallpaper, monitors, controlValues) => {
-        await client.theme.setWallpaper.mutate({
+        await client.wallpaper.set.mutate({
           type: "video",
           id: wallpaper.id,
           name: wallpaper.name,

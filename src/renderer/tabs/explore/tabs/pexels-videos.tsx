@@ -10,7 +10,7 @@ const ExplorePexelsVideosTab = () => {
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "pexels.apiKey",
+          key: "apiKeys.pexels",
           decrypt: true,
         },
         title: "Pexels API Key Required",

@@ -2,7 +2,8 @@ import React from "react";
 import { Palette, Save, Wallpaper, Copy, X, PaletteIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Slider } from "@uiw/react-color";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
+import type { ThemeType, ThemePolarity, Theme } from "@electron/main/trpc/routes/theme/index.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
 import {
   DialogContent,
   DialogDescription,
@@ -17,7 +18,6 @@ import { Badge } from "@renderer/components/ui/badge.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs.js";
 import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
 import LoadingButton from "@renderer/components/ui/loading-button.js";
-import { Theme, ThemeTypes, ThemeVariants } from "@renderer/lib/theme/index.js";
 import {
   type OnWallpaperApply,
   type OnWallpaperDownload,
@@ -31,20 +31,22 @@ import {
 import ApplyWallpaperDialog from "./apply-dialog.js";
 import { type DynamicControlDefinition } from "./types.js";
 
-const WallpaperDialog = ({
+const WallpaperDialog = <T extends BaseWallpaper>({
   wallpaper,
   onApply,
   onDownload,
   scalingOptions,
   controlDefinitions,
+  isOpen,
 }: {
-  wallpaper: BaseWallpaper;
-  onApply?: OnWallpaperApply;
-  onDownload?: OnWallpaperDownload;
+  wallpaper: T;
+  onApply?: OnWallpaperApply<T>;
+  onDownload?: OnWallpaperDownload<T>;
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
+  isOpen: boolean;
 }) => {
-  const { theme, setTheme, generateThemeFromImage } = useThemeGeneration();
+  const { theme, setTheme } = useThemeGeneration(wallpaper.previewPath, isOpen);
   const { selectedColor, selectedColorKey, selectColor, updateColor, clearSelection } =
     useColorEditor();
   const { activeTheme, setActiveTheme, activeVariant, setActiveVariant, updateThemeColor } =
@@ -70,76 +72,78 @@ const WallpaperDialog = ({
 
   return (
     <DialogContent className="flex h-[90vh] max-h-[900px] min-h-[600px] w-[95vw] max-w-4xl flex-col p-0 select-none">
-      <div className="flex flex-shrink-0 flex-col p-6 pb-4">
-        <Header wallpaper={wallpaper} />
-      </div>
-
-      <div className="flex flex-1 flex-col gap-4 overflow-hidden px-6">
-        <div className="flex-shrink-0">
-          <WallpaperImage wallpaper={wallpaper} onThemeGenerated={generateThemeFromImage} />
+      <ScrollArea className="overflow-hidden">
+        <div className="flex flex-shrink-0 flex-col p-6 pb-4">
+          <Header wallpaper={wallpaper} />
         </div>
 
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <Tabs
-            value={activeTheme}
-            onValueChange={(value) => setActiveTheme(value as ThemeTypes)}
-            className="flex flex-1 flex-col"
-          >
-            <TabsList className="mb-3 grid w-full flex-shrink-0 grid-cols-2">
-              <TabsTrigger value="base16">Base 16</TabsTrigger>
-              <TabsTrigger value="material">Material</TabsTrigger>
-            </TabsList>
+        <div className="flex flex-1 flex-col gap-4 overflow-hidden px-6">
+          <div className="flex-shrink-0">
+            <WallpaperImage wallpaper={wallpaper} />
+          </div>
 
-            <div className="flex-shrink-0">
-              <ColorEditor
-                selectedColor={selectedColor}
-                onColorChange={handleColorUpdate}
-                onClear={clearSelection}
-              />
-            </div>
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <Tabs
+              value={activeTheme}
+              onValueChange={(value) => setActiveTheme(value as ThemeType)}
+              className="flex flex-1 flex-col"
+            >
+              <TabsList className="mb-3 grid w-full flex-shrink-0 grid-cols-2">
+                <TabsTrigger value="base16">Base 16</TabsTrigger>
+                <TabsTrigger value="material">Material</TabsTrigger>
+              </TabsList>
 
-            <div className="flex-1 overflow-hidden">
-              <TabsContent value="base16" className="h-full">
-                <ThemePanel
-                  theme={theme?.base16}
-                  activeVariant={activeVariant}
-                  setActiveVariant={setActiveVariant}
-                  onColorSelect={handleColorSelect}
+              <div className="flex-shrink-0">
+                <ColorEditor
                   selectedColor={selectedColor}
-                  isLoading={!theme}
+                  onColorChange={handleColorUpdate}
+                  onClear={clearSelection}
                 />
-              </TabsContent>
+              </div>
 
-              <TabsContent value="material" className="h-full">
-                <ThemePanel
-                  theme={theme?.material}
-                  activeVariant={activeVariant}
-                  setActiveVariant={setActiveVariant}
-                  onColorSelect={handleColorSelect}
-                  selectedColor={selectedColor}
-                  isLoading={!theme}
-                />
-              </TabsContent>
-            </div>
-          </Tabs>
+              <div className="flex-1 overflow-hidden">
+                <TabsContent value="base16" className="h-full">
+                  <ThemePanel
+                    theme={theme?.base16}
+                    activeVariant={activeVariant}
+                    setActiveVariant={setActiveVariant}
+                    onColorSelect={handleColorSelect}
+                    selectedColor={selectedColor}
+                    isLoading={!theme}
+                  />
+                </TabsContent>
+
+                <TabsContent value="material" className="h-full">
+                  <ThemePanel
+                    theme={theme?.material}
+                    activeVariant={activeVariant}
+                    setActiveVariant={setActiveVariant}
+                    onColorSelect={handleColorSelect}
+                    selectedColor={selectedColor}
+                    isLoading={!theme}
+                  />
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
         </div>
-      </div>
 
-      <div className="flex-shrink-0 border-t p-6 pt-4">
-        <WallpaperActions
-          wallpaper={wallpaper}
-          theme={theme}
-          onApply={onApply}
-          onDownload={onDownload}
-          scalingOptions={scalingOptions}
-          controlDefinitions={controlDefinitions}
-        />
-      </div>
+        <div className="flex-shrink-0 border-t p-6 pt-4">
+          <WallpaperActions
+            wallpaper={wallpaper}
+            theme={theme}
+            onApply={onApply}
+            onDownload={onDownload}
+            scalingOptions={scalingOptions}
+            controlDefinitions={controlDefinitions}
+          />
+        </div>
+      </ScrollArea>
     </DialogContent>
   );
 };
 
-const Header = ({ wallpaper }: { wallpaper: BaseWallpaper }) => {
+const Header = <T extends BaseWallpaper>({ wallpaper }: { wallpaper: T }) => {
   return (
     <DialogHeader className="flex-shrink-0 space-y-2">
       <DialogTitle className="flex items-center gap-2">
@@ -151,28 +155,7 @@ const Header = ({ wallpaper }: { wallpaper: BaseWallpaper }) => {
   );
 };
 
-const WallpaperImage = ({
-  wallpaper,
-  onThemeGenerated,
-}: {
-  wallpaper: BaseWallpaper;
-  onThemeGenerated: (element: HTMLImageElement | HTMLVideoElement) => Promise<void>;
-}) => {
-  const imageRef = React.useRef<HTMLImageElement>(null);
-  const videoRef = React.useRef<HTMLVideoElement>(null);
-
-  const handleImageLoad = React.useCallback(async () => {
-    if (imageRef.current) {
-      await onThemeGenerated(imageRef.current);
-    }
-  }, [onThemeGenerated]);
-
-  const handleVideoLoad = React.useCallback(async () => {
-    if (videoRef.current) {
-      await onThemeGenerated(videoRef.current);
-    }
-  }, [onThemeGenerated]);
-
+const WallpaperImage = <T extends BaseWallpaper>({ wallpaper }: { wallpaper: T }) => {
   return (
     <Card className="p-1">
       <CardContent className="p-1">
@@ -181,8 +164,6 @@ const WallpaperImage = ({
             className="h-48 w-full rounded-lg object-cover sm:h-56 md:h-64"
             src={wallpaper.previewPath}
             alt={wallpaper.name}
-            ref={imageRef}
-            onLoad={handleImageLoad}
           />
         ) : (
           <video
@@ -191,8 +172,6 @@ const WallpaperImage = ({
             autoPlay
             loop
             playsInline
-            ref={videoRef}
-            onPlaying={handleVideoLoad}
           ></video>
         )}
       </CardContent>
@@ -262,9 +241,9 @@ const ThemePanel = ({
   selectedColor,
   isLoading = false,
 }: {
-  theme?: Theme[ThemeTypes];
-  activeVariant: ThemeVariants;
-  setActiveVariant: (variant: ThemeVariants) => void;
+  theme?: Theme[ThemeType];
+  activeVariant: ThemePolarity;
+  setActiveVariant: (variant: ThemePolarity) => void;
   onColorSelect: (colorValue: string, colorKey: string) => void;
   selectedColor?: string;
   isLoading?: boolean;
@@ -335,8 +314,8 @@ const ThemeColors = ({
   onColorSelect,
   selectedColor,
 }: {
-  theme?: Theme[ThemeTypes];
-  activeVariant: ThemeVariants;
+  theme?: Theme[ThemeType];
+  activeVariant: ThemePolarity;
   onColorSelect: (colorValue: string, colorKey: string) => void;
   selectedColor?: string;
 }) => {
@@ -376,7 +355,7 @@ const ThemeColors = ({
   );
 };
 
-const WallpaperActions = ({
+const WallpaperActions = <T extends BaseWallpaper>({
   wallpaper,
   theme,
   onApply,
@@ -384,10 +363,10 @@ const WallpaperActions = ({
   scalingOptions,
   controlDefinitions,
 }: {
-  wallpaper: BaseWallpaper;
+  wallpaper: T;
   theme?: Theme;
-  onApply?: OnWallpaperApply;
-  onDownload?: OnWallpaperDownload;
+  onApply?: OnWallpaperApply<T>;
+  onDownload?: OnWallpaperDownload<T>;
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
 }) => {
@@ -397,7 +376,7 @@ const WallpaperActions = ({
     <div className="flex flex-col gap-2 sm:flex-row">
       <LoadingButton
         isLoading={setThemeMutation.isPending}
-        onClick={() => setThemeMutation.mutate(theme)}
+        onClick={() => setThemeMutation.mutate(theme!)}
         className="flex-1 text-sm"
         disabled={!theme}
       >

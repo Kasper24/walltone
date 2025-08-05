@@ -10,7 +10,7 @@ const ExploreWallpaperEngineTab = () => {
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "wallpaperEngine.apiKey",
+          key: "apiKeys.wallpaperEngine",
           decrypt: true,
         },
         title: "Wallpaper Engine API Key Required",
@@ -210,9 +210,10 @@ const ExploreWallpaperEngineTab = () => {
         },
       ]}
       onWallpaperDownload={async (wallpaper) => {
-        const apiKey = (await client.settings.get.query({
-          key: "wallpaperEngine.apiKey",
-        })) as string;
+        const apiKey = await client.settings.get.query({
+          key: "apiKeys.wallpaperEngine",
+        });
+
         await client.api.wallpaperEngine.subscribe.mutate({
           apiKey,
           id: wallpaper.id,

@@ -2,6 +2,7 @@ import React from "react";
 import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useDebouncedCallback } from "use-debounce";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
 import { client } from "@renderer/lib/trpc.js";
 import { AppliedFilters, ConfigurationRequirement, WallpapersGridProps } from "./types.js";
 
@@ -71,7 +72,7 @@ export const useConfiguration = (requiresConfiguration?: ConfigurationRequiremen
   };
 };
 
-export const useWallpaperData = ({
+export const useWallpaperData = <T extends BaseWallpaper>({
   queryKeys,
   queryFn,
   queryEnabled,
@@ -82,7 +83,7 @@ export const useWallpaperData = ({
   isConfigurationValid,
 }: {
   queryKeys: string[];
-  queryFn: WallpapersGridProps["queryFn"];
+  queryFn: WallpapersGridProps<T>["queryFn"];
   queryEnabled: boolean;
   debouncedInputValue: string;
   sorting: string;

@@ -2,11 +2,10 @@ import path from "path";
 import { promises as fs } from "fs";
 import z from "zod";
 import { TRPCError } from "@trpc/server";
-import { color } from "chroma.ts";
-import { execute, killProcess, santize } from "@electron/main/lib/index.js";
+import { execute, killProcess, santize, renderString } from "@electron/main/lib/index.js";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { caller } from "./base.js";
-import { settingKeySchema } from "./settings.js";
+import { type SettingKey } from "./settings.js";
 
 const SUPPORTED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"];
 const SUPPORTED_VIDEO_EXTENSIONS = [".mp4", ".mkv", ".webm", ".avi", ".mov"];
@@ -24,21 +23,40 @@ export interface DownloadableWallpaper extends BaseWallpaper {
   downloadUrl: string;
 }
 
-export interface LibraryWallpaper extends BaseWallpaper {
-  type: "image" | "video" | "wallpaper-engine";
+interface ImageWallpaper extends BaseWallpaper {
+  type: "image";
   path: string;
   dateAdded: number;
   tags: string[];
 }
 
-export interface WallpaperData {
-  data: BaseWallpaper[];
+interface VideoWallpaper extends BaseWallpaper {
+  type: "video";
+  path: string;
+  dateAdded: number;
+  tags: string[];
+}
+
+interface WallpaperEngineWallpaper extends BaseWallpaper {
+  type: "wallpaper-engine";
+  path: string;
+  dateAdded: number;
+  tags: string[];
+  workshopId: string;
+  file: string;
+  sceneType: string;
+}
+
+export type LibraryWallpaper = ImageWallpaper | VideoWallpaper | WallpaperEngineWallpaper;
+
+export interface WallpaperData<T extends BaseWallpaper> {
+  data: T[];
   currentPage: number;
   prevPage: number | null;
   nextPage: number | null;
 }
 
-const searchWallpapesSchema = z.object({
+const searchWallpapersSchema = z.object({
   type: z.enum(["image", "video", "wallpaper-engine", "all"]),
   page: z.number().min(1).default(1),
   limit: z.number().min(1).default(10),
@@ -81,19 +99,14 @@ const setWallpaperSchema = z.object({
     .optional(),
 });
 
-const setThemeSchema = z.object({
-  wallpaper: z.any(),
-  theme: z.any(),
-});
-
-export const themeRouter = router({
-  searchWallpapers: publicProcedure.input(searchWallpapesSchema).query(async ({ input }) => {
+export const wallpaperRouter = router({
+  search: publicProcedure.input(searchWallpapersSchema).query(async ({ input }) => {
     const wallpapers: LibraryWallpaper[] = [];
 
     if (input.type === "image" || input.type === "all") {
       const imageWallpapers = await getMediaWallpapers(
         "image",
-        "image.wallpaperFolders",
+        "wallpaperSources.imageFolders",
         SUPPORTED_IMAGE_EXTENSIONS
       );
       wallpapers.push(...imageWallpapers);
@@ -102,7 +115,7 @@ export const themeRouter = router({
     if (input.type === "video" || input.type === "all") {
       const videoWallpapers = await getMediaWallpapers(
         "video",
-        "video.wallpaperFolders",
+        "wallpaperSources.videoFolders",
         SUPPORTED_VIDEO_EXTENSIONS
       );
       wallpapers.push(...videoWallpapers);
@@ -124,7 +137,7 @@ export const themeRouter = router({
     return paginateData(sortedWallpapers, input.page, input.limit);
   }),
 
-  setWallpaper: publicProcedure.input(setWallpaperSchema).mutation(async ({ input }) => {
+  set: publicProcedure.input(setWallpaperSchema).mutation(async ({ input }) => {
     killProcess("swaybg");
     killProcess("mpvpaper");
     killProcess("linux-wallpaperengine");
@@ -143,9 +156,9 @@ export const themeRouter = router({
         break;
       case "wallpaper-engine": {
         const assetsPath = await caller.settings.get({
-          key: "wallpaperEngine.assetsFolder",
+          key: "wallpaperSources.wallpaperEngineAssetsFolder",
         });
-        if (!assetsPath)
+        if (typeof assetsPath !== "string" || !assetsPath)
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Wallpaper Engine assets folder is not set.",
@@ -174,15 +187,15 @@ export const themeRouter = router({
     }
   }),
 
-  restoreWallpaperOnStart: publicProcedure.mutation(async () => {
+  restoreOnStart: publicProcedure.mutation(async () => {
     const restoreOnStart = await caller.settings.get({
-      key: "theme.restoreOnStart",
+      key: "app.restoreWallpaperOnStart",
     });
     if (!restoreOnStart) return;
 
-    const lastWallpaperCmd = (await caller.settings.get({
-      key: "theme.lastWallpaperCmd",
-    })) as { command: string; args: string[] } | undefined;
+    const lastWallpaperCmd = await caller.settings.get({
+      key: "internal.lastWallpaperCmd",
+    });
 
     if (lastWallpaperCmd) {
       killProcess("swaybg");
@@ -191,92 +204,13 @@ export const themeRouter = router({
       execute(lastWallpaperCmd);
     }
   }),
-
-  setTheme: publicProcedure.input(setThemeSchema).mutation(async ({ input }) => {
-    const templates =
-      ((await caller.settings.get({
-        key: "theme.templates",
-      })) as { src: string; dest: string; postHook: string }[]) || [];
-    if (!templates)
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Templates are not set.",
-      });
-
-    await Promise.all(
-      templates.map(async (tpl) => {
-        if (!tpl.src || !tpl.dest) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Invalid template configuration: ${JSON.stringify(tpl)}`,
-          });
-        }
-
-        try {
-          const content = await fs.readFile(tpl.src, "utf-8");
-          const rendered = await renderString(content, {
-            wallpaper: {
-              id: santize(input.wallpaper.id),
-              name: santize(input.wallpaper.name),
-            },
-            theme: input.theme,
-          });
-
-          try {
-            const destination = await renderString(tpl.dest, {
-              wallpaper: {
-                id: santize(input.wallpaper.id),
-                name: santize(input.wallpaper.name),
-              },
-              theme: input.theme,
-            });
-            await fs.mkdir(path.dirname(destination), { recursive: true });
-            await fs.writeFile(destination, rendered, "utf-8");
-
-            if (tpl.postHook) {
-              try {
-                const postHook = await renderString(tpl.postHook, {
-                  wallpaper: input.wallpaper,
-                  theme: input.theme,
-                });
-                const [cmd, ...args] = postHook.split(" ");
-                await execute({ command: cmd, args, shell: true });
-              } catch (error) {
-                const errorMessage =
-                  error instanceof Error ? error.message : "Unknown error occurred";
-                throw new TRPCError({
-                  code: "INTERNAL_SERVER_ERROR",
-                  message: `Error running post-hook command: ${tpl.postHook}: ${errorMessage}`,
-                  cause: error,
-                });
-              }
-            }
-          } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: `Error writing file to ${tpl.dest}: ${errorMessage}`,
-              cause: error,
-            });
-          }
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `Error reading template file ${tpl.src}: ${errorMessage}`,
-            cause: error,
-          });
-        }
-      })
-    );
-  }),
 });
 
-const paginateData = (
-  data: LibraryWallpaper[],
+const paginateData = <T extends LibraryWallpaper>(
+  data: T[],
   page: number,
   itemsPerPage: number
-): WallpaperData => {
+): WallpaperData<T> => {
   const currentPage = page;
   const totalItems = data.length;
   const numberOfPages = Math.ceil(totalItems / itemsPerPage);
@@ -294,13 +228,13 @@ const paginateData = (
 
 const getMediaWallpapers = async (
   mediaType: "image" | "video",
-  settingsKey: z.infer<typeof settingKeySchema>,
+  settingsKey: SettingKey,
   fileTypes: string[]
 ) => {
   const wallpapers: LibraryWallpaper[] = [];
-  const folders = (await caller.settings.get({
+  const folders = await caller.settings.get({
     key: settingsKey,
-  })) as string[];
+  });
 
   if (!folders || !Array.isArray(folders) || folders.length === 0) {
     throw new TRPCError({
@@ -355,10 +289,10 @@ const searchForFiles = async (
 };
 
 const getWallpaperEngineWallpapers = async () => {
-  const wallpapers: LibraryWallpaper[] = [];
-  const folders = (await caller.settings.get({
-    key: "wallpaperEngine.wallpaperFolders",
-  })) as string[];
+  const wallpapers: WallpaperEngineWallpaper[] = [];
+  const folders = await caller.settings.get({
+    key: "wallpaperSources.wallpaperEngineFolders",
+  });
   if (!folders || !Array.isArray(folders) || folders.length === 0) {
     throw new TRPCError({
       code: "NOT_FOUND",
@@ -468,7 +402,7 @@ const setImageWallpaper = async (
   });
 
   await caller.settings.set({
-    key: "theme.lastWallpaperCmd",
+    key: "internal.lastWallpaperCmd",
     value: {
       command: "swaybg",
       args,
@@ -532,7 +466,7 @@ const setVideoWallpaper = async (
   args.push(videoPath);
 
   await caller.settings.set({
-    key: "theme.lastWallpaperCmd",
+    key: "internal.lastWallpaperCmd",
     value: {
       command: "mpvpaper",
       args,
@@ -633,9 +567,9 @@ const copyWallpaperToDestinations = async (
   wallpaperName: string,
   wallpaperPath: string
 ) => {
-  const wallpaperDestinations = (await caller.settings.get({
-    key: "theme.wallpaperCopyDestinations",
-  })) as string[];
+  const wallpaperDestinations = await caller.settings.get({
+    key: "themeOutput.copyWallpaperTo",
+  });
 
   await Promise.all(
     wallpaperDestinations.map(async (destination) => {
@@ -649,20 +583,4 @@ const copyWallpaperToDestinations = async (
       await fs.copyFile(wallpaperPath, destination);
     })
   );
-};
-
-const renderString = async (content: string, context: Record<string, unknown>) => {
-  return content.replace(/\$\{([\s\S]+?)\}/g, (_, expr) => {
-    try {
-      const fn = new Function(...Object.keys(context), "color", `return (${expr})`);
-      return fn(...Object.values(context), color);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: `Failed to evaluate: ${expr}: ${errorMessage}`,
-        cause: error,
-      });
-    }
-  });
 };

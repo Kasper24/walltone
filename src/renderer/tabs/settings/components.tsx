@@ -14,15 +14,40 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { v4 as uuidv4 } from "uuid";
+import { SettingKey } from "@electron/main/trpc/routes/settings.js";
 import { useTheme } from "@renderer/providers/theme/hook.js";
 import { Button } from "@renderer/components/ui/button.js";
 import { Input } from "@renderer/components/ui/input.js";
 import { Card, CardContent } from "@renderer/components/ui/card.js";
 import { Switch } from "@renderer/components/ui/switch.js";
+import { Slider } from "@renderer/components/ui/slider.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@renderer/components/ui/select.js";
 import { client } from "@renderer/lib/trpc.js";
-import { RouterInputs } from "@electron/main/trpc/routes/base.js";
 
-type SettingKey = RouterInputs["settings"]["get"]["key"];
+const Error = ({ settingKey }: { settingKey: SettingKey }) => {
+  const queryClient = useQueryClient();
+
+  return (
+    <div className="py-8 text-center">
+      <p className="text-destructive text-sm">Failed to load</p>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => queryClient.invalidateQueries({ queryKey: [settingKey] })}
+        className="mt-2"
+      >
+        Retry
+      </Button>
+    </div>
+  );
+};
 
 const ThemeSetting = () => {
   const { theme, setTheme } = useTheme();
@@ -44,7 +69,6 @@ const ThemeSetting = () => {
 
 interface InputSettingProps {
   settingKey: SettingKey;
-  nestedSettingPath?: (string | number)[];
   encrypt?: boolean;
   filePicker?: "file" | "folder";
   placeholder?: string;
@@ -53,14 +77,12 @@ interface InputSettingProps {
 
 const InputSetting = ({
   settingKey,
-  nestedSettingPath,
   placeholder = "",
   encrypt = false,
   filePicker,
   showOpenInExplorerButton = false,
 }: InputSettingProps) => {
   const queryClient = useQueryClient();
-  const queryKey = nestedSettingPath ? [settingKey, ...nestedSettingPath] : [settingKey];
   const [localValue, setLocalValue] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
 
@@ -69,11 +91,10 @@ const InputSetting = ({
     isPending,
     isError,
   } = useQuery({
-    queryKey: queryKey,
+    queryKey: [settingKey],
     queryFn: async () =>
       await client.settings.get.query({
         key: settingKey,
-        path: nestedSettingPath,
         decrypt: encrypt,
       }),
   });
@@ -86,13 +107,12 @@ const InputSetting = ({
     mutationFn: async (value: string) => {
       await client.settings.set.mutate({
         key: settingKey,
-        path: nestedSettingPath,
         value: value,
         encrypt,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKey });
+      queryClient.invalidateQueries({ queryKey: [settingKey] });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -103,12 +123,11 @@ const InputSetting = ({
     mutationFn: async () => {
       await client.settings.set.mutate({
         key: settingKey,
-        path: nestedSettingPath,
         filePicker,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKey });
+      queryClient.invalidateQueries({ queryKey: [settingKey] });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -144,29 +163,7 @@ const InputSetting = ({
   }
 
   if (isError) {
-    return (
-      <div className="space-y-2">
-        <div className="flex gap-2">
-          <div className="border-destructive bg-destructive/10 flex h-10 flex-1 items-center rounded-md border px-3">
-            <span className="text-destructive text-sm">Failed to load setting</span>
-          </div>
-          {filePicker && (
-            <Button variant="outline" disabled>
-              <Folder className="mr-2 h-4 w-4" />
-              Browse
-            </Button>
-          )}
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => queryClient.invalidateQueries({ queryKey: queryKey })}
-          className="h-8"
-        >
-          Retry
-        </Button>
-      </div>
-    );
+    return <Error settingKey={settingKey} />;
   }
 
   return (
@@ -258,27 +255,14 @@ const BooleanSetting = ({ settingKey }: { settingKey: SettingKey }) => {
 
   if (isPending) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex h-20 items-center justify-center">
         <Loader2 className="h-4 w-4 animate-spin" />
-        <span className="text-muted-foreground text-sm">Loading...</span>
       </div>
     );
   }
 
   if (isError) {
-    return (
-      <div className="space-y-2">
-        <span className="text-destructive text-sm">Failed to load setting</span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => queryClient.invalidateQueries({ queryKey: [settingKey] })}
-          className="h-8"
-        >
-          Retry
-        </Button>
-      </div>
-    );
+    return <Error settingKey={settingKey} />;
   }
 
   const isEnabled = Boolean(value);
@@ -291,6 +275,144 @@ const BooleanSetting = ({ settingKey }: { settingKey: SettingKey }) => {
         disabled={setValue.isPending}
       />
       {setValue.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+    </div>
+  );
+};
+
+interface DropdownSettingProps {
+  settingKey: SettingKey;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+}
+
+const DropdownSetting = ({
+  settingKey,
+  options,
+  placeholder = "Select an option",
+}: DropdownSettingProps) => {
+  const queryClient = useQueryClient();
+
+  const {
+    data: value,
+    isPending,
+    isError,
+  } = useQuery({
+    queryKey: [settingKey],
+    queryFn: async () => {
+      return await client.settings.get.query({
+        key: settingKey,
+      });
+    },
+  });
+
+  const setValueMutation = useMutation({
+    mutationFn: async (newValue: string) => {
+      await client.settings.set.mutate({
+        key: settingKey,
+        value: newValue,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [settingKey] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  if (isPending) {
+    return (
+      <div className="flex gap-2">
+        <div className="bg-muted flex h-10 flex-1 items-center rounded-md border px-3">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <span className="text-muted-foreground text-sm">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <Error settingKey={settingKey} />;
+  }
+
+  return (
+    <Select
+      value={value ?? ""}
+      onValueChange={(newValue) => setValueMutation.mutate(newValue)}
+      disabled={setValueMutation.isPending}
+    >
+      <SelectTrigger>
+        <SelectValue placeholder={placeholder} />
+        {setValueMutation.isPending && <Loader2 className="ml-auto h-4 w-4 animate-spin" />}
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
+
+interface SliderSettingProps {
+  settingKey: SettingKey;
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+const SliderSetting = ({ settingKey, min = 0, max = 1, step = 0.01 }: SliderSettingProps) => {
+  const queryClient = useQueryClient();
+
+  const {
+    data: value,
+    isPending,
+    isError,
+  } = useQuery({
+    queryKey: [settingKey],
+    queryFn: async () => await client.settings.get.query({ key: settingKey }),
+  });
+
+  const setValueMutation = useMutation({
+    mutationFn: async (newValue: number) => {
+      await client.settings.set.mutate({
+        key: settingKey,
+        value: newValue,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [settingKey] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  if (isPending) {
+    return (
+      <div className="flex h-10 items-center justify-center">
+        <Loader2 className="h-4 w-4 animate-spin" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <Error settingKey={settingKey} />;
+  }
+
+  return (
+    <div className="flex items-center gap-4">
+      <Slider
+        value={[value ?? 0]}
+        onValueChange={(vals) => setValueMutation.mutate(vals[0])}
+        min={min}
+        max={max}
+        step={step}
+        disabled={setValueMutation.isPending}
+      />
+      <span className="text-muted-foreground w-12 text-sm">{value?.toFixed(2)}</span>
     </div>
   );
 };
@@ -310,6 +432,11 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
       });
     },
   });
+
+  const pathsWithId = React.useMemo(
+    () => paths?.map((path) => ({ ...path, id: uuidv4() })),
+    [paths]
+  );
 
   const addPathMutation = useMutation({
     mutationFn: async () => {
@@ -350,30 +477,15 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
   }
 
   if (isError) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-destructive text-sm">Failed to load folders</p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => queryClient.invalidateQueries({ queryKey: [settingKey] })}
-          className="mt-2"
-        >
-          Retry
-        </Button>
-      </div>
-    );
+    return <Error settingKey={settingKey} />;
   }
-
   return (
     <Card>
       <CardContent className="space-y-3">
-        {paths?.map((path: string, index: number) => (
-          <div className="flex gap-2" key={index}>
+        {pathsWithId?.map((path: { id: string; value: string }, index: number) => (
+          <div className="flex gap-2" key={path.id}>
             <InputSetting
-              key={path}
-              settingKey={settingKey}
-              nestedSettingPath={[index]}
+              settingKey={`${settingKey}[${index}]`}
               placeholder="Enter folder path"
               filePicker="folder"
             />
@@ -431,10 +543,15 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
     },
   });
 
+  const templatesWithId = React.useMemo(
+    () => templates?.map((tpl) => ({ ...tpl, id: uuidv4() })),
+    [templates]
+  );
+
   const addTemplateMutation = useMutation({
     mutationFn: async () => {
       await client.settings.add.mutate({
-        key: "theme.templates",
+        key: settingKey,
         value: { src: "", dest: "", postHook: "" },
       });
     },
@@ -448,7 +565,7 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
 
   const deleteTemplateMutation = useMutation({
     mutationFn: async (index: number) => {
-      await client.settings.delete.mutate({ key: "theme.templates", index });
+      await client.settings.delete.mutate({ key: settingKey, index });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [settingKey] });
@@ -467,35 +584,22 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
   }
 
   if (isError) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-destructive text-sm">Failed to load templates</p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => queryClient.invalidateQueries({ queryKey: [settingKey] })}
-          className="mt-2"
-        >
-          Retry
-        </Button>
-      </div>
-    );
+    return <Error settingKey={settingKey} />;
   }
 
   return (
     <Card className="space-y-3">
       <CardContent className="space-y-3">
-        {templates?.length > 0 && (
+        {templatesWithId?.length > 0 && (
           <div className="grid gap-3">
-            {templates?.map((_, idx: number) => (
-              <div className="space-y-3" key={idx}>
+            {templatesWithId?.map((tpl, index: number) => (
+              <div className="space-y-3" key={tpl.id}>
                 {/* Source file row */}
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   <span className="text-muted-foreground w-12 text-xs font-medium">Source:</span>
                   <InputSetting
-                    settingKey={settingKey}
-                    nestedSettingPath={[idx, "src"]}
+                    settingKey={`${settingKey}[${index}].src`}
                     placeholder="Enter source template file"
                     showOpenInExplorerButton
                     filePicker="file"
@@ -507,8 +611,7 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
                   <Folder className="h-4 w-4" />
                   <span className="text-muted-foreground w-12 text-xs font-medium">Dest:</span>
                   <InputSetting
-                    settingKey={settingKey}
-                    nestedSettingPath={[idx, "dest"]}
+                    settingKey={`${settingKey}[${index}].dest`}
                     placeholder="Enter destination directory"
                     filePicker="folder"
                     showOpenInExplorerButton
@@ -520,8 +623,7 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
                   <Terminal className="h-4 w-4" />
                   <span className="text-muted-foreground w-12 text-xs font-medium">Post Hook:</span>
                   <InputSetting
-                    settingKey={settingKey}
-                    nestedSettingPath={[idx, "postHook"]}
+                    settingKey={`${settingKey}[${index}].postHook`}
                     placeholder="Enter post hook command"
                   />
                 </div>
@@ -530,7 +632,7 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
                 <Button
                   className="w-full flex-1"
                   variant="destructive"
-                  onClick={() => deleteTemplateMutation.mutate(idx)}
+                  onClick={() => deleteTemplateMutation.mutate(index)}
                 >
                   {deleteTemplateMutation.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -543,14 +645,12 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
             ))}
           </div>
         )}
-
-        {(!templates || templates?.length === 0) && (
+        {(!templatesWithId || templatesWithId?.length === 0) && (
           <div className="text-muted-foreground py-8 text-center">
             <FileText className="mx-auto mb-2 h-8 w-8 opacity-50" />
             <p className="text-sm">No templates added yet</p>
           </div>
         )}
-
         <Button
           onClick={() => addTemplateMutation.mutate()}
           variant="outline"
@@ -569,4 +669,12 @@ const TemplateListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
   );
 };
 
-export { ThemeSetting, InputSetting, BooleanSetting, FolderListSetting, TemplateListSetting };
+export {
+  ThemeSetting,
+  InputSetting,
+  BooleanSetting,
+  DropdownSetting,
+  SliderSetting,
+  FolderListSetting,
+  TemplateListSetting,
+};

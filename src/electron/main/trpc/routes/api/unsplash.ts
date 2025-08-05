@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { type DownloadableWallpaper } from "@electron/main/trpc/routes/theme.js";
+import { type DownloadableWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
 
 interface UnsplashPhoto {
   id: string;
@@ -89,7 +89,6 @@ interface UnsplashPhoto {
       status: string;
     }
   >;
-  z;
   user: {
     id: string;
     updated_at: string;
@@ -165,8 +164,8 @@ const transformPhotos = (photos: UnsplashPhoto[]): DownloadableWallpaper[] => {
 const unsplashSearchParamsSchema = z.object({
   apiKey: z.string().min(1, "API Key is required"),
   query: z.string(),
-  page: z.number().min(1).optional().default(1),
-  perPage: z.number().optional().default(30),
+  page: z.number().min(1),
+  perPage: z.number().min(1).optional().default(30),
   orderBy: z.enum(["relevant", "latest"]).optional().default("relevant"),
   orientation: z.enum(["landscape", "portrait", "squarish"]).optional(),
   color: z
@@ -198,8 +197,6 @@ export const unsplashRouter = router({
     params.set("query", input.query || "wallpaper");
     if (input.orientation) params.set("orientation", input.orientation);
     if (input.color) params.set("color", input.color);
-
-    console.log(`Unsplash API URL: ${url.toString()}`);
 
     try {
       const response = await fetch(url.toString());

@@ -1,5 +1,7 @@
 import React from "react";
 import { Check, Monitor as MonitorIcon, Loader2 } from "lucide-react";
+import { type Monitor } from "@electron/main/trpc/routes/monitor.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
 import {
   DialogContent,
   DialogDescription,
@@ -8,8 +10,6 @@ import {
   DialogFooter,
   DialogClose,
 } from "@renderer/components/ui/dialog.js";
-import { type Monitor } from "@electron/main/trpc/routes/monitor.js";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
 import { Button } from "@renderer/components/ui/button.js";
 import { Checkbox } from "@renderer/components/ui/checkbox.js";
 import { Card, CardContent, CardHeader, CardTitle } from "@renderer/components/ui/card.js";
@@ -32,14 +32,14 @@ import {
   SetDynamicControlValues,
 } from "./types.js";
 
-const ApplyWallpaperDialog = ({
+const ApplyWallpaperDialog = <T extends BaseWallpaper>({
   wallpaper,
   onApply,
   scalingOptions,
   controlDefinitions,
 }: {
-  wallpaper: BaseWallpaper;
-  onApply?: OnWallpaperApply;
+  wallpaper: T;
+  onApply?: OnWallpaperApply<T>;
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
 }) => {

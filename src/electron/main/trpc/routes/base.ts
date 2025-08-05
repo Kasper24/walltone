@@ -7,7 +7,8 @@ import { wallpaperEngineRouter } from "./api/wallpaper-engine.js";
 import { fileRouter } from "./file.js";
 import { monitorRouter } from "./monitor.js";
 import { settingsRouter } from "./settings.js";
-import { themeRouter } from "./theme.js";
+import { wallpaperRouter } from "./wallpaper.js";
+import { themeRouter } from "./theme/index.js";
 
 export const appRouter = router({
   api: router({
@@ -20,6 +21,7 @@ export const appRouter = router({
   monitor: monitorRouter,
   settings: settingsRouter,
   theme: themeRouter,
+  wallpaper: wallpaperRouter,
 });
 
 export const caller = createCallerFactory(appRouter)({});
