@@ -201,7 +201,7 @@ export const wallpaperRouter = router({
       key: "internal.lastWallpaperCmd",
     });
 
-    if (lastWallpaperCmd) {
+    if (lastWallpaperCmd.command) {
       killProcess("swaybg");
       killProcess("mpvpaper");
       killProcess("linux-wallpaperengine");
