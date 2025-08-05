@@ -1,6 +1,6 @@
 import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
 import { client } from "@renderer/lib/trpc.js";
-import { WallhavenSorting } from "@electron/main/trpc/routes/api/wallhaven.js";
+import { WallhavenSorting } from "@electron/main/trpc/routes/api/wallhaven/index.js";
 
 const ExploreWallhavenTab = () => {
   return (

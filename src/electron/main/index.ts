@@ -1,17 +1,19 @@
 import { app, BrowserWindow, globalShortcut } from "electron";
 import { createIPCHandler } from "electron-trpc-experimental/main";
-import { appRouter } from "@electron/main/trpc/routes/base.js";
+import { appRouter, caller } from "@electron/main/trpc/routes/index.js";
 import { registerProtocols } from "./setup/protocols.js";
 import { createTray } from "./setup/tray.js";
 import { createWindow } from "./setup/window.js";
 
 let isQuitting = false;
 
-const initializeApp = () => {
+const initializeApp = async () => {
   const mainWindow = createWindow();
   createTray(mainWindow);
 
   createIPCHandler({ router: appRouter, windows: [mainWindow] });
+
+  await caller.wallpaper.restoreOnStart();
 
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();

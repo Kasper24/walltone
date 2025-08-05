@@ -10,7 +10,8 @@ import {
   Settings,
   CheckCircle2,
 } from "lucide-react";
-import { BaseWallpaper } from "@electron/main/trpc/routes/theme.js";
+import { BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
+import { type SettingKey } from "@electron/main/trpc/routes/settings/index.js";
 import { Dialog, DialogTrigger } from "@renderer/components/ui/dialog.js";
 import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
 import {
@@ -29,17 +30,13 @@ import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import { cn } from "@renderer/lib/cn.js";
 import { ConfigurationRequirement, OnWallpaperApply, OnWallpaperDownload } from "./types.js";
 
-export const ConfigurationScreen = ({
+export const ConfigurationScreen = <TConfigKey extends SettingKey>({
   requirement,
-  configValue,
   isPending,
-  isError,
   refetch,
 }: {
-  requirement: ConfigurationRequirement;
-  configValue?: unknown;
+  requirement: ConfigurationRequirement<TConfigKey>;
   isPending: boolean;
-  isError: boolean;
   refetch: () => void;
 }) => {
   if (isPending) {
@@ -61,108 +58,108 @@ export const ConfigurationScreen = ({
     );
   }
 
-  if (isError || !configValue) {
-    return (
-      <ScrollArea className="h-[80vh]">
-        <div className="flex min-h-[80vh] items-center justify-center">
-          <Card className="w-full max-w-lg justify-self-center shadow-lg">
-            <CardHeader className="pb-4">
-              <div className="flex items-start gap-4">
-                <div className="rounded-full bg-amber-100 p-3 dark:bg-amber-900/20">
-                  {React.createElement(requirement.icon, {
-                    className: "h-6 w-6 text-amber-600 dark:text-amber-400",
-                  })}
-                </div>
-                <div className="flex-1">
-                  <div className="mb-1 flex items-center gap-2">
-                    <CardTitle className="text-xl">{requirement.title}</CardTitle>
-                    <Badge variant="outline" className="text-xs">
-                      Setup Required
-                    </Badge>
-                  </div>
-                  <CardDescription className="text-base">{requirement.description}</CardDescription>
-                </div>
+  return (
+    <ScrollArea className="h-[80vh]">
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <Card className="w-full max-w-lg justify-self-center shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex items-start gap-4">
+              <div className="rounded-full bg-amber-100 p-3 dark:bg-amber-900/20">
+                {React.createElement(requirement.icon, {
+                  className: "h-6 w-6 text-amber-600 dark:text-amber-400",
+                })}
               </div>
-            </CardHeader>
-
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="text-muted-foreground h-4 w-4" />
-                  <h4 className="text-sm font-semibold">Setup Instructions</h4>
+              <div className="flex-1">
+                <div className="mb-1 flex items-center gap-2">
+                  <CardTitle className="text-xl">{requirement.title}</CardTitle>
+                  <Badge variant="outline" className="text-xs">
+                    Setup Required
+                  </Badge>
                 </div>
+                <CardDescription className="text-base">{requirement.description}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
 
-                <div className="space-y-3 pl-6">
-                  {requirement.setupInstructions.map((instruction, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="bg-primary text-primary-foreground mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-xs font-medium">
-                        {index + 1}
-                      </div>
-                      <p className="text-muted-foreground text-sm leading-relaxed">{instruction}</p>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="text-muted-foreground h-4 w-4" />
+                <h4 className="text-sm font-semibold">Setup Instructions</h4>
+              </div>
+
+              <div className="space-y-3 pl-6">
+                {requirement.setupInstructions.map((instruction, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="bg-primary text-primary-foreground mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-xs font-medium">
+                      {index + 1}
                     </div>
-                  ))}
-                </div>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{instruction}</p>
+                  </div>
+                ))}
               </div>
+            </div>
 
-              <Separator />
+            <Separator />
 
-              <div className="space-y-3">
-                <h4 className="flex items-center gap-2 text-sm font-semibold">
-                  <Settings className="h-4 w-4" />
-                  Quick Actions
-                </h4>
+            <div className="space-y-3">
+              <h4 className="flex items-center gap-2 text-sm font-semibold">
+                <Settings className="h-4 w-4" />
+                Quick Actions
+              </h4>
 
-                <div className="grid gap-2">
-                  {requirement?.actions?.map((action) => (
-                    <Button
-                      key={action.title}
-                      variant={action.variant}
-                      className="h-11 w-full justify-start"
-                      onClick={() => action.onClick(refetch)}
-                    >
-                      {React.createElement(action.icon, {
-                        className: "mr-3 h-4 w-4",
-                      })}
-                      <div className="text-left">
-                        <div className="font-medium">{action.title}</div>
-                        <div className="text-muted-foreground text-xs">{action.description}</div>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
+              <div className="grid gap-2">
+                {requirement?.actions?.map((action) => (
+                  <Button
+                    key={action.title}
+                    variant={action.variant}
+                    className="h-11 w-full justify-start"
+                    onClick={() => action.onClick(refetch)}
+                  >
+                    {React.createElement(action.icon, {
+                      className: "mr-3 h-4 w-4",
+                    })}
+                    <div className="text-left">
+                      <div className="font-medium">{action.title}</div>
+                      <div className="text-muted-foreground text-xs">{action.description}</div>
+                    </div>
+                  </Button>
+                ))}
               </div>
+            </div>
 
-              <div className="bg-muted/50 rounded-lg p-4">
-                <p className="text-muted-foreground text-xs leading-relaxed">
-                  <strong>Need help?</strong> {requirement.helperText}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </ScrollArea>
-    );
-  }
+            <div className="bg-muted/50 rounded-lg p-4">
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                <strong>Need help?</strong> {requirement.helperText}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </ScrollArea>
+  );
 
   return null;
 };
 
-export const Wallpaper = ({
+export const Wallpaper = <T extends BaseWallpaper>({
   wallpaper,
   onWallpaperApply,
   onWallpaperDownload,
   scalingOptions,
   controlDefinitions,
 }: {
-  wallpaper: BaseWallpaper;
-  onWallpaperApply?: OnWallpaperApply;
-  onWallpaperDownload?: OnWallpaperDownload;
+  wallpaper: T;
+  onWallpaperApply?: OnWallpaperApply<T>;
+  onWallpaperDownload?: OnWallpaperDownload<T>;
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
 }) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+
   return (
     <div key={wallpaper.id} className="group relative overflow-hidden rounded-lg">
-      <Dialog>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="flex w-full">
           {wallpaper.type !== "video" ? (
             <img
@@ -196,6 +193,7 @@ export const Wallpaper = ({
           onDownload={onWallpaperDownload}
           scalingOptions={scalingOptions}
           controlDefinitions={controlDefinitions}
+          isOpen={isOpen}
         />
       </Dialog>
     </div>
@@ -429,7 +427,7 @@ export const EmptyWallpapers = ({
   );
 };
 
-export const WallpaperGrid = ({
+export const WallpaperGrid = <T extends BaseWallpaper>({
   isError,
   error,
   refetch,
@@ -451,11 +449,11 @@ export const WallpaperGrid = ({
   failureCount: number;
   isLoading: boolean;
   isFetching: boolean;
-  allWallpapers: BaseWallpaper[];
+  allWallpapers: T[];
   debouncedInputValue: string;
   clearSearch: () => void;
-  onWallpaperApply?: OnWallpaperApply;
-  onWallpaperDownload?: OnWallpaperDownload;
+  onWallpaperApply?: OnWallpaperApply<T>;
+  onWallpaperDownload?: OnWallpaperDownload<T>;
   scalingOptions?: { key: string; text: string }[];
   infiniteScrollRef: (node?: Element | null | undefined) => void;
   controlDefinitions?: DynamicControlDefinition[];

@@ -18,6 +18,7 @@ const createWindow = () => {
       allowRunningInsecureContent: false,
       nodeIntegration: false,
       nodeIntegrationInSubFrames: false,
+      nodeIntegrationInWorker: true,
       webSecurity: true,
       preload: path.join(import.meta.dirname, "preload.js"),
     },

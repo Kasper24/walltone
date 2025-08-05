@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import { TRPCError } from "@trpc/server";
 
 const execute = ({
   command,
@@ -72,4 +73,20 @@ const santize = (str: string) => {
   return str.replace(/[^a-z0-9-]/gi, "").toLowerCase();
 };
 
-export { execute, killProcess, santize };
+const renderString = async (content: string, context: Record<string, unknown>) => {
+  return content.replace(/\$\{([\s\S]+?)\}/g, (_, expr) => {
+    try {
+      const fn = new Function(...Object.keys(context), `return (${expr})`);
+      return fn(...Object.values(context));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Failed to evaluate: ${expr}: ${errorMessage}`,
+        cause: error,
+      });
+    }
+  });
+};
+
+export { execute, killProcess, santize, renderString };

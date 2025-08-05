@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { type DownloadableWallpaper } from "@electron/main/trpc/routes/theme.js";
+import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
 
 interface PexelsPhoto {
   id: number;
@@ -67,8 +67,9 @@ interface PexelsSearchResponse<T> {
   next_page?: string;
 }
 
-const transformPhotos = (photos: PexelsPhoto[]): DownloadableWallpaper[] => {
+const transformPhotos = (photos: PexelsPhoto[]): ApiWallpaper[] => {
   return photos.map((photo) => ({
+    type: "api",
     id: photo.id.toString(),
     name: photo.alt || `Photo by ${photo.photographer}`,
     previewPath: photo.src.large,
@@ -76,7 +77,7 @@ const transformPhotos = (photos: PexelsPhoto[]): DownloadableWallpaper[] => {
   }));
 };
 
-const transformVideos = (videos: PexelsVideo[]): DownloadableWallpaper[] => {
+const transformVideos = (videos: PexelsVideo[]): ApiWallpaper[] => {
   return videos.map((video) => {
     // Get the highest quality video file
     const bestVideo = video.video_files.reduce((prev, current) => {
@@ -86,6 +87,7 @@ const transformVideos = (videos: PexelsVideo[]): DownloadableWallpaper[] => {
     });
 
     return {
+      type: "api",
       id: video.id.toString(),
       name: `Video by ${video.user.name}`,
       previewPath: video.image,
@@ -152,7 +154,7 @@ export const pexelsRouter = router({
       const data: PexelsSearchResponse<PexelsPhoto | PexelsVideo> = await response.json();
       const numberOfPages = Math.ceil(data.total_results / (input.perPage || 30));
 
-      let transformedData: DownloadableWallpaper[] = [];
+      let transformedData: ApiWallpaper[] = [];
       if (input.type === "photos" && data.photos) {
         transformedData = transformPhotos(data.photos as PexelsPhoto[]);
       } else if (input.type === "videos" && data.videos) {
@@ -164,7 +166,7 @@ export const pexelsRouter = router({
         currentPage: data.page,
         prevPage: data.page > 1 ? data.page - 1 : null,
         nextPage: data.page < numberOfPages ? data.page + 1 : null,
-        total: data.total_results,
+        totalItems: data.total_results,
         totalPages: numberOfPages,
       };
     } catch (error) {

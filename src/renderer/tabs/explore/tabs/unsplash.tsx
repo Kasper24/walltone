@@ -10,7 +10,7 @@ const ExploreUnsplashTab = () => {
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "unsplash.apiKey",
+          key: "apiKeys.unsplash",
           decrypt: true,
         },
         title: "Unsplash API Key Required",
@@ -49,7 +49,7 @@ const ExploreUnsplashTab = () => {
       queryKeys={[`explore-unsplash`]}
       queryFn={async ({ pageParam, query, sorting, appliedFilters, configValue }) =>
         await client.api.unsplash.search.query({
-          apiKey: configValue,
+          apiKey: configValue!,
           page: pageParam,
           query,
           orderBy: sorting,

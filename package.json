@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "walltone",
-  "productName": "Walltone",
+  "productName": "walltone",
   "version": " 0.0.1",
   "description": "Theme Manager",
   "main": ".vite/build/main.js",
@@ -15,9 +15,9 @@
   "scripts": {
     "lint-staged": "lint-staged",
     "prepare": "husky",
-    "lint:types": "tsc --noEmit",
     "lint:check": "eslint --max-warnings=0",
     "lint:fix": "eslint --fix",
+    "ts:check": "tsc --noEmit",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,css,yaml}\"",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,css,yaml}\"",
     "start": "electron-forge start",
@@ -85,10 +85,11 @@
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/react-query": "^5.84.1",
     "@uiw/react-color": "^2.7.3",
+    "canvas": "^3.1.2",
     "chroma.ts": "^1.0.10",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "electron-store": "^10.1.0",
+    "conf": "^14.0.0",
     "electron-trpc-experimental": "^1.0.0-alpha.0",
     "keytar": "^7.9.0",
     "lucide-react": "^0.536.0",
@@ -101,7 +102,11 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11",
     "tw-animate-css": "^1.3.6",
-    "use-debounce": "^10.0.3",
+    "use-debounce": "^10.0.5",
+    "uuid": "^11.1.0",
     "zod": "^4.0.14"
+  },
+  "overrides": {
+    "@trpc/server": "11.4.4"
   }
 }

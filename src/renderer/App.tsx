@@ -2,11 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@renderer/providers/theme/provider.js";
 import { Toaster } from "@renderer/components/ui/sonner.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs.js";
+import { CurrentTabProvider } from "@renderer/providers/current-tab/provider.js";
+import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import ExploreTab from "@renderer/tabs/explore/index.js";
 import SettingsTab from "@renderer/tabs/settings/index.js";
 import LibraryTab from "@renderer/tabs/library/index.js";
-import { CurrentTabProvider } from "./providers/current-tab/provider.js";
-import { useCurrentTab } from "./providers/current-tab/hook.js";
 
 const queryClient = new QueryClient();
 

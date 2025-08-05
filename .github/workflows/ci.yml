@@ -25,15 +25,12 @@ jobs:
 
       - name: Lint (ESLint)
         run: npm run lint:check
-        continue-on-error: true
 
       - name: Type check
-        run: npm run lint:types
-        continue-on-error: true
+        run: npm run ts:check
 
       - name: Format check (Prettier)
         run: npm run format:check
-        continue-on-error: true
 
       - name: Package
         run: npm run package

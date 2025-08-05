@@ -2,8 +2,8 @@ export interface DynamicControlDefinition {
   type: "range" | "boolean" | "select";
   key: string;
   title: string;
-  description?: string;
-  defaultValue?: string | number | boolean;
+  description: string;
+  defaultValue: string | number | boolean;
   options?: {
     min?: number;
     max?: number;
@@ -13,9 +13,8 @@ export interface DynamicControlDefinition {
 }
 
 export interface DynamicControlValues {
-  [key: string]: string | number | boolean | undefined;
+  [key: string]: string | number | boolean;
 }
 
-export type SetDynamicControlValues = React.Dispatch<
-  React.SetStateAction<string | number | boolean>
->;
+// export type SetDynamicControlValues = React.Dispatch<DynamicControlValues>;
+export type SetDynamicControlValues = React.Dispatch<React.SetStateAction<DynamicControlValues>>;

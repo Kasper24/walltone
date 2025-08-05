@@ -1,15 +1,22 @@
 import { LucideIcon } from "lucide-react";
-import { RouterInputs } from "@electron/main/trpc/routes/base.js";
-import { BaseWallpaper, WallpaperData } from "@electron/main/trpc/routes/theme.js";
-import { DynamicControlValues } from "@renderer/components/wallpaper-dialog/types.js";
+import { type DotNotationValueOf } from "node_modules/conf/dist/source/types.js";
+import {
+  type BaseWallpaper,
+  type WallpaperData,
+} from "@electron/main/trpc/routes/wallpaper/index.js";
+import { type SettingKey, type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
+import {
+  DynamicControlDefinition,
+  DynamicControlValues,
+} from "@renderer/components/wallpaper-dialog/types.js";
 
-export type OnWallpaperApply = (
-  wallpaper: BaseWallpaper,
+export type OnWallpaperApply<T extends BaseWallpaper> = (
+  wallpaper: T,
   monitorConfigs: { name: string; scalingMethod: string }[],
   controlValues?: DynamicControlValues
 ) => Promise<void>;
 
-export type OnWallpaperDownload = (wallpaper: BaseWallpaper) => Promise<void>;
+export type OnWallpaperDownload<T extends BaseWallpaper> = (wallpaper: T) => Promise<void>;
 
 export interface FilterDefinition {
   type: "single" | "multiple" | "boolean";
@@ -29,9 +36,9 @@ export interface AppliedFilters {
 
 export type SetAppliedFilters = React.Dispatch<React.SetStateAction<AppliedFilters>>;
 
-export interface ConfigurationRequirement {
+export interface ConfigurationRequirement<TConfigKey extends SettingKey> {
   setting: {
-    key: RouterInputs["settings"]["get"]["key"];
+    key: TConfigKey;
     decrypt?: boolean;
   };
   title: string;
@@ -48,18 +55,22 @@ export interface ConfigurationRequirement {
   }[];
 }
 
-export interface WallpapersGridProps {
+export interface WallpapersGridProps<
+  T extends BaseWallpaper,
+  TSorting extends string,
+  TConfigKey extends SettingKey,
+> {
   queryKeys: string[];
   queryFn: (params: {
     pageParam: number;
     query: string;
-    sorting: string;
+    sorting: TSorting;
     appliedFilters?: AppliedFilters;
-    configValue?: unknown;
-  }) => Promise<WallpaperData>;
+    configValue?: DotNotationValueOf<SettingsSchema, TConfigKey>;
+  }) => Promise<WallpaperData<T>>;
   queryEnabled?: boolean;
   sortingOptions?: {
-    key: string;
+    key: TSorting;
     text: string;
   }[];
   filterDefinitions?: FilterDefinition[];
@@ -67,8 +78,8 @@ export interface WallpapersGridProps {
     key: string;
     text: string;
   }[];
-  onWallpaperApply?: OnWallpaperApply;
-  onWallpaperDownload?: OnWallpaperDownload;
-  requiresConfiguration?: ConfigurationRequirement;
-  controlDefinitions?: DynamicControlValue[];
+  onWallpaperApply?: OnWallpaperApply<T>;
+  onWallpaperDownload?: OnWallpaperDownload<T>;
+  requiresConfiguration?: ConfigurationRequirement<TConfigKey>;
+  controlDefinitions?: DynamicControlDefinition[];
 }

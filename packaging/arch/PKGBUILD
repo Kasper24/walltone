@@ -6,9 +6,11 @@ pkgdesc="Wallpaper and theme management application"
 arch=("x86_64")
 url="https://github.com/kasper24/walltone"
 license=("GPL3")
-depends=("nss" "libsecret" "swaybg" "mpvpaper" "linux-wallpaperengine" "cage" "grim" "wayland-utils")
+depends=("nss" "libsecret" "cairo" "pango" "libjpeg-turbo"
+"giflib" "libsvgtiny" "swaybg" "mpvpaper"
+"linux-wallpaperengine" "cage" "grim" "wayland-utils")
 makedepends=("npm" "nodejs" "git")
-source=("$pkgname::git+$url.git#branch=dev")
+source=("$pkgname::git+$url.git")
 sha256sums=("SKIP")
 
 pkgver() {

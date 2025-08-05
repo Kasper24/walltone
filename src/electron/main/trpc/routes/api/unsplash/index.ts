@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { type DownloadableWallpaper } from "@electron/main/trpc/routes/theme.js";
+import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
 
 interface UnsplashPhoto {
   id: string;
@@ -89,7 +89,6 @@ interface UnsplashPhoto {
       status: string;
     }
   >;
-  z;
   user: {
     id: string;
     updated_at: string;
@@ -153,8 +152,9 @@ interface UnsplashSearchResult {
   results: UnsplashPhoto[];
 }
 
-const transformPhotos = (photos: UnsplashPhoto[]): DownloadableWallpaper[] => {
+const transformWallpapers = (photos: UnsplashPhoto[]): ApiWallpaper[] => {
   return photos.map((photo) => ({
+    type: "api",
     id: photo.id,
     name: photo.alt_description || photo.description || `Photo by ${photo.user.name}`,
     previewPath: photo.urls.regular,
@@ -165,8 +165,8 @@ const transformPhotos = (photos: UnsplashPhoto[]): DownloadableWallpaper[] => {
 const unsplashSearchParamsSchema = z.object({
   apiKey: z.string().min(1, "API Key is required"),
   query: z.string(),
-  page: z.number().min(1).optional().default(1),
-  perPage: z.number().optional().default(30),
+  page: z.number().min(1),
+  perPage: z.number().min(1).optional().default(30),
   orderBy: z.enum(["relevant", "latest"]).optional().default("relevant"),
   orientation: z.enum(["landscape", "portrait", "squarish"]).optional(),
   color: z
@@ -199,8 +199,6 @@ export const unsplashRouter = router({
     if (input.orientation) params.set("orientation", input.orientation);
     if (input.color) params.set("color", input.color);
 
-    console.log(`Unsplash API URL: ${url.toString()}`);
-
     try {
       const response = await fetch(url.toString());
       if (!response.ok)
@@ -213,15 +211,15 @@ export const unsplashRouter = router({
 
       // Normalize the response format
       const photos = Array.isArray(data) ? data : data.results;
-      const total = Array.isArray(data) ? photos.length : data.total;
+      const totalItems = Array.isArray(data) ? photos.length : data.total;
       const totalPages = Array.isArray(data) ? Infinity : data.total_pages;
 
       return {
-        data: photos ? transformPhotos(photos) : [],
+        data: photos ? transformWallpapers(photos) : [],
         currentPage: input.page,
         prevPage: input.page > 1 ? input.page - 1 : null,
         nextPage: input.page < totalPages ? input.page + 1 : null,
-        total,
+        totalItems,
         totalPages,
       };
     } catch (error) {

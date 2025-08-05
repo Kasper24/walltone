@@ -10,7 +10,7 @@ const ExplorePexelsImagesTab = () => {
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "pexels.apiKey",
+          key: "apiKeys.pexels",
           decrypt: true,
         },
         title: "Pexels API Key Required",
@@ -50,7 +50,7 @@ const ExplorePexelsImagesTab = () => {
       queryFn={async ({ pageParam, query, appliedFilters, configValue }) =>
         await client.api.pexels.search.query({
           type: "photos",
-          apiKey: configValue,
+          apiKey: configValue!,
           page: pageParam,
           query,
           ...appliedFilters?.strings,

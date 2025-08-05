@@ -1,4 +1,6 @@
 import { RefreshCw } from "lucide-react";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
+import { type SettingKey } from "@electron/main/trpc/routes/settings/index.js";
 import { Input } from "@renderer/components/ui/input.js";
 import {
   Select,
@@ -23,7 +25,7 @@ import {
   FilterDefinition,
 } from "./types.js";
 
-const WallpaperGridControls = ({
+const WallpaperGridControls = <TSorting extends string>({
   inputValue,
   onInputChange,
   onSortingChange,
@@ -35,8 +37,8 @@ const WallpaperGridControls = ({
 }: {
   inputValue: string;
   onInputChange: (value: string) => void;
-  onSortingChange: (value: string) => void;
-  sortingOptions?: { key: string; text: string }[];
+  onSortingChange: (value: TSorting) => void;
+  sortingOptions?: { key: TSorting; text: string }[];
   filterDefinitions?: FilterDefinition[];
   appliedFilters: AppliedFilters;
   setAppliedFilters: SetAppliedFilters;
@@ -78,7 +80,11 @@ const WallpaperGridControls = ({
   );
 };
 
-const WallpapersGrid = ({
+const WallpapersGrid = <
+  T extends BaseWallpaper,
+  TSorting extends string,
+  TConfigKey extends SettingKey,
+>({
   queryKeys,
   queryFn,
   queryEnabled = true,
@@ -89,8 +95,7 @@ const WallpapersGrid = ({
   onWallpaperDownload,
   requiresConfiguration,
   controlDefinitions,
-}: WallpapersGridProps) => {
-  // Custom hooks for state management
+}: WallpapersGridProps<T, TSorting, TConfigKey>) => {
   const { inputValue, setInputValue, debouncedInputValue, handleSearch, clearSearch } =
     useWallpaperSearch();
 
@@ -120,14 +125,17 @@ const WallpapersGrid = ({
     isConfigurationValid,
   });
 
-  // Show configuration requirement screen
-  if (requiresConfiguration && (isConfigPending || isConfigError || !configValue)) {
+  if (
+    requiresConfiguration &&
+    (isConfigPending ||
+      isConfigError ||
+      !configValue ||
+      (Array.isArray(configValue) && configValue.length === 0))
+  ) {
     return (
       <ConfigurationScreen
         requirement={requiresConfiguration}
-        configValue={configValue}
         isPending={isConfigPending}
-        isError={isConfigError}
         refetch={refetchConfig}
       />
     );

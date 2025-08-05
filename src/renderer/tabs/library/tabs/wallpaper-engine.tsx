@@ -10,7 +10,7 @@ const LibraryWallpaperEngineTab = () => {
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "wallpaperEngine.wallpaperFolders",
+          key: "wallpaperSources.wallpaperEngineFolders",
         },
         title: "Wallpaper Engine Library Configuration",
         description:
@@ -43,7 +43,7 @@ const LibraryWallpaperEngineTab = () => {
       queryFn={async ({ pageParam, query, sorting, appliedFilters }) => {
         const tags = Object.entries(appliedFilters?.arrays || {}).flatMap(([_, values]) => values);
 
-        return await client.theme.searchWallpapers.query({
+        return await client.wallpaper.search.query({
           type: "wallpaper-engine",
           page: pageParam,
           limit: 50,
@@ -283,7 +283,7 @@ const LibraryWallpaperEngineTab = () => {
         },
       ]}
       onWallpaperApply={async (wallpaper, monitors, controlValues) => {
-        await client.theme.setWallpaper.mutate({
+        await client.wallpaper.set.mutate({
           type: "wallpaper-engine",
           id: wallpaper.id,
           name: wallpaper.name,
