@@ -1,17 +1,8 @@
 import * as chroma from "chroma.ts";
 
-export interface Base16Settings {
-  accentMinSaturation: number;
-  accentMaxSaturation: number;
-  accentMinLuminance: number;
-  accentMaxLuminance: number;
-  accentSaturation: number;
-  accentDarken: number;
-  accentLighten: number;
-  backgroundSaturation: number;
-  backgroundDarken: number;
-  backgroundLighten: number;
-}
+import { type SettingsSchema } from "@electron/main/trpc/routes/settings.js";
+
+type Base16Settings = SettingsSchema["themeGeneration"]["base16"];
 
 const base16ColorKeys = [
   "base00",

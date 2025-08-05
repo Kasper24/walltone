@@ -5,7 +5,7 @@ import Conf, { Schema } from "conf";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 
-interface SettingsSchema {
+export interface SettingsSchema {
   /** Settings for the application's appearance and startup behavior. */
   app: {
     uiTheme: "light" | "dark";
@@ -56,7 +56,7 @@ interface SettingsSchema {
   };
 }
 
-interface SecretsSchema {
+export interface SecretsSchema {
   apiKeys: {
     pexels: string;
     unsplash: string;

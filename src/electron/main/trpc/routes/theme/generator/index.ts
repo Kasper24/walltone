@@ -8,9 +8,11 @@ import {
   Score,
 } from "@material/material-color-utilities";
 import * as chroma from "chroma.ts";
+import { type SettingsSchema } from "@electron/main/trpc/routes/settings.js";
 import generateMaterialTheme from "./material.js";
-import generateBase16Theme, { Base16Settings } from "./base16.js";
+import generateBase16Theme from "./base16.js";
 
+type Base16Settings = SettingsSchema["themeGeneration"]["base16"];
 type MaterialPixel = number;
 type QuantizePixel = [number, number, number];
 type QuantizeLib = "material" | "quantize";
