@@ -2,7 +2,7 @@ import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { ThemeType, ThemePolarity, Theme } from "@electron/main/trpc/routes/theme/index.js";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
 import {
   type OnWallpaperApply,
   type OnWallpaperDownload,

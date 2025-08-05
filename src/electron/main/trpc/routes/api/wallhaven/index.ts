@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
+import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
 
 export type WallhavenSorting = "date_added" | "random" | "views" | "favorites" | "toplist";
 export type WallhavenCategory = "general" | "anime" | "people";
@@ -117,7 +117,7 @@ export const wallhavenRouter = router({
         currentPage: data.meta.current_page,
         prevPage: data.meta.current_page > 1 ? data.meta.current_page - 1 : null,
         nextPage: data.meta.current_page < totalPages ? data.meta.current_page + 1 : null,
-        total: data.meta.total,
+        totalItems: data.meta.total,
         totalPages,
       };
     } catch (error) {

@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { v4 as uuidv4 } from "uuid";
-import { type SettingKey, type SettingsSchema } from "@electron/main/trpc/routes/settings.js";
+import { type SettingKey, type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
 import { useTheme } from "@renderer/providers/theme/hook.js";
 import { Button } from "@renderer/components/ui/button.js";
 import { Input } from "@renderer/components/ui/input.js";

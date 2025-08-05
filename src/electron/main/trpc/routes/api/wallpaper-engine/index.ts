@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
 
 interface WallpaperEngineWorkshopItem {
   result: number;
@@ -133,7 +133,7 @@ export const wallpaperEngineRouter = router({
         currentPage: input.page,
         prevPage: input.page > 1 ? input.page - 1 : null,
         nextPage: input.page < numberOfPages ? input.page + 1 : null,
-        total: data.response.total,
+        totalItems: data.response.total,
         totalPages: numberOfPages,
       };
     } catch (error) {

@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
+import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
 
 interface PexelsPhoto {
   id: number;
@@ -166,7 +166,7 @@ export const pexelsRouter = router({
         currentPage: data.page,
         prevPage: data.page > 1 ? data.page - 1 : null,
         nextPage: data.page < numberOfPages ? data.page + 1 : null,
-        total: data.total_results,
+        totalItems: data.total_results,
         totalPages: numberOfPages,
       };
     } catch (error) {

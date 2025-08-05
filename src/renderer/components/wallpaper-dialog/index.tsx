@@ -3,7 +3,7 @@ import { Palette, Save, Wallpaper, Copy, X, PaletteIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Slider } from "@uiw/react-color";
 import type { ThemeType, ThemePolarity, Theme } from "@electron/main/trpc/routes/theme/index.js";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
 import {
   DialogContent,
   DialogDescription,

@@ -1,6 +1,6 @@
 import { app, BrowserWindow, globalShortcut } from "electron";
 import { createIPCHandler } from "electron-trpc-experimental/main";
-import { appRouter, caller } from "@electron/main/trpc/routes/base.js";
+import { appRouter, caller } from "@electron/main/trpc/routes/index.js";
 import { registerProtocols } from "./setup/protocols.js";
 import { createTray } from "./setup/tray.js";
 import { createWindow } from "./setup/window.js";

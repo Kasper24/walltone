@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
+import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
 
 interface UnsplashPhoto {
   id: string;
@@ -211,7 +211,7 @@ export const unsplashRouter = router({
 
       // Normalize the response format
       const photos = Array.isArray(data) ? data : data.results;
-      const total = Array.isArray(data) ? photos.length : data.total;
+      const totalItems = Array.isArray(data) ? photos.length : data.total;
       const totalPages = Array.isArray(data) ? Infinity : data.total_pages;
 
       return {
@@ -219,7 +219,7 @@ export const unsplashRouter = router({
         currentPage: input.page,
         prevPage: input.page > 1 ? input.page - 1 : null,
         nextPage: input.page < totalPages ? input.page + 1 : null,
-        total,
+        totalItems,
         totalPages,
       };
     } catch (error) {

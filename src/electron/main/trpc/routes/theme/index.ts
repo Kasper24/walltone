@@ -6,8 +6,8 @@ import { TRPCError } from "@trpc/server";
 import { color } from "chroma.ts";
 import { execute, santize, renderString } from "@electron/main/lib/index.js";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { caller } from "@electron/main/trpc/routes/base.js";
-import { type SettingsSchema } from "@electron/main/trpc/routes/settings.js";
+import { caller } from "@electron/main/trpc/routes/index.js";
+import { type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
 
 const hexColor = () => z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex color format");
 

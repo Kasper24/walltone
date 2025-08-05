@@ -8,7 +8,7 @@ import {
   Score,
 } from "@material/material-color-utilities";
 import * as chroma from "chroma.ts";
-import { type SettingsSchema } from "@electron/main/trpc/routes/settings.js";
+import { type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
 import generateMaterialTheme from "./material.js";
 import generateBase16Theme from "./base16.js";
 

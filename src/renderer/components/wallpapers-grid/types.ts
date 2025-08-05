@@ -1,7 +1,10 @@
 import { LucideIcon } from "lucide-react";
 import { type DotNotationValueOf } from "node_modules/conf/dist/source/types.js";
-import { type BaseWallpaper, type WallpaperData } from "@electron/main/trpc/routes/wallpaper.js";
-import { type SettingKey, type SettingsSchema } from "@electron/main/trpc/routes/settings.js";
+import {
+  type BaseWallpaper,
+  type WallpaperData,
+} from "@electron/main/trpc/routes/wallpaper/index.js";
+import { type SettingKey, type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
 import {
   DynamicControlDefinition,
   DynamicControlValues,

@@ -1,6 +1,6 @@
 import { RefreshCw } from "lucide-react";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
-import { type SettingKey } from "@electron/main/trpc/routes/settings.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
+import { type SettingKey } from "@electron/main/trpc/routes/settings/index.js";
 import { Input } from "@renderer/components/ui/input.js";
 import {
   Select,

@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
 import { Card, CardHeader, CardContent, CardTitle } from "@renderer/components/ui/card.js";
-import { SettingKey } from "@electron/main/trpc/routes/settings.js";
+import { SettingKey } from "@electron/main/trpc/routes/settings/index.js";
 import {
   InputSetting,
   BooleanSetting,

@@ -10,8 +10,8 @@ import {
   Settings,
   CheckCircle2,
 } from "lucide-react";
-import { BaseWallpaper } from "@electron/main/trpc/routes/wallpaper.js";
-import { type SettingKey } from "@electron/main/trpc/routes/settings.js";
+import { BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
+import { type SettingKey } from "@electron/main/trpc/routes/settings/index.js";
 import { Dialog, DialogTrigger } from "@renderer/components/ui/dialog.js";
 import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
 import {

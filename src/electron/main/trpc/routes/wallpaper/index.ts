@@ -4,8 +4,8 @@ import z from "zod";
 import { TRPCError } from "@trpc/server";
 import { execute, killProcess, santize, renderString } from "@electron/main/lib/index.js";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { caller } from "./base.js";
-import { type SettingsSchema, type SettingKey } from "./settings.js";
+import { caller } from "@electron/main/trpc/routes/index.js";
+import { type SettingsSchema, type SettingKey } from "@electron/main/trpc/routes/settings/index.js";
 
 const SUPPORTED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"];
 const SUPPORTED_VIDEO_EXTENSIONS = [".mp4", ".mkv", ".webm", ".avi", ".mov"];
@@ -56,6 +56,8 @@ export interface WallpaperData<T extends BaseWallpaper> {
   currentPage: number;
   prevPage: number | null;
   nextPage: number | null;
+  totalItems: number;
+  totalPages: number;
 }
 
 const searchWallpapersSchema = z.object({
@@ -215,7 +217,7 @@ const paginateData = <T extends LibraryWallpaper>(
 ): WallpaperData<T> => {
   const currentPage = page;
   const totalItems = data.length;
-  const numberOfPages = Math.ceil(totalItems / itemsPerPage);
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedData = data.slice(startIndex, endIndex);
@@ -224,7 +226,9 @@ const paginateData = <T extends LibraryWallpaper>(
     data: paginatedData,
     currentPage,
     prevPage: currentPage > 1 ? currentPage - 1 : null,
-    nextPage: currentPage < numberOfPages ? currentPage + 1 : null,
+    nextPage: currentPage < totalPages ? currentPage + 1 : null,
+    totalItems,
+    totalPages,
   };
 };
 
