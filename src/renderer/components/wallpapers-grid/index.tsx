@@ -91,7 +91,6 @@ const WallpapersGrid = <T extends BaseWallpaper>({
   requiresConfiguration,
   controlDefinitions,
 }: WallpapersGridProps<T>) => {
-  // Custom hooks for state management
   const { inputValue, setInputValue, debouncedInputValue, handleSearch, clearSearch } =
     useWallpaperSearch();
 
@@ -121,8 +120,10 @@ const WallpapersGrid = <T extends BaseWallpaper>({
     isConfigurationValid,
   });
 
-  // Show configuration requirement screen
-  if (requiresConfiguration && (isConfigPending || isConfigError || !configValue)) {
+  if (
+    (requiresConfiguration && (isConfigPending || isConfigError || !configValue)) ||
+    (Array.isArray(configValue) && configValue.length === 0)
+  ) {
     return (
       <ConfigurationScreen
         requirement={requiresConfiguration}
