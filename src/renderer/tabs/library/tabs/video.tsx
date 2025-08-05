@@ -10,7 +10,7 @@ const LibraryVideoTab = () => {
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "video.wallpaperFolders",
+          key: "wallpaperSources.videoFolders",
         },
         title: "Video Library Configuration",
         description: "To browse video wallpapers, you need to add wallpaper folders first.",

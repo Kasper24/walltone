@@ -121,8 +121,11 @@ const WallpapersGrid = <T extends BaseWallpaper>({
   });
 
   if (
-    (requiresConfiguration && (isConfigPending || isConfigError || !configValue)) ||
-    (Array.isArray(configValue) && configValue.length === 0)
+    requiresConfiguration &&
+    (isConfigPending ||
+      isConfigError ||
+      !configValue ||
+      (Array.isArray(configValue) && configValue.length === 0))
   ) {
     return (
       <ConfigurationScreen
