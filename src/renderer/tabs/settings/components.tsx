@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@renderer/components/ui/select.js";
 import { client } from "@renderer/lib/trpc.js";
+import { useDebouncedCallback } from "use-debounce";
 
 const Error = ({ settingKey }: { settingKey: SettingKey }) => {
   const queryClient = useQueryClient();
@@ -103,7 +104,7 @@ const InputSetting = ({
     setLocalValue(value ?? "");
   }, [value]);
 
-  const onBlurMutation = useMutation({
+  const setValueMutation = useMutation({
     mutationFn: async (value: string) => {
       await client.settings.set.mutate({
         key: settingKey,
@@ -115,9 +116,13 @@ const InputSetting = ({
       queryClient.invalidateQueries({ queryKey: [settingKey] });
     },
     onError: (error) => {
+      setLocalValue(value ?? "");
       toast.error(error.message);
     },
   });
+  const setValueMutationDebounced = useDebouncedCallback((value) => {
+    setValueMutation.mutate(value);
+  }, 500);
 
   const onBrowseFolderMutation = useMutation({
     mutationFn: async () => {
@@ -175,12 +180,12 @@ const InputSetting = ({
           placeholder={placeholder}
           onChange={(e) => {
             setLocalValue(e.target.value);
+            setValueMutationDebounced(e.target.value);
           }}
-          onBlur={(e) => {
-            onBlurMutation.mutate(e.target.value);
-          }}
-          disabled={onBlurMutation.isPending}
         />
+        {setValueMutation.isPending && (
+          <Loader2 className="text-muted-foreground absolute top-1/2 right-2 h-4 w-4 -translate-y-1/2 animate-spin" />
+        )}
         {encrypt && (
           <Button
             type="button"
@@ -203,10 +208,10 @@ const InputSetting = ({
         <Button
           size="sm"
           variant="ghost"
-          disabled={onBlurMutation.isPending}
+          disabled={setValueMutation.isPending}
           onClick={() => onBrowseFolderMutation.mutate()}
         >
-          {onBlurMutation.isPending ? (
+          {setValueMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Folder className="h-4 w-4" />
@@ -238,7 +243,7 @@ const BooleanSetting = ({ settingKey }: { settingKey: SettingKey }) => {
     },
   });
 
-  const setValue = useMutation({
+  const setValueMutation = useMutation({
     mutationFn: async (value: boolean) => {
       await client.settings.set.mutate({
         key: settingKey,
@@ -271,10 +276,10 @@ const BooleanSetting = ({ settingKey }: { settingKey: SettingKey }) => {
     <div className="flex items-center gap-3">
       <Switch
         checked={isEnabled}
-        onCheckedChange={(checked) => setValue.mutate(checked)}
-        disabled={setValue.isPending}
+        onCheckedChange={(checked) => setValueMutation.mutate(checked)}
+        disabled={setValueMutation.isPending}
       />
-      {setValue.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+      {setValueMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
     </div>
   );
 };
