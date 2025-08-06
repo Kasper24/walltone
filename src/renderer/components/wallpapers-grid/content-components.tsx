@@ -10,6 +10,7 @@ import {
   Settings,
   CheckCircle2,
 } from "lucide-react";
+import { AutoSizer, Grid } from "react-virtualized";
 import { BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
 import { type SettingKey } from "@electron/main/trpc/routes/settings/index.js";
 import { Dialog, DialogTrigger } from "@renderer/components/ui/dialog.js";
@@ -29,6 +30,7 @@ import { type DynamicControlDefinition } from "@renderer/components/wallpaper-di
 import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import { cn } from "@renderer/lib/cn.js";
 import { ConfigurationRequirement, OnWallpaperApply, OnWallpaperDownload } from "./types.js";
+import { Skeleton } from "../ui/skeleton.js";
 
 export const ConfigurationScreen = <TConfigKey extends SettingKey>({
   requirement,
@@ -138,8 +140,6 @@ export const ConfigurationScreen = <TConfigKey extends SettingKey>({
       </div>
     </ScrollArea>
   );
-
-  return null;
 };
 
 export const Wallpaper = <T extends BaseWallpaper>({
@@ -158,12 +158,12 @@ export const Wallpaper = <T extends BaseWallpaper>({
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <div key={wallpaper.id} className="group relative overflow-hidden rounded-lg">
+    <div className="group relative h-full w-full overflow-hidden rounded-lg">
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger className="flex w-full">
+        <DialogTrigger className="flex h-full w-full">
           {wallpaper.type !== "video" ? (
             <img
-              className="h-56 w-full transform rounded-lg transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
+              className="h-full w-full transform rounded-lg object-fill transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
               src={wallpaper.previewPath}
               alt={wallpaper.name}
               loading="lazy"
@@ -172,7 +172,7 @@ export const Wallpaper = <T extends BaseWallpaper>({
           ) : (
             <video
               src={wallpaper.previewPath}
-              className="h-56 w-full transform rounded-lg object-fill transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
+              className="h-full w-full transform rounded-lg object-fill transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
               onMouseEnter={(e) => {
                 e.currentTarget.play();
               }}
@@ -434,13 +434,15 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
   failureCount,
   isLoading,
   isFetching,
+  isFetchingNextPage,
+  hasNextPage,
+  fetchNextPage,
   allWallpapers,
   debouncedInputValue,
   clearSearch,
   onWallpaperApply,
   onWallpaperDownload,
   scalingOptions,
-  infiniteScrollRef,
   controlDefinitions,
 }: {
   isError: boolean;
@@ -449,15 +451,19 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
   failureCount: number;
   isLoading: boolean;
   isFetching: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
+  fetchNextPage: () => void;
   allWallpapers: T[];
   debouncedInputValue: string;
   clearSearch: () => void;
   onWallpaperApply?: OnWallpaperApply<T>;
   onWallpaperDownload?: OnWallpaperDownload<T>;
   scalingOptions?: { key: string; text: string }[];
-  infiniteScrollRef: (node?: Element | null | undefined) => void;
   controlDefinitions?: DynamicControlDefinition[];
 }) => {
+  const gridRef = React.useRef<Grid>(null);
+
   if (isError) {
     return <Error error={error!} retry={refetch} retryCount={failureCount} />;
   }
@@ -477,24 +483,73 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
   }
 
   return (
-    <ScrollArea
-      className={cn("h-[80vh]", {
-        "opacity-20": isFetching,
+    <div
+      className={cn("h-[80vh] w-full", {
+        "opacity-20": isFetchingNextPage,
       })}
     >
-      <div className="mr-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-        {allWallpapers.map((wallpaper) => (
-          <Wallpaper
-            key={wallpaper.id}
-            wallpaper={wallpaper}
-            onWallpaperApply={onWallpaperApply}
-            onWallpaperDownload={onWallpaperDownload}
-            scalingOptions={scalingOptions}
-            controlDefinitions={controlDefinitions}
-          />
-        ))}
-        <div className="h-5 w-5" ref={infiniteScrollRef}></div>
-      </div>
-    </ScrollArea>
+      <AutoSizer
+        onResize={() => {
+          // Force re-render on resize to recompute grid size
+          gridRef.current?.recomputeGridSize();
+        }}
+      >
+        {({ width, height }) => {
+          const columnWidth = 300;
+          const rowHeight = 260;
+          const columnCount = Math.max(1, Math.floor(width / columnWidth));
+          const rowCount = Math.ceil(allWallpapers.length / columnCount);
+
+          return (
+            <Grid
+              ref={gridRef}
+              width={width}
+              height={height}
+              columnWidth={Math.floor(width / columnCount) - 3}
+              columnCount={columnCount}
+              rowHeight={rowHeight}
+              rowCount={rowCount}
+              cellRenderer={({ columnIndex, rowIndex, key, style }) => {
+                const index = rowIndex * columnCount + columnIndex;
+                if (index >= allWallpapers.length) return null;
+                const wallpaper = allWallpapers[index];
+                return (
+                  <div key={key} style={style} className="p-1.5">
+                    <Wallpaper
+                      wallpaper={wallpaper}
+                      onWallpaperApply={onWallpaperApply}
+                      onWallpaperDownload={onWallpaperDownload}
+                      scalingOptions={scalingOptions}
+                      controlDefinitions={controlDefinitions}
+                    />
+                  </div>
+                );
+              }}
+              onSectionRendered={({ rowStopIndex, columnStopIndex }) => {
+                // Infinite loading: if last row is visible, fetch next page
+                const lastVisibleIndex = rowStopIndex * columnCount + columnStopIndex;
+                if (
+                  lastVisibleIndex >= allWallpapers.length - columnCount &&
+                  hasNextPage &&
+                  !isFetchingNextPage
+                ) {
+                  fetchNextPage();
+                }
+              }}
+            />
+          );
+        }}
+      </AutoSizer>
+      {isFetchingNextPage && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-end justify-center">
+          <div className="bg-background/80 pointer-events-auto mb-8 flex items-center gap-2 rounded-full px-6 py-3 shadow-lg">
+            <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+            <span className="text-muted-foreground text-sm font-medium">
+              Loading more wallpapers…
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };

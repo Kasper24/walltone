@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -117,13 +116,36 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  ::-webkit-scrollbar {
+    @apply h-2.5 w-2.5;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full border-[1px] border-solid border-transparent bg-clip-padding;
+  }
+
+  ::-webkit-scrollbar-button {
+    @apply h-0 w-0;
+  }
+
+  ::-webkit-scrollbar:horizontal {
+    @apply hidden;
+  }
+
   body {
     @apply bg-background text-foreground;
   }
+
   button,
   [role="button"] {
     cursor: pointer;
   }
+
   .draglayer {
     -webkit-app-region: drag;
   }
