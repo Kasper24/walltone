@@ -28,7 +28,6 @@ import { Separator } from "@renderer/components/ui/separator.js";
 import WallpaperDialog from "@renderer/components/wallpaper-dialog/index.js";
 import { type DynamicControlDefinition } from "@renderer/components/wallpaper-dialog/types.js";
 import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
-import { cn } from "@renderer/lib/cn.js";
 import { ConfigurationRequirement, OnWallpaperApply, OnWallpaperDownload } from "./types.js";
 
 export const ConfigurationScreen = <TConfigKey extends SettingKey>({
@@ -482,11 +481,7 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
   }
 
   return (
-    <div
-      className={cn("h-[80vh] w-full", {
-        "opacity-20": isFetchingNextPage,
-      })}
-    >
+    <div className={"h-[80vh] w-full"}>
       <AutoSizer
         onResize={() => {
           // Force re-render on resize to recompute grid size
