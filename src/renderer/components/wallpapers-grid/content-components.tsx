@@ -30,7 +30,6 @@ import { type DynamicControlDefinition } from "@renderer/components/wallpaper-di
 import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import { cn } from "@renderer/lib/cn.js";
 import { ConfigurationRequirement, OnWallpaperApply, OnWallpaperDownload } from "./types.js";
-import { Skeleton } from "../ui/skeleton.js";
 
 export const ConfigurationScreen = <TConfigKey extends SettingKey>({
   requirement,
