@@ -96,7 +96,7 @@ const ApplyWallpaperDialog = <T extends BaseWallpaper>({
   }
 
   return (
-    <DialogContent className="max-h-[80vh] max-w-[700px] select-none">
+    <DialogContent className="select-none">
       <DialogHeader className="space-y-2">
         <DialogTitle className="line-clamp-1">Apply Wallpaper: {wallpaper.name}</DialogTitle>
         <DialogDescription>
@@ -104,8 +104,8 @@ const ApplyWallpaperDialog = <T extends BaseWallpaper>({
         </DialogDescription>
       </DialogHeader>
 
-      <ScrollArea className="max-h-[60vh]">
-        <div className="space-y-4 pr-4">
+      <ScrollArea className="max-h-[60vh] pr-5">
+        <div className="space-y-4">
           <WallpaperPreview wallpaper={wallpaper} />
 
           <QuickSelectionButtons onSelectAll={selectAll} onSelectNone={selectNone} />
@@ -143,7 +143,7 @@ const ApplyWallpaperDialog = <T extends BaseWallpaper>({
         </div>
       </ScrollArea>
 
-      <DialogFooter className="flex-row justify-end space-x-2">
+      <DialogFooter className="flex-row justify-end space-x-2 pr-5">
         <DialogClose asChild>
           <Button disabled={selectedMonitors.size === 0} onClick={handleApply}>
             Apply to {selectedMonitors.size} Monitor{selectedMonitors.size !== 1 ? "s" : ""}

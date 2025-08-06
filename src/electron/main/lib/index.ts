@@ -6,6 +6,7 @@ const execute = ({
   args = [],
   env = {},
   shell = false,
+  detached = false,
   logStdout = true,
   logStderr = true,
 }: {
@@ -13,6 +14,7 @@ const execute = ({
   args?: string[];
   env?: NodeJS.ProcessEnv;
   shell?: boolean;
+  detached?: boolean;
   logStdout?: boolean;
   logStderr?: boolean;
 }): Promise<{ stdout: string; stderr: string }> => {
@@ -24,6 +26,7 @@ const execute = ({
         ...process.env,
         ...env,
       },
+      detached: detached,
       shell,
     });
 

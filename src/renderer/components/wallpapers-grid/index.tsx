@@ -107,13 +107,15 @@ const WallpapersGrid = <
 
   const {
     isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
     isLoading,
     isError,
     error,
     refetch,
     failureCount,
     allWallpapers,
-    infiniteScrollRef,
   } = useWallpaperData({
     queryKeys,
     queryFn,
@@ -163,13 +165,15 @@ const WallpapersGrid = <
         failureCount={failureCount}
         isLoading={isLoading}
         isFetching={isFetching}
+        isFetchingNextPage={isFetchingNextPage}
+        hasNextPage={hasNextPage}
+        fetchNextPage={fetchNextPage}
         allWallpapers={allWallpapers}
         debouncedInputValue={debouncedInputValue}
         clearSearch={clearSearch}
         onWallpaperApply={onWallpaperApply}
         onWallpaperDownload={onWallpaperDownload}
         scalingOptions={scalingOptions}
-        infiniteScrollRef={infiniteScrollRef}
         controlDefinitions={controlDefinitions}
       />
     </div>

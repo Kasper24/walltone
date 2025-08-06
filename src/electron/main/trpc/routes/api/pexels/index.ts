@@ -99,9 +99,12 @@ const transformVideos = (videos: PexelsVideo[]): ApiWallpaper[] => {
 const pexelsSearchParamsSchema = z.object({
   type: z.enum(["photos", "videos"]),
   apiKey: z.string().min(1, "API Key is required"),
-  query: z.string().optional(),
+  query: z
+    .string()
+    .transform((q) => (q && q.trim() !== "" ? q : "wallpaper"))
+    .default("wallpaper"),
   page: z.number().min(1),
-  perPage: z.number().optional(),
+  perPage: z.number().min(1).default(100),
   orientation: z.enum(["landscape", "portrait", "square"]).optional(),
   size: z.enum(["large", "medium", "small"]).optional(),
   color: z
@@ -133,9 +136,9 @@ export const pexelsRouter = router({
     const url = new URL(baseUrl);
     const params = url.searchParams;
 
-    params.set("query", input.query || "wallpaper");
+    params.set("query", input.query);
     params.set("page", input.page.toString());
-    params.set("per_page", (input.perPage || 30).toString());
+    params.set("per_page", input.perPage.toString());
     if (input.orientation) params.set("orientation", input.orientation);
     if (input.size) params.set("size", input.size);
     if (input.color) params.set("color", input.color);
@@ -152,7 +155,7 @@ export const pexelsRouter = router({
         });
 
       const data: PexelsSearchResponse<PexelsPhoto | PexelsVideo> = await response.json();
-      const numberOfPages = Math.ceil(data.total_results / (input.perPage || 30));
+      const numberOfPages = Math.ceil(data.total_results / input.perPage);
 
       let transformedData: ApiWallpaper[] = [];
       if (input.type === "photos" && data.photos) {

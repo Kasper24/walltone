@@ -71,7 +71,7 @@ const WallpaperDialog = <T extends BaseWallpaper>({
   );
 
   return (
-    <DialogContent className="flex h-[90vh] max-h-[900px] min-h-[600px] w-[95vw] max-w-4xl flex-col p-0 select-none">
+    <DialogContent className="flex h-[90vh] max-h-[900px] flex-col p-0 select-none">
       <ScrollArea className="overflow-hidden">
         <div className="flex flex-shrink-0 flex-col p-6 pb-4">
           <Header wallpaper={wallpaper} />

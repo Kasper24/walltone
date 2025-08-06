@@ -43,7 +43,6 @@ const LibraryImageTab = () => {
         await client.wallpaper.search.query({
           type: "image",
           page: pageParam,
-          limit: 20,
           query: query || "",
         })
       }

@@ -164,9 +164,12 @@ const transformWallpapers = (photos: UnsplashPhoto[]): ApiWallpaper[] => {
 
 const unsplashSearchParamsSchema = z.object({
   apiKey: z.string().min(1, "API Key is required"),
-  query: z.string(),
+  query: z
+    .string()
+    .transform((q) => (q && q.trim() !== "" ? q : "wallpaper"))
+    .default("wallpaper"),
   page: z.number().min(1),
-  perPage: z.number().min(1).optional().default(30),
+  perPage: z.number().min(1).max(30).default(30),
   orderBy: z.enum(["relevant", "latest"]).optional().default("relevant"),
   orientation: z.enum(["landscape", "portrait", "squarish"]).optional(),
   color: z
@@ -195,7 +198,7 @@ export const unsplashRouter = router({
     params.set("page", input.page.toString());
     params.set("per_page", input.perPage.toString());
     params.set("order_by", input.orderBy);
-    params.set("query", input.query || "wallpaper");
+    params.set("query", input.query);
     if (input.orientation) params.set("orientation", input.orientation);
     if (input.color) params.set("color", input.color);
 
