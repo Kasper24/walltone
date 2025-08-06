@@ -46,7 +46,6 @@ const LibraryWallpaperEngineTab = () => {
         return await client.wallpaper.search.query({
           type: "wallpaper-engine",
           page: pageParam,
-          limit: 50,
           sorting: sorting,
           query,
           tags,

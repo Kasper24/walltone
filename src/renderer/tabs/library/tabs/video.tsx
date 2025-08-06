@@ -43,7 +43,6 @@ const LibraryVideoTab = () => {
         await client.wallpaper.search.query({
           type: "video",
           page: pageParam,
-          limit: 20,
           query: query || "",
         })
       }

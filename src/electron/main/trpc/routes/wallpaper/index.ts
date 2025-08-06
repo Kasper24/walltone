@@ -63,7 +63,7 @@ export interface WallpaperData<T extends BaseWallpaper> {
 const searchWallpapersSchema = z.object({
   type: z.enum(["image", "video", "wallpaper-engine", "all"]),
   page: z.number().min(1).default(1),
-  limit: z.number().min(1).default(10),
+  perPage: z.number().min(1).default(20),
   query: z.string().optional(),
   sorting: z.enum(["name", "date_added", "id"]).default("name"),
   tags: z.array(z.string()).optional(),
@@ -138,7 +138,7 @@ export const wallpaperRouter = router({
     );
     const sortedWallpapers = sortWallpapers(filteredWallpapers, input.sorting);
 
-    return paginateData(sortedWallpapers, input.page, input.limit);
+    return paginateData(sortedWallpapers, input.page, input.perPage);
   }),
 
   set: publicProcedure.input(setWallpaperSchema).mutation(async ({ input }) => {

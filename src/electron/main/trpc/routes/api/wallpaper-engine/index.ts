@@ -82,7 +82,7 @@ const transformWallpapers = (wallpapers: WallpaperEngineWorkshopItem[]): BaseWal
 const searchSchema = z.object({
   apiKey: z.string().min(1, "API Key is required"),
   page: z.number().min(1),
-  perPage: z.number().min(1).optional().default(100),
+  perPage: z.number().min(1).default(100),
   query: z.string().optional(),
   tags: z.array(z.string()).optional(),
   sorting: z.string().optional(),
@@ -102,8 +102,8 @@ export const wallpaperEngineRouter = router({
     params.set("key", input.apiKey);
     params.set("creator_appid", "431960");
     params.set("appid", "431960");
-    params.set("page", `${input.page}`);
-    params.set("numperpage", `${input.perPage}`);
+    params.set("page", input.page.toString());
+    params.set("numperpage", input.perPage.toString());
     params.set("format", "json");
     params.set("return_tags", "true");
     params.set("return_previews", "true");
