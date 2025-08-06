@@ -161,7 +161,7 @@ export const Wallpaper = <T extends BaseWallpaper>({
         <DialogTrigger className="flex h-full w-full">
           {wallpaper.type !== "video" ? (
             <img
-              className="h-full w-full transform rounded-lg object-fill transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
+              className="bg-secondary h-full w-full transform rounded-lg object-fill transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
               src={wallpaper.previewPath}
               alt={wallpaper.name}
               loading="lazy"
@@ -170,7 +170,7 @@ export const Wallpaper = <T extends BaseWallpaper>({
           ) : (
             <video
               src={wallpaper.previewPath}
-              className="h-full w-full transform rounded-lg object-fill transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
+              className="bg-secondary h-full w-full transform rounded-lg object-fill transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
               onMouseEnter={(e) => {
                 e.currentTarget.play();
               }}
