@@ -104,8 +104,8 @@ const ApplyWallpaperDialog = <T extends BaseWallpaper>({
         </DialogDescription>
       </DialogHeader>
 
-      <ScrollArea className="max-h-[60vh]">
-        <div className="space-y-4 pr-4">
+      <ScrollArea className="max-h-[60vh] pr-5">
+        <div className="space-y-4">
           <WallpaperPreview wallpaper={wallpaper} />
 
           <QuickSelectionButtons onSelectAll={selectAll} onSelectNone={selectNone} />
@@ -141,15 +141,15 @@ const ApplyWallpaperDialog = <T extends BaseWallpaper>({
             </div>
           )}
         </div>
-      </ScrollArea>
 
-      <DialogFooter className="flex-row justify-end space-x-2">
-        <DialogClose asChild>
-          <Button disabled={selectedMonitors.size === 0} onClick={handleApply}>
-            Apply to {selectedMonitors.size} Monitor{selectedMonitors.size !== 1 ? "s" : ""}
-          </Button>
-        </DialogClose>
-      </DialogFooter>
+        <DialogFooter className="mt-5 flex-row justify-end space-x-2">
+          <DialogClose asChild>
+            <Button disabled={selectedMonitors.size === 0} onClick={handleApply}>
+              Apply to {selectedMonitors.size} Monitor{selectedMonitors.size !== 1 ? "s" : ""}
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </ScrollArea>
     </DialogContent>
   );
 };
