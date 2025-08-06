@@ -548,7 +548,7 @@ const setWallpaperEngineWallpaper = async (
   }
 
   await caller.settings.set({
-    key: "theme.lastWallpaperCmd",
+    key: "internal.lastWallpaperCmd",
     value: {
       command: "linux-wallpaperengine",
       args,
