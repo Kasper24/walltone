@@ -165,6 +165,11 @@ export const wallpaperRouter = router({
     // Wait for processes to terminate
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    if (input.monitors.length === 0)
+      input.monitors = (await caller.monitor.search()).map((monitor) => ({
+        id: monitor.id,
+      }));
+
     switch (input.type) {
       case "image":
         if (input.screenshot) {
