@@ -212,6 +212,7 @@ const ExploreWallpaperEngineTab = () => {
       onWallpaperDownload={async (wallpaper) => {
         const apiKey = await client.settings.get.query({
           key: "apiKeys.wallpaperEngine",
+          decrypt: true,
         });
 
         await client.api.wallpaperEngine.subscribe.mutate({
