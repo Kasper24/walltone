@@ -60,10 +60,11 @@ const convertPurity = (purity: WallhavenPurity[]): string => {
 
 const transformWallpapers = (wallpapers: WallhavenWallpaper[]): ApiWallpaper[] => {
   return wallpapers.map((wallpaper) => ({
-    type: "api",
+    type: "image",
     id: wallpaper.id,
     name: wallpaper.id,
-    previewPath: wallpaper.thumbs.large,
+    thumbnailPath: wallpaper.thumbs.large,
+    fullSizePath: wallpaper.path,
     downloadUrl: wallpaper.path,
   }));
 };

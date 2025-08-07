@@ -8,7 +8,7 @@ url="https://github.com/kasper24/walltone"
 license=("GPL3")
 depends=("nss" "libsecret" "cairo" "pango" "libjpeg-turbo"
 "giflib" "libsvgtiny" "swaybg" "mpvpaper"
-"linux-wallpaperengine" "cage" "grim")
+"linux-wallpaperengine" "cage" "grim" "ffmpeg")
 makedepends=("npm" "nodejs" "git")
 source=("$pkgname::git+$url.git")
 sha256sums=("SKIP")

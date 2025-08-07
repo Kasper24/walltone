@@ -171,7 +171,7 @@ const WallpaperImage = <T extends BaseWallpaper>({ wallpaper }: { wallpaper: T }
       <CardContent className="p-1">
         {wallpaper.type !== "video" ? (
           <img
-            className="h-48 w-full rounded-lg object-cover sm:h-56 md:h-64"
+            className="h-48 w-full rounded-lg object-fill sm:h-56 md:h-64"
             src={wallpaper.fullSizePath}
             alt={wallpaper.name}
           />

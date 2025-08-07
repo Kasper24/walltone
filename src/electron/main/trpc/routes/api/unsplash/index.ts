@@ -154,10 +154,11 @@ interface UnsplashSearchResult {
 
 const transformWallpapers = (photos: UnsplashPhoto[]): ApiWallpaper[] => {
   return photos.map((photo) => ({
-    type: "api",
+    type: "image",
     id: photo.id,
     name: photo.alt_description || photo.description || `Photo by ${photo.user.name}`,
-    previewPath: photo.urls.regular,
+    thumbnailPath: photo.urls.regular,
+    fullSizePath: photo.urls.full,
     downloadUrl: photo.urls.full,
   }));
 };

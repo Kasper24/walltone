@@ -19,6 +19,8 @@
   linux-wallpaperengine,
   cage,
   grim,
+  ffmpeg,
+  vips,
   lib,
 }:
 
@@ -45,7 +47,7 @@ buildNpmPackage rec {
 
   src = ../../.;
 
-  npmDepsHash = "sha256-1RJDuZVHJGvvn9ozMZdRtVXpy4O4N+wMA/pW8JJaFtk=";
+  npmDepsHash = "sha256-bTD9ZQ9p+Q2CGiBXRrIRQgDtz809HNilnuOhplrGtUw=";
 
   dontNpmBuild = true;
   makeCacheWritable = true;
@@ -74,6 +76,9 @@ buildNpmPackage rec {
     libpng
     librsvg
     giflib
+
+    # Sharp dependencies
+    vips
   ];
 
   nativeBuildInputs = [
@@ -95,6 +100,7 @@ buildNpmPackage rec {
           linux-wallpaperengine
           cage
           grim
+          ffmpeg
         ]
       }
 

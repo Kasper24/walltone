@@ -85,6 +85,7 @@ const config: ForgeConfig = {
         canvas: "^3.1.2",
         conf: "^14.0.0",
         keytar: "^7.9.0",
+        sharp: "^0.34.3",
       };
       fs.writeFileSync(path.resolve(buildPath, "package.json"), JSON.stringify(packageJson));
 

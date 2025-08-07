@@ -159,28 +159,13 @@ export const Wallpaper = <T extends BaseWallpaper>({
     <div className="group relative h-full w-full overflow-hidden rounded-lg">
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="flex h-full w-full">
-          {wallpaper.type !== "video" ? (
-            <img
-              className="bg-secondary h-full w-full transform rounded-lg object-fill transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
-              src={wallpaper.previewPath}
-              alt={wallpaper.name}
-              loading="lazy"
-              decoding="async"
-            />
-          ) : (
-            <video
-              src={wallpaper.previewPath}
-              className="bg-secondary h-full w-full transform rounded-lg object-fill transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
-              onMouseEnter={(e) => {
-                e.currentTarget.play();
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.pause();
-                e.currentTarget.currentTime = 0;
-              }}
-            ></video>
-          )}
-
+          <img
+            className="bg-secondary h-full w-full transform rounded-lg object-cover transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
+            src={wallpaper.thumbnailPath}
+            alt={wallpaper.name}
+            loading="lazy"
+            decoding="async"
+          />
           <div className="bg-background pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-50">
             <span className="p-3 text-center font-semibold">{wallpaper.name}</span>
           </div>
@@ -490,7 +475,7 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
       >
         {({ width, height }) => {
           const columnWidth = 300;
-          const rowHeight = 260;
+          const rowHeight = 250;
           const columnCount = Math.max(1, Math.floor(width / columnWidth));
           const rowCount = Math.ceil(allWallpapers.length / columnCount);
 

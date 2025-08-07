@@ -11,57 +11,6 @@ import {
 import { client } from "@renderer/lib/trpc.js";
 import { DynamicControlValues } from "./types.js";
 
-export const getSrcForThemeGeneration = (imageSrc: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    if (imageSrc.startsWith("video://")) {
-      const video = document.createElement("video");
-      video.src = imageSrc;
-      video.crossOrigin = "anonymous"; // Required for canvas security
-      video.muted = true;
-
-      const onSeeked = () => {
-        try {
-          const canvas = document.createElement("canvas");
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            return reject(new Error("Could not get 2D canvas context."));
-          }
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          // The dataURL is a base64 string representing the image.
-          const dataUrl = canvas.toDataURL("image/png");
-          resolve(dataUrl);
-        } catch (e) {
-          reject(e);
-        } finally {
-          // Clean up to prevent memory leaks.
-          video.removeEventListener("seeked", onSeeked);
-          video.removeEventListener("error", onError);
-        }
-      };
-
-      const onError = (e: Event | string) => {
-        reject(new Error(`Failed to load video for theme generation: ${e}`));
-        video.removeEventListener("seeked", onSeeked);
-        video.removeEventListener("error", onError);
-      };
-
-      video.addEventListener("seeked", onSeeked);
-      video.addEventListener("error", onError);
-
-      // Once the video metadata is loaded, we can seek to a frame.
-      video.onloadedmetadata = () => {
-        video.currentTime = 1; // Seek to the 1-second mark.
-      };
-
-      video.load();
-    } else {
-      resolve(imageSrc);
-    }
-  });
-};
-
 export const useThemeGeneration = (imageSrc: string, enabled: boolean) => {
   const [theme, setTheme] = React.useState<Theme | undefined>();
 
@@ -70,7 +19,7 @@ export const useThemeGeneration = (imageSrc: string, enabled: boolean) => {
     enabled,
     queryFn: async () => {
       return await client.theme.generate.query({
-        imageSrc: await getSrcForThemeGeneration(imageSrc),
+        imageSrc: imageSrc,
       });
     },
   });

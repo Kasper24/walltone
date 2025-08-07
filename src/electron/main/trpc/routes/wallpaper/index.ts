@@ -1,5 +1,8 @@
+import os from "os";
 import path from "path";
+import crypto from "crypto";
 import { promises as fs } from "fs";
+import sharp from "sharp";
 import z from "zod";
 import { TRPCError } from "@trpc/server";
 import { execute, killProcess, santize, renderString } from "@electron/main/lib/index.js";
@@ -7,21 +10,22 @@ import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { caller } from "@electron/main/trpc/routes/index.js";
 import { type SettingsSchema, type SettingKey } from "@electron/main/trpc/routes/settings/index.js";
 
+const THUMB_CACHE_DIR = path.join(os.homedir(), ".cache", "walltone", "thumbnails");
+const THUMBNAIL_WIDTH = 640;
 const SUPPORTED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"];
 const SUPPORTED_VIDEO_EXTENSIONS = [".mp4", ".mkv", ".webm", ".avi", ".mov"];
-
 const CAGE_INIT_TIME = 5;
 const CAGE_SCREENSHOT_PATH = "/tmp/walltone-wallpaper-screenshot.png";
 
 export interface BaseWallpaper {
-  type: "image" | "video" | "wallpaper-engine" | "api";
+  type: "image" | "video" | "wallpaper-engine";
   id: string;
   name: string;
-  previewPath: string;
+  thumbnailPath: string;
+  fullSizePath: string;
 }
 
 export interface ApiWallpaper extends BaseWallpaper {
-  type: "api";
   downloadUrl: string;
 }
 
@@ -78,7 +82,7 @@ const setWallpaperSchema = z.object({
   monitors: z
     .array(
       z.object({
-        name: z.string().min(1),
+        id: z.string().min(1),
         scalingMethod: z.string().optional(),
       })
     )
@@ -130,15 +134,18 @@ export const wallpaperRouter = router({
       wallpapers.push(...weWallpapers);
     }
 
-    const filteredWallpapers = filterWallpapers(
-      wallpapers,
-      input.query,
-      input.tags,
-      input.matchAll
-    );
-    const sortedWallpapers = sortWallpapers(filteredWallpapers, input.sorting);
+    const filtered = filterWallpapers(wallpapers, input.query, input.tags, input.matchAll);
+    const sorted = sortWallpapers(filtered, input.sorting);
+    const paginated = paginateData(sorted, input.page, input.perPage);
 
-    return paginateData(sortedWallpapers, input.page, input.perPage);
+    paginated.data = await Promise.all(
+      paginated.data.map(async (wallpaper) => {
+        wallpaper.thumbnailPath = await resolveThumbnailPath(wallpaper);
+        return wallpaper;
+      })
+    );
+
+    return paginated;
   }),
 
   set: publicProcedure.input(setWallpaperSchema).mutation(async ({ input }) => {
@@ -238,6 +245,7 @@ const getMediaWallpapers = async (
   fileTypes: string[]
 ) => {
   const wallpapers: LibraryWallpaper[] = [];
+
   const folders = await caller.settings.get({
     key: settingsKey,
   });
@@ -257,7 +265,8 @@ const getMediaWallpapers = async (
           id: path.basename(file.path),
           name: file.name,
           path: file.path,
-          previewPath: mediaType !== "video" ? `image://${file.path}` : `video://${file.path}`,
+          thumbnailPath: "", // Generated later
+          fullSizePath: `${mediaType}://${file.path}`,
           dateAdded: Date.now(),
           tags: [mediaType],
           type: mediaType,
@@ -338,7 +347,8 @@ const getWallpaperEngineWallpapers = async () => {
                   id: path.basename(subdirectoryPath),
                   name: parsedData.title,
                   path: subdirectoryPath,
-                  previewPath: `image://${path.join(subdirectoryPath, parsedData.preview)}`,
+                  thumbnailPath: "", // Generated later
+                  fullSizePath: `image://${path.join(subdirectoryPath, parsedData.preview)}`,
                   dateAdded: stat.mtime.getTime(),
                   workshopId: dirent.name,
                   file: parsedData.file,
@@ -392,14 +402,14 @@ const sortWallpapers = (wallpapers: LibraryWallpaper[], sorting: string) => {
 
 const setImageWallpaper = async (
   imagePath: string,
-  monitors: { name: string; scalingMethod?: string }[]
+  monitors: { id: string; scalingMethod?: string }[]
 ) => {
   const args: string[] = [];
 
   monitors.forEach((monitor) => {
     args.push(
       "--output",
-      monitor.name,
+      monitor.id,
       "--image",
       imagePath,
       "--mode",
@@ -420,7 +430,7 @@ const setImageWallpaper = async (
 
 const setVideoWallpaper = async (
   videoPath: string,
-  monitors: { name: string; scalingMethod?: string }[],
+  monitors: { id: string; scalingMethod?: string }[],
   options?: {
     mute?: boolean;
   }
@@ -463,7 +473,7 @@ const setVideoWallpaper = async (
 
   // Add monitor names (use ALL if multiple monitors, otherwise specific monitor)
   if (monitors.length === 1) {
-    args.push(monitors[0].name);
+    args.push(monitors[0].id);
   } else {
     args.push("ALL");
   }
@@ -485,7 +495,7 @@ const setVideoWallpaper = async (
 const setWallpaperEngineWallpaper = async (
   assetsPath: string,
   wallpaperPath: string,
-  monitors: { name: string; scalingMethod?: string }[],
+  monitors: { id: string; scalingMethod?: string }[],
   options?: {
     silent?: boolean;
     volume?: number;
@@ -501,7 +511,7 @@ const setWallpaperEngineWallpaper = async (
   const args = [
     ...monitors.flatMap((monitor) => [
       "--screen-root",
-      monitor.name,
+      monitor.id,
       "--bg",
       wallpaperPath,
       "--scaling",
@@ -589,4 +599,77 @@ const copyWallpaperToDestinations = async (
       await fs.copyFile(wallpaperPath, destination);
     })
   );
+};
+
+async function getFileHash(filePath: string): Promise<string> {
+  const stat = await fs.stat(filePath);
+  return crypto.createHash("sha1").update(`${stat.mtimeMs}-${stat.size}`).digest("hex");
+}
+
+async function getOrCreateThumbnail(wallpaper: LibraryWallpaper) {
+  await fs.mkdir(THUMB_CACHE_DIR, { recursive: true });
+  const fullSizePath = wallpaper.fullSizePath.replace("image://", "").replace("video://", "");
+
+  const hash = await getFileHash(fullSizePath);
+  const thumbPath = path.join(THUMB_CACHE_DIR, `${hash}.jpeg`);
+
+  try {
+    await fs.access(thumbPath);
+    console.log("Cache hit: ", wallpaper.fullSizePath);
+  } catch {
+    console.log("Cache miss: ", wallpaper.fullSizePath);
+
+    if (wallpaper.type === "image" || wallpaper.type === "wallpaper-engine")
+      await sharp(fullSizePath)
+        .rotate()
+        .resize(THUMBNAIL_WIDTH, null, {
+          withoutEnlargement: true,
+        })
+        .jpeg({
+          quality: 80,
+          mozjpeg: true,
+        })
+        .toFile(thumbPath);
+
+    if (wallpaper.type === "video")
+      await execute({
+        ignoreErrors: true,
+        command: "ffmpeg",
+        args: [
+          "-y",
+          "-ss",
+          "1", // seek to 1s
+          "-i",
+          fullSizePath,
+          "-frames:v",
+          "1", // grab one frame
+          "-vf",
+          `scale='if(gt(iw,${THUMBNAIL_WIDTH}),${THUMBNAIL_WIDTH},iw)':-1`,
+          "-q:v",
+          "1", // quality (1 = best, 31 = worst)
+          thumbPath, // save directly to file
+        ],
+      });
+  }
+
+  return `image://${thumbPath}`;
+}
+
+const resolveThumbnailPath = async (wallpaper: LibraryWallpaper) => {
+  if (wallpaper.type === "image") {
+    return await getOrCreateThumbnail(wallpaper);
+  }
+  if (wallpaper.type === "video") {
+    return await getOrCreateThumbnail(wallpaper);
+  }
+  if (wallpaper.type === "wallpaper-engine") {
+    // If the preview is a gif, just use it directly
+    if (path.extname(wallpaper.thumbnailPath).toLowerCase() === ".gif") {
+      return wallpaper.thumbnailPath;
+    }
+    // Otherwise, generate a thumbnail
+    return await getOrCreateThumbnail(wallpaper);
+  }
+
+  return "";
 };

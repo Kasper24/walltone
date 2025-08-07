@@ -69,10 +69,11 @@ interface PexelsSearchResponse<T> {
 
 const transformPhotos = (photos: PexelsPhoto[]): ApiWallpaper[] => {
   return photos.map((photo) => ({
-    type: "api",
+    type: "image",
     id: photo.id.toString(),
     name: photo.alt || `Photo by ${photo.photographer}`,
-    previewPath: photo.src.large,
+    thumbnailPath: photo.src.large,
+    fullSizePath: photo.src.original,
     downloadUrl: photo.src.original,
   }));
 };
@@ -87,10 +88,11 @@ const transformVideos = (videos: PexelsVideo[]): ApiWallpaper[] => {
     });
 
     return {
-      type: "api",
+      type: "video",
       id: video.id.toString(),
       name: `Video by ${video.user.name}`,
-      previewPath: video.image,
+      thumbnailPath: video.image,
+      fullSizePath: bestVideo.link,
       downloadUrl: bestVideo.link,
     };
   });
