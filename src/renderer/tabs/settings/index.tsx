@@ -22,6 +22,7 @@ import {
 
 interface SettingConfig {
   settingKey: SettingKey;
+  additionalQueryKeysToInvalidate?: string[];
   title: string;
   description?: string;
   type:
@@ -201,6 +202,7 @@ const SETTINGS_CONFIG: SettingsSection[] = [
     settings: [
       {
         settingKey: "apiKeys.unsplash",
+        additionalQueryKeysToInvalidate: ["wallpapers.explore.unsplash"],
         title: "Unsplash API Key",
         description: "Required for retrieving wallpapers from Unsplash",
         type: "encrypted",
@@ -208,6 +210,10 @@ const SETTINGS_CONFIG: SettingsSection[] = [
       },
       {
         settingKey: "apiKeys.pexels",
+        additionalQueryKeysToInvalidate: [
+          "wallpapers.explore.pexelsImages",
+          "wallpapers.explore.pexelsVideos",
+        ],
         title: "Pexels API Key",
         description: "Required for retrieving wallpapers from Pexels",
         type: "encrypted",
@@ -215,6 +221,7 @@ const SETTINGS_CONFIG: SettingsSection[] = [
       },
       {
         settingKey: "apiKeys.wallpaperEngine",
+        additionalQueryKeysToInvalidate: ["wallpapers.explore.wallpaperEngine"],
         title: "Steam API Key",
         description: "Required for retrieving wallpapers from Wallpaper Engine",
         type: "encrypted",
@@ -229,12 +236,14 @@ const SETTINGS_CONFIG: SettingsSection[] = [
     settings: [
       {
         settingKey: "wallpaperSources.imageFolders",
+        additionalQueryKeysToInvalidate: ["wallpapers.library.image"],
         title: "Image Wallpaper Folders",
         description: "Local folders containing wallpaper images",
         type: "folder-list",
       },
       {
         settingKey: "wallpaperSources.videoFolders",
+        additionalQueryKeysToInvalidate: ["wallpapers.library.video"],
         title: "Video Wallpaper Folders",
         description: "Local folders containing wallpaper videos",
         type: "folder-list",
@@ -248,6 +257,7 @@ const SETTINGS_CONFIG: SettingsSection[] = [
       },
       {
         settingKey: "wallpaperSources.wallpaperEngineFolders",
+        additionalQueryKeysToInvalidate: ["wallpapers.library.wallpaperEngine"],
         title: "Wallpaper Engine Wallpaper Folders",
         description: "Additional folders to scan for wallpapers",
         type: "folder-list",
@@ -319,6 +329,7 @@ const SettingField = ({ setting }: { setting: SettingConfig }) => {
       return (
         <InputSetting
           settingKey={setting.settingKey}
+          additionalQueryKeysToInvalidate={setting.additionalQueryKeysToInvalidate}
           placeholder={setting.placeholder || ""}
           filePicker="folder"
         />
@@ -350,7 +361,12 @@ const SettingField = ({ setting }: { setting: SettingConfig }) => {
         />
       );
     case "folder-list":
-      return <FolderListSetting settingKey={setting.settingKey} />;
+      return (
+        <FolderListSetting
+          settingKey={setting.settingKey}
+          additionalQueryKeysToInvalidate={setting.additionalQueryKeysToInvalidate}
+        />
+      );
     case "theme":
       return <ThemeSetting />;
     case "template-list":

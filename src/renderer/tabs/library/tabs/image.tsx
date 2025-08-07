@@ -38,7 +38,7 @@ const LibraryImageTab = () => {
           },
         ],
       }}
-      queryKeys={["library-image"]}
+      queryKeys={["wallpapers.library.image"]}
       queryFn={async ({ pageParam, query }) =>
         await client.wallpaper.search.query({
           type: "image",

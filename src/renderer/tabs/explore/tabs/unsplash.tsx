@@ -46,7 +46,7 @@ const ExploreUnsplashTab = () => {
           },
         ],
       }}
-      queryKeys={[`explore-unsplash`]}
+      queryKeys={[`wallpapers.explore.unsplash`]}
       queryFn={async ({ pageParam, query, sorting, appliedFilters, configValue }) =>
         await client.api.unsplash.search.query({
           apiKey: configValue!,

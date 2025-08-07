@@ -46,7 +46,7 @@ const ExplorePexelsImagesTab = () => {
           },
         ],
       }}
-      queryKeys={[`explore-pexels-images`]}
+      queryKeys={[`wallpapers.explore.pexelsImages`]}
       queryFn={async ({ pageParam, query, appliedFilters, configValue }) =>
         await client.api.pexels.search.query({
           type: "photos",

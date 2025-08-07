@@ -46,7 +46,7 @@ const ExplorePexelsVideosTab = () => {
           },
         ],
       }}
-      queryKeys={[`explore-pexels-videos`]}
+      queryKeys={[`wallpapers.explore.pexelsVideos`]}
       queryFn={async ({ pageParam, query, appliedFilters, configValue }) =>
         await client.api.pexels.search.query({
           type: "videos",

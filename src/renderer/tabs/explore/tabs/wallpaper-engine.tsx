@@ -46,7 +46,7 @@ const ExploreWallpaperEngineTab = () => {
           },
         ],
       }}
-      queryKeys={[`explore-wallpaper-engine`]}
+      queryKeys={[`wallpapers.explore.wallpaperEngine`]}
       queryFn={async ({ pageParam, query, sorting, appliedFilters, configValue }) => {
         const tags = Object.entries(appliedFilters?.arrays || {}).flatMap(([_, values]) => values);
 
