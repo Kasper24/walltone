@@ -166,28 +166,28 @@ export const useMonitorSelection = (scalingOptions?: { key: string; text: string
     if (monitorsQuery.data && monitorsQuery.data.length > 0) {
       const firstMonitor = monitorsQuery.data[0];
       if (firstMonitor) {
-        setSelectedMonitors(new Set([firstMonitor.name]));
-        setMonitorScalingMethods({ [firstMonitor.name]: defaultScalingMethod });
+        setSelectedMonitors(new Set([firstMonitor.id]));
+        setMonitorScalingMethods({ [firstMonitor.id]: defaultScalingMethod });
       }
     }
   }, [monitorsQuery.data, defaultScalingMethod]);
 
   const toggleMonitor = React.useCallback(
-    (name: string) => {
+    (id: string) => {
       setSelectedMonitors((prev) => {
         const newSet = new Set(prev);
-        if (newSet.has(name)) {
-          newSet.delete(name);
+        if (newSet.has(id)) {
+          newSet.delete(id);
           setMonitorScalingMethods((prevMethods) => {
             const newMethods = { ...prevMethods };
-            delete newMethods[name];
+            delete newMethods[id];
             return newMethods;
           });
         } else {
-          newSet.add(name);
+          newSet.add(id);
           setMonitorScalingMethods((prevMethods) => ({
             ...prevMethods,
-            [name]: defaultScalingMethod,
+            [id]: defaultScalingMethod,
           }));
         }
         return newSet;
@@ -196,16 +196,16 @@ export const useMonitorSelection = (scalingOptions?: { key: string; text: string
     [defaultScalingMethod]
   );
 
-  const updateScalingMethod = React.useCallback((name: string, scalingMethod: string) => {
+  const updateScalingMethod = React.useCallback((id: string, scalingMethod: string) => {
     setMonitorScalingMethods((prev) => ({
       ...prev,
-      [name]: scalingMethod,
+      [id]: scalingMethod,
     }));
   }, []);
 
   const selectAll = React.useCallback(() => {
     if (monitorsQuery.data) {
-      const allnames = monitorsQuery.data.map((monitor) => monitor.name);
+      const allnames = monitorsQuery.data.map((monitor) => monitor.id);
       setSelectedMonitors(new Set(allnames));
 
       const allMethods = allnames.reduce(
@@ -271,7 +271,7 @@ export const useWallpaperActions = <T extends BaseWallpaper>(wallpaper: T) => {
       controlValues,
     }: {
       onApply: OnWallpaperApply<T>;
-      monitorConfigs: { name: string; scalingMethod: string }[];
+      monitorConfigs: { id: string; scalingMethod: string }[];
       controlValues?: DynamicControlValues;
     }) => {
       return await onApply(wallpaper, monitorConfigs, controlValues);

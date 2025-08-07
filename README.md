@@ -57,7 +57,6 @@ It automatically generates beautiful color themes from your wallpapers, and lets
 - [`linux-wallpaperengine`](https://github.com/catsout/wallpaper-engine-kde-plugin) - for Wallpaper Engine
 - [`cage`](https://github.com/cage-kiosk/cage) -  runs wallpapers in an isolated, invisible Wayland session specifically so we can screenshot them without affecting the user’s desktop
 - [`grim`](https://github.com/emersion/grim) - takes a screenshot of the wallpaper running inside cage
-- [`wayland-info`](https://gitlab.freedesktop.org/wayland/wayland-utils/) - used to query Wayland compositor outputs protocol
 
 ### Arch Linux (AUR)
 

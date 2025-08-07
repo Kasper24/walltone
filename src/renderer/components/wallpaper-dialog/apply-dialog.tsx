@@ -68,9 +68,9 @@ const ApplyWallpaperDialog = <T extends BaseWallpaper>({
 
   const handleApply = React.useCallback(() => {
     if (onApply) {
-      const monitorConfigs = Array.from(selectedMonitors).map((name) => ({
-        name,
-        scalingMethod: monitorScalingMethods[name] || scalingOptions?.[0]?.key || "fill",
+      const monitorConfigs = Array.from(selectedMonitors).map((id) => ({
+        id,
+        scalingMethod: monitorScalingMethods[id] || scalingOptions?.[0]?.key || "fill",
       }));
       applyMutation.mutate({
         onApply,
@@ -211,13 +211,13 @@ const WallpaperPreview = ({ wallpaper }: { wallpaper: BaseWallpaper }) => {
       {wallpaper.type !== "video" ? (
         <img
           className="h-20 w-32 rounded-md object-cover"
-          src={wallpaper.previewPath}
+          src={wallpaper.thumbnailPath}
           alt={wallpaper.name}
         />
       ) : (
         <video
           className="h-20 w-32 rounded-md object-fill"
-          src={wallpaper.previewPath}
+          src={wallpaper.thumbnailPath}
           autoPlay
           loop
           muted
@@ -254,7 +254,7 @@ const VisualMonitorLayout = ({
 }: {
   monitors: Monitor[];
   selectedMonitors: Set<string>;
-  onToggleMonitor: (name: string) => void;
+  onToggleMonitor: (id: string) => void;
 }) => {
   const getRelativePosition = (monitor: Monitor, monitors: Monitor[]) => {
     if (monitors.length <= 1) return { left: 0, top: 0, width: 100, height: 100 };
@@ -287,11 +287,11 @@ const VisualMonitorLayout = ({
     <div className="bg-muted/20 relative h-32 rounded-lg border p-4">
       {monitors.map((monitor) => {
         const position = getRelativePosition(monitor, monitors);
-        const isSelected = selectedMonitors.has(monitor.name);
+        const isSelected = selectedMonitors.has(monitor.id);
 
         return (
           <div
-            key={monitor.name}
+            key={monitor.id}
             className={`absolute cursor-pointer rounded border-2 transition-all ${
               isSelected
                 ? "border-primary bg-primary/20"
@@ -305,12 +305,12 @@ const VisualMonitorLayout = ({
               minWidth: "60px",
               minHeight: "40px",
             }}
-            onClick={() => onToggleMonitor(monitor.name)}
+            onClick={() => onToggleMonitor(monitor.id)}
           >
             <div className="flex h-full items-center justify-center">
               <div className="text-center">
                 <MonitorIcon className="mx-auto mb-1 h-4 w-4" />
-                <div className="text-xs font-medium">{monitor.name}</div>
+                <div className="text-xs font-medium">{monitor.id}</div>
                 {isSelected && <Check className="text-primary mx-auto mt-1 h-3 w-3" />}
               </div>
             </div>
@@ -333,38 +333,37 @@ const MonitorList = ({
   selectedMonitors: Set<string>;
   monitorScalingMethods: Record<string, string>;
   scalingOptions?: { key: string; text: string }[];
-  onToggleMonitor: (name: string) => void;
-  onUpdateScalingMethod: (name: string, scalingMethod: string) => void;
+  onToggleMonitor: (id: string) => void;
+  onUpdateScalingMethod: (id: string, scalingMethod: string) => void;
 }) => {
   return (
     <div className="max-h-64 space-y-2 overflow-y-auto">
       {monitors.map((monitor) => {
-        const isSelected = selectedMonitors.has(monitor.name);
+        const isSelected = selectedMonitors.has(monitor.id);
         const currentScalingMethod =
-          monitorScalingMethods[monitor.name] || scalingOptions?.[0]?.key || "fill";
+          monitorScalingMethods[monitor.id] || scalingOptions?.[0]?.key || "fill";
 
         return (
-          <Card key={monitor.name} className="hover:bg-muted/50 transition-colors">
+          <Card key={monitor.id} className="hover:bg-muted/50 transition-colors">
             <CardContent className="p-3">
               <div className="flex items-start space-x-3">
                 <div className="pt-0.5">
                   <Checkbox
-                    id={monitor.name}
+                    id={monitor.id}
                     checked={isSelected}
-                    onCheckedChange={() => onToggleMonitor(monitor.name)}
+                    onCheckedChange={() => onToggleMonitor(monitor.id)}
                   />
                 </div>
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center space-x-2">
                     <MonitorIcon className="h-4 w-4" />
                     <span className="font-medium">
-                      {monitor.make} {monitor.model}
-                      <span className="text-muted-foreground ml-2 text-xs">({monitor.name})</span>
+                      {monitor.name}
+                      <span className="text-muted-foreground ml-2 text-xs">({monitor.id})</span>
                     </span>
                   </div>
                   <div className="text-muted-foreground text-sm">
-                    {monitor.width} × {monitor.height} @ {monitor.refreshRate}
-                    Hz
+                    {monitor.width} × {monitor.height}
                     {monitor.scale !== 1 && <span className="ml-2">• Scale: {monitor.scale}x</span>}
                   </div>
 
@@ -373,7 +372,7 @@ const MonitorList = ({
                       <label className="text-muted-foreground text-xs font-medium">Scaling:</label>
                       <Select
                         value={currentScalingMethod}
-                        onValueChange={(value) => onUpdateScalingMethod(monitor.name, value)}
+                        onValueChange={(value) => onUpdateScalingMethod(monitor.id, value)}
                       >
                         <SelectTrigger className="h-7 w-28 text-xs">
                           <SelectValue />

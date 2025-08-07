@@ -19,7 +19,6 @@
   linux-wallpaperengine,
   cage,
   grim,
-  wayland-utils,
   lib,
 }:
 
@@ -96,7 +95,6 @@ buildNpmPackage rec {
           linux-wallpaperengine
           cage
           grim
-          wayland-utils
         ]
       }
 

@@ -12,7 +12,7 @@ import {
 
 export type OnWallpaperApply<T extends BaseWallpaper> = (
   wallpaper: T,
-  monitorConfigs: { name: string; scalingMethod: string }[],
+  monitorConfigs: { id: string; scalingMethod: string }[],
   controlValues?: DynamicControlValues
 ) => Promise<void>;
 
