@@ -87,6 +87,7 @@ const setWallpaperSchema = z.object({
       })
     )
     .min(1),
+  screenshot: z.boolean().default(true),
   wallpaperEngineOptions: z
     .object({
       silent: z.boolean().optional(),
@@ -106,6 +107,8 @@ const setWallpaperSchema = z.object({
     })
     .optional(),
 });
+
+export type SetWallpaperSchema = z.infer<typeof setWallpaperSchema>;
 
 export const wallpaperRouter = router({
   search: publicProcedure.input(searchWallpapersSchema).query(async ({ input }) => {
@@ -149,6 +152,13 @@ export const wallpaperRouter = router({
   }),
 
   set: publicProcedure.input(setWallpaperSchema).mutation(async ({ input }) => {
+    caller.settings.set({
+      key: "internal.lastWallpaper",
+      value: {
+        ...Object.fromEntries(input.monitors.map((monitor) => [monitor.id, input])),
+      },
+    });
+
     killProcess("swaybg");
     killProcess("mpvpaper");
     killProcess("linux-wallpaperengine");
@@ -157,12 +167,18 @@ export const wallpaperRouter = router({
 
     switch (input.type) {
       case "image":
-        await copyWallpaperToDestinations(input.id, input.name, input.path);
+        if (input.screenshot) {
+          await copyWallpaperToDestinations(input.id, input.name, input.path);
+        }
+
         await setImageWallpaper(input.path, input.monitors);
         break;
       case "video":
-        await screenshotWallpaperInCage(["mpv", "panscan=1.0", input.path]);
-        await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
+        if (input.screenshot) {
+          await screenshotWallpaperInCage(["mpv", "panscan=1.0", input.path]);
+          await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
+        }
+
         await setVideoWallpaper(input.path, input.monitors, input.videoOptions);
         break;
       case "wallpaper-engine": {
@@ -174,18 +190,21 @@ export const wallpaperRouter = router({
             code: "INTERNAL_SERVER_ERROR",
             message: "Wallpaper Engine assets folder is not set.",
           });
-        await screenshotWallpaperInCage([
-          "linux-wallpaperengine",
-          "--silent",
-          "--fps",
-          "1",
-          "--assets-dir",
-          assetsPath,
-          "--window",
-          "0x0x1280x720",
-          input.path,
-        ]);
-        await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
+
+        if (input.screenshot) {
+          await screenshotWallpaperInCage([
+            "linux-wallpaperengine",
+            "--silent",
+            "--fps",
+            "1",
+            "--assets-dir",
+            assetsPath,
+            "--window",
+            "0x0x1280x720",
+            input.path,
+          ]);
+          await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
+        }
 
         await setWallpaperEngineWallpaper(
           assetsPath,
@@ -204,16 +223,13 @@ export const wallpaperRouter = router({
     });
     if (!restoreOnStart) return;
 
-    const lastWallpaperCmd = await caller.settings.get({
-      key: "internal.lastWallpaperCmd",
-    });
+    const lastWallpaper = (await caller.settings.get({
+      key: "internal.lastWallpaper",
+    })) as SettingsSchema["internal"]["lastWallpaper"];
 
-    if (lastWallpaperCmd.command) {
-      killProcess("swaybg");
-      killProcess("mpvpaper");
-      killProcess("linux-wallpaperengine");
-      execute(lastWallpaperCmd);
-    }
+    Object.values(lastWallpaper).forEach(async (wallpaper) => {
+      await caller.wallpaper.set(wallpaper);
+    });
   }),
 });
 
@@ -417,14 +433,6 @@ const setImageWallpaper = async (
     );
   });
 
-  await caller.settings.set({
-    key: "internal.lastWallpaperCmd",
-    value: {
-      command: "swaybg",
-      args,
-    },
-  });
-
   await execute({ command: "swaybg", args });
 };
 
@@ -480,14 +488,6 @@ const setVideoWallpaper = async (
 
   // Add video path
   args.push(videoPath);
-
-  await caller.settings.set({
-    key: "internal.lastWallpaperCmd",
-    value: {
-      command: "mpvpaper",
-      args,
-    },
-  });
 
   await execute({ command: "mpvpaper", args });
 };
@@ -556,14 +556,6 @@ const setWallpaperEngineWallpaper = async (
   if (options?.noFullscreenPause) {
     args.push("--no-fullscreen-pause");
   }
-
-  await caller.settings.set({
-    key: "internal.lastWallpaperCmd",
-    value: {
-      command: "linux-wallpaperengine",
-      args,
-    },
-  });
 
   await execute({ command: "linux-wallpaperengine", args });
 };

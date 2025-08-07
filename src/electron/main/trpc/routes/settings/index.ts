@@ -4,6 +4,7 @@ import { z } from "zod";
 import Conf, { Schema } from "conf";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
+import { SetWallpaperSchema } from "@electron/main/trpc/routes/wallpaper/index.js";
 
 export interface SettingsSchema {
   /** Settings for the application's appearance and startup behavior. */
@@ -49,12 +50,10 @@ export interface SettingsSchema {
 
   /** Internal state, not typically edited by the user. */
   internal: {
-    lastWallpaperCmd: {
-      command: string;
-      args: string[];
-    };
+    lastWallpaper: Record<string, SetWallpaperSchema>;
   };
 
+  /** API keys for third-party services. */
   apiKeys?: {
     pexels: string;
     unsplash: string;
@@ -130,12 +129,53 @@ const schema: Schema<SettingsSchema> = {
   internal: {
     type: "object",
     properties: {
-      lastWallpaperCmd: {
+      lastWallpaper: {
         type: "object",
-        properties: {
-          command: { type: "string", default: "" },
-          args: { type: "array", default: [], items: { type: "string" } },
+        patternProperties: {
+          ".*": {
+            type: "object",
+            properties: {
+              type: { type: "string", enum: ["image", "video", "wallpaper-engine"] },
+              id: { type: "string", minLength: 1 },
+              name: { type: "string", minLength: 1 },
+              path: { type: "string", minLength: 1 },
+              monitors: {
+                type: "array",
+                minItems: 1,
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string", minLength: 1 },
+                    scalingMethod: { type: "string" },
+                  },
+                  required: ["id"],
+                },
+              },
+              wallpaperEngineOptions: {
+                type: "object",
+                properties: {
+                  silent: { type: "boolean" },
+                  volume: { type: "number", minimum: 0, maximum: 100 },
+                  noAutomute: { type: "boolean" },
+                  noAudioProcessing: { type: "boolean" },
+                  fps: { type: "number", minimum: 1, maximum: 200 },
+                  clamping: { type: "string", enum: ["clamp", "border", "repeat"] },
+                  disableMouse: { type: "boolean" },
+                  disableParallax: { type: "boolean" },
+                  noFullscreenPause: { type: "boolean" },
+                },
+              },
+              videoOptions: {
+                type: "object",
+                properties: {
+                  mute: { type: "boolean" },
+                },
+              },
+            },
+            required: ["type", "id", "name", "path", "monitors"],
+          },
         },
+        additionalProperties: false,
         default: {},
       },
     },
