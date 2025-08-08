@@ -84,7 +84,12 @@ const santize = (str: string) => {
 };
 
 const renderString = async (content: string, context: Record<string, unknown>) => {
-  return content.replace(/\$\{([\s\S]+?)\}/g, (_, expr) => {
+  // Replace $${} with a temporary marker
+  const tempMarker = "__RENDERSTRING_ESCAPED_DOLLAR_BRACE__";
+  let processedContent = content.replace(/\$\$\{/g, tempMarker);
+
+  // Process normal template expressions
+  processedContent = processedContent.replace(/\$\{([\s\S]+?)\}/g, (_, expr) => {
     try {
       const fn = new Function(...Object.keys(context), `return (${expr})`);
       return fn(...Object.values(context));
@@ -97,6 +102,9 @@ const renderString = async (content: string, context: Record<string, unknown>) =
       });
     }
   });
+
+  // Restore escaped sequences
+  return processedContent.replace(new RegExp(tempMarker, "g"), "${");
 };
 
 export { execute, killProcess, santize, renderString };
