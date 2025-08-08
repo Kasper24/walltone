@@ -3,13 +3,6 @@
   fetchurl,
   buildNpmPackage,
   libsecret,
-  pixman,
-  cairo,
-  pango,
-  libjpeg,
-  libpng,
-  librsvg,
-  giflib,
   pkg-config,
   makeWrapper,
   electron-bin,
@@ -43,11 +36,11 @@ let
 in
 buildNpmPackage rec {
   pname = "walltone";
-  version = "unstable-2025-08-02";
+  version = "unstable-2025-08-08";
 
   src = ../../.;
 
-  npmDepsHash = "sha256-bTD9ZQ9p+Q2CGiBXRrIRQgDtz809HNilnuOhplrGtUw=";
+  npmDepsHash = "sha256-WhiEyynQReumK4L7JGtfnunwaiiugObHuxZG7D3OppY=";
 
   dontNpmBuild = true;
   makeCacheWritable = true;
@@ -67,17 +60,6 @@ buildNpmPackage rec {
 
   buildInputs = [
     libsecret
-
-    # Node-Canvas dependencies
-    pixman
-    cairo
-    pango
-    libjpeg
-    libpng
-    librsvg
-    giflib
-
-    # Sharp dependencies
     vips
   ];
 

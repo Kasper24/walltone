@@ -1,5 +1,4 @@
 import { parentPort } from "worker_threads";
-import { createCanvas, loadImage } from "canvas";
 import quantize, { ColorMap } from "quantize";
 import {
   argbFromRgb,
@@ -11,6 +10,7 @@ import * as chroma from "chroma.ts";
 import { type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
 import generateMaterialTheme from "./material.js";
 import generateBase16Theme from "./base16.js";
+import sharp from "sharp";
 
 type Base16Settings = SettingsSchema["themeGeneration"]["base16"];
 type MaterialPixel = number;
@@ -18,11 +18,18 @@ type QuantizePixel = [number, number, number];
 type QuantizeLib = "material" | "quantize";
 
 const getBytesFromImageSrc = async (imageSrc: string) => {
-  const image = await loadImage(imageSrc);
-  const canvas = createCanvas(image.width, image.height);
-  const context = canvas.getContext("2d");
-  context.drawImage(image, 0, 0);
-  return context.getImageData(0, 0, image.width, image.height).data;
+  let src: string | ArrayBuffer = imageSrc;
+
+  if (imageSrc.startsWith("http://") || imageSrc.startsWith("https://")) {
+    const response = await fetch(imageSrc);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image from ${imageSrc}`);
+    }
+    src = await response.arrayBuffer();
+  }
+
+  const { data } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return new Uint8ClampedArray(data);
 };
 
 const getPixelsFromBytes = (
