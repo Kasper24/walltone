@@ -15,21 +15,21 @@ export interface ApiWallpaper extends BaseWallpaper {
 
 interface ImageWallpaper extends BaseWallpaper {
   type: "image";
-  path: string;
+  applyPath: string;
   dateAdded: number;
   tags: string[];
 }
 
 interface VideoWallpaper extends BaseWallpaper {
   type: "video";
-  path: string;
+  applyPath: string;
   dateAdded: number;
   tags: string[];
 }
 
 export interface WallpaperEngineWallpaper extends BaseWallpaper {
   type: "wallpaper-engine";
-  path: string;
+  applyPath: string;
   dateAdded: number;
   tags: string[];
   workshopId: string;

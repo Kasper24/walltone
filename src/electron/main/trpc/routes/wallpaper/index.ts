@@ -41,7 +41,7 @@ export const setWallpaperSchema = z.object({
   type: z.enum(["image", "video", "wallpaper-engine"]),
   id: z.string().min(1),
   name: z.string().min(1),
-  path: z.string().min(1),
+  applyPath: z.string().min(1),
   monitors: monitorsSchema.min(1),
   wallpaperEngineOptions: z
     .object({

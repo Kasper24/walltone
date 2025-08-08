@@ -138,7 +138,7 @@ const schema: Schema<SettingsSchema> = {
               type: { type: "string", enum: ["image", "video", "wallpaper-engine"] },
               id: { type: "string", minLength: 1 },
               name: { type: "string", minLength: 1 },
-              path: { type: "string", minLength: 1 },
+              applyPath: { type: "string", minLength: 1 },
               monitors: {
                 type: "array",
                 minItems: 1,

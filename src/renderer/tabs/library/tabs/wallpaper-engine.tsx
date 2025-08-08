@@ -286,7 +286,7 @@ const LibraryWallpaperEngineTab = () => {
           type: "wallpaper-engine",
           id: wallpaper.id,
           name: wallpaper.name,
-          path: wallpaper.path,
+          applyPath: wallpaper.applyPath,
           monitors,
           wallpaperEngineOptions: controlValues,
         });

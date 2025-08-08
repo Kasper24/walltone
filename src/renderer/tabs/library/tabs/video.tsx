@@ -71,7 +71,7 @@ const LibraryVideoTab = () => {
           type: "video",
           id: wallpaper.id,
           name: wallpaper.name,
-          path: wallpaper.path,
+          applyPath: wallpaper.applyPath,
           monitors,
           videoOptions: controlValues,
         });

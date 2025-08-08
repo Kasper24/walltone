@@ -34,7 +34,7 @@ const getImageAndVideoWallpapers = async (type: "image" | "video") => {
         wallpapers.push({
           id: path.basename(file.path),
           name: file.name,
-          path: file.path,
+          applyPath: file.path,
           thumbnailPath: "", // Generated later
           fullSizePath: `${type}://${file.path}`,
           dateAdded: Date.now(),
@@ -113,7 +113,7 @@ const getWallpaperEngineWallpapers = async () => {
                   type: "wallpaper-engine",
                   id: path.basename(subdirectoryPath),
                   name: parsedData.title,
-                  path: subdirectoryPath,
+                  applyPath: subdirectoryPath,
                   thumbnailPath: "", // Generated later
                   fullSizePath: `image://${path.join(subdirectoryPath, parsedData.preview)}`,
                   dateAdded: stat.mtime.getTime(),

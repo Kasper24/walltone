@@ -62,7 +62,7 @@ const LibraryImageTab = () => {
           type: "image",
           id: wallpaper.id,
           name: wallpaper.name,
-          path: wallpaper.path,
+          applyPath: wallpaper.applyPath,
           monitors,
         });
       }}

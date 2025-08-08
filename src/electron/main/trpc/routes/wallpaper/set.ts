@@ -31,9 +31,9 @@ const saveLastWallpaper = async (input: SetWallpaperInput) => {
 
 const screenshotWallpaper = async (input: SetWallpaperInput) => {
   if (input.type === "image") {
-    await copyWallpaperToDestinations(input.id, input.name, input.path);
+    await copyWallpaperToDestinations(input.id, input.name, input.applyPath);
   } else if (input.type === "video") {
-    await screenshotWallpaperInCage(["mpv", "panscan=1.0", input.path]);
+    await screenshotWallpaperInCage(["mpv", "panscan=1.0", input.applyPath]);
     await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
   } else if (input.type === "wallpaper-engine") {
     const assetsPath = await caller.settings.get({
@@ -56,7 +56,7 @@ const screenshotWallpaper = async (input: SetWallpaperInput) => {
       assetsPath,
       "--window",
       "0x0x1280x720",
-      input.path,
+      input.applyPath,
     ]);
     await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
   }
@@ -64,9 +64,9 @@ const screenshotWallpaper = async (input: SetWallpaperInput) => {
 
 const setWallpaper = async (input: SetWallpaperInput, detached: boolean) => {
   if (input.type === "image") {
-    await setImageWallpaper(input.path, input.monitors, detached);
+    await setImageWallpaper(input.applyPath, input.monitors, detached);
   } else if (input.type === "video") {
-    await setVideoWallpaper(input.path, input.monitors, input.videoOptions, detached);
+    await setVideoWallpaper(input.applyPath, input.monitors, input.videoOptions, detached);
   } else if (input.type === "wallpaper-engine") {
     const assetsPath = await caller.settings.get({
       key: "wallpaperSources.wallpaperEngineAssetsFolder",
@@ -81,7 +81,7 @@ const setWallpaper = async (input: SetWallpaperInput, detached: boolean) => {
 
     await setWallpaperEngineWallpaper(
       assetsPath,
-      input.path,
+      input.applyPath,
       input.monitors,
       input.wallpaperEngineOptions,
       detached
