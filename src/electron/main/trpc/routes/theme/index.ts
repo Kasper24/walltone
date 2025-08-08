@@ -130,7 +130,7 @@ export const themeRouter = router({
           if (event.status === "success") {
             resolve(result);
           } else {
-            reject(new Error(result.error || "Worker failed with an unknown error."));
+            reject(new Error(result?.error || "Worker failed with an unknown error."));
           }
           worker.terminate();
         });
