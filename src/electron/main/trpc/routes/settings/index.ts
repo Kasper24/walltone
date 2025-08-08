@@ -4,7 +4,7 @@ import { z } from "zod";
 import Conf, { Schema } from "conf";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { SetWallpaperSchema } from "@electron/main/trpc/routes/wallpaper/index.js";
+import { SetWallpaperInput } from "@electron/main/trpc/routes/wallpaper/types.js";
 
 export interface SettingsSchema {
   /** Settings for the application's appearance and startup behavior. */
@@ -50,7 +50,7 @@ export interface SettingsSchema {
 
   /** Internal state, not typically edited by the user. */
   internal: {
-    lastWallpaper: Record<string, SetWallpaperSchema>;
+    lastWallpaper: Record<string, SetWallpaperInput>;
   };
 
   /** API keys for third-party services. */

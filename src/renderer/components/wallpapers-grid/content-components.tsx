@@ -11,7 +11,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { AutoSizer, Grid } from "react-virtualized";
-import { BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
+import { BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
 import { type SettingKey } from "@electron/main/trpc/routes/settings/index.js";
 import { Dialog, DialogTrigger } from "@renderer/components/ui/dialog.js";
 import { ScrollArea } from "@renderer/components/ui/scroll-area.js";

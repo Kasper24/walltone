@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
 
 interface WallpaperEngineWorkshopItem {
   result: number;

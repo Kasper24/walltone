@@ -3,7 +3,7 @@ import { type DotNotationValueOf } from "node_modules/conf/dist/source/types.js"
 import {
   type BaseWallpaper,
   type WallpaperData,
-} from "@electron/main/trpc/routes/wallpaper/index.js";
+} from "@electron/main/trpc/routes/wallpaper/types.js";
 import { type SettingKey, type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
 import {
   DynamicControlDefinition,

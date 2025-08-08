@@ -2,7 +2,7 @@ import React from "react";
 import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useDebouncedCallback } from "use-debounce";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
 import { type SettingKey, type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
 import { client } from "@renderer/lib/trpc.js";
 import { AppliedFilters, ConfigurationRequirement, WallpapersGridProps } from "./types.js";

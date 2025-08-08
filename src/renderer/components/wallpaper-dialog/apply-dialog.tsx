@@ -1,7 +1,7 @@
 import React from "react";
 import { Check, Monitor as MonitorIcon, Loader2 } from "lucide-react";
 import { type Monitor } from "@electron/main/trpc/routes/monitor/index.js";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
 import {
   DialogContent,
   DialogDescription,
