@@ -23,6 +23,10 @@ export default defineConfig((env) => {
             __dirname,
             "src/electron/main/trpc/routes/theme/generator/index.ts"
           ),
+          ["thumbnail-generator"]: path.resolve(
+            __dirname,
+            "src/electron/main/trpc/routes/wallpaper/thumbnail.ts"
+          ),
         },
         output: {
           entryFileNames: "[name].js",

@@ -1,10 +1,11 @@
+import { parentPort } from "worker_threads";
 import os from "os";
 import path from "path";
 import crypto from "crypto";
 import { promises as fs } from "fs";
 import sharp from "sharp";
 import { execute } from "@electron/main/lib/index.js";
-import { LibraryWallpaper } from "./types.js";
+import { LibraryWallpaper, WallpaperData } from "./types.js";
 
 const THUMB_CACHE_DIR = path.join(os.homedir(), ".cache", "walltone", "thumbnails");
 const THUMBNAIL_WIDTH = 640;
@@ -79,4 +80,17 @@ const resolveThumbnailPath = async (wallpaper: LibraryWallpaper) => {
   return "";
 };
 
-export { resolveThumbnailPath };
+parentPort?.on("message", async ({ data }: { data: WallpaperData<LibraryWallpaper> }) => {
+  try {
+    data.data = await Promise.all(
+      data.data.map(async (wallpaper) => {
+        wallpaper.thumbnailPath = await resolveThumbnailPath(wallpaper);
+        return wallpaper;
+      })
+    );
+
+    parentPort?.postMessage({ status: "success", data });
+  } catch (error) {
+    parentPort?.postMessage({ status: "error", error: (error as Error).message });
+  }
+});

@@ -1,8 +1,9 @@
+import path from "path";
+import { Worker } from "worker_threads";
 import z from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { caller } from "@electron/main/trpc/routes/index.js";
 import { type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
-import { resolveThumbnailPath } from "./thumbnail.js";
 import { type LibraryWallpaper } from "./types.js";
 import {
   getImageAndVideoWallpapers,
@@ -86,14 +87,27 @@ export const wallpaperRouter = router({
     const sorted = sortWallpapers(filtered, input.sorting);
     const paginated = paginateData(sorted, input.page, input.perPage);
 
-    paginated.data = await Promise.all(
-      paginated.data.map(async (wallpaper) => {
-        wallpaper.thumbnailPath = await resolveThumbnailPath(wallpaper);
-        return wallpaper;
-      })
-    );
+    return await new Promise((resolve, reject) => {
+      const workerPath = path.join(import.meta.dirname, "thumbnail-generator.js");
+      const worker = new Worker(workerPath);
 
-    return paginated;
+      worker.on("message", (event) => {
+        const result = event.data;
+        if (event.status === "success") {
+          resolve(result);
+        } else {
+          reject(new Error(result.error || "Worker failed with an unknown error."));
+        }
+        worker.terminate();
+      });
+
+      worker.on("error", (error) => {
+        reject(error);
+        worker.terminate();
+      });
+
+      worker.postMessage({ data: paginated });
+    });
   }),
 
   set: publicProcedure.input(setWallpaperSchema).mutation(async ({ input }) => {
