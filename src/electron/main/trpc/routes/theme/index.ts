@@ -155,6 +155,15 @@ export const themeRouter = router({
         message: "Templates are not set.",
       });
 
+    const context = {
+      wallpaper: {
+        ...input.wallpaper,
+        id: santize(input.wallpaper.id),
+        name: santize(input.wallpaper.name),
+      },
+      theme: themeToChroma(input.theme),
+    };
+
     await Promise.all(
       templates.map(async (tpl) => {
         if (!tpl.src || !tpl.dest) {
@@ -166,37 +175,16 @@ export const themeRouter = router({
 
         try {
           const content = await fs.readFile(tpl.src, "utf-8");
-          const rendered = await renderString(content, {
-            wallpaper: {
-              ...input.wallpaper,
-              id: santize(input.wallpaper.id),
-              name: santize(input.wallpaper.name),
-            },
-            theme: themeToChroma(input.theme),
-          });
+          const rendered = await renderString(content, context);
 
           try {
-            const destination = await renderString(tpl.dest, {
-              wallpaper: {
-                ...input.wallpaper,
-                id: santize(input.wallpaper.id),
-                name: santize(input.wallpaper.name),
-              },
-              theme: themeToChroma(input.theme),
-            });
+            const destination = await renderString(tpl.dest, context);
             await fs.mkdir(path.dirname(destination), { recursive: true });
             await fs.writeFile(destination, rendered, "utf-8");
 
             if (tpl.postHook) {
               try {
-                const postHook = await renderString(tpl.postHook, {
-                  wallpaper: {
-                    ...input.wallpaper,
-                    id: santize(input.wallpaper.id),
-                    name: santize(input.wallpaper.name),
-                  },
-                  theme: themeToChroma(input.theme),
-                });
+                const postHook = await renderString(tpl.postHook, context);
                 const [cmd, ...args] = postHook.split(" ");
                 await execute({ command: cmd, args, shell: true });
               } catch (error) {
