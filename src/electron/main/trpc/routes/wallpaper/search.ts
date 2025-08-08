@@ -32,7 +32,7 @@ const getImageAndVideoWallpapers = async (type: "image" | "video") => {
       const files = await searchForFiles(folder, WALLPAPERS_TYPE_TO_EXTS[type]);
       files.forEach(async (file) => {
         wallpapers.push({
-          id: path.basename(file.path),
+          id: path.basename(file.path, path.extname(file.path)),
           name: file.name,
           applyPath: file.path,
           thumbnailPath: "", // Generated later
