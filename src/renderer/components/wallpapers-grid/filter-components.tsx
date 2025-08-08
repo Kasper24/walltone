@@ -114,7 +114,7 @@ export const FilterSheet = ({
                 <div className="grid grid-cols-1 gap-3">
                   {booleanSelectFilters.map((filter) => (
                     <BooleanSelectFilter
-                      key={filter.title}
+                      key={filter.key}
                       filter={filter}
                       appliedFilters={appliedFilters}
                       setAppliedFilters={setAppliedFilters}
@@ -129,7 +129,7 @@ export const FilterSheet = ({
                 <div className="space-y-4">
                   {singleSelectFilters.map((filter) => (
                     <SingleSelectFilter
-                      key={filter.title}
+                      key={filter.key}
                       filter={filter}
                       appliedFilters={appliedFilters}
                       setAppliedFilters={setAppliedFilters}
@@ -144,7 +144,7 @@ export const FilterSheet = ({
                 <div className="space-y-6">
                   {multipleSelectFilters.map((filter) => (
                     <MultiSelectFilter
-                      key={filter.title}
+                      key={filter.key}
                       filter={filter}
                       appliedFilters={appliedFilters}
                       setAppliedFilters={setAppliedFilters}
@@ -188,7 +188,7 @@ const ActiveFiltersSection = ({
         {Object.entries(appliedFilters.arrays)
           .filter(([_, values]) => values.length > 0)
           .map(([filterKey, values]) => {
-            const filterDef = filterDefinitions.find((f) => f.title.toLowerCase() === filterKey);
+            const filterDef = filterDefinitions.find((f) => f.key === filterKey);
             return values.map((value) => (
               <ActiveFilterBadge
                 key={`${filterKey}-${value}`}
@@ -211,7 +211,7 @@ const ActiveFiltersSection = ({
         {Object.entries(appliedFilters.strings)
           .filter(([_, value]) => value)
           .map(([filterKey, value]) => {
-            const filterDef = filterDefinitions.find((f) => f.title.toLowerCase() === filterKey);
+            const filterDef = filterDefinitions.find((f) => f.key === filterKey);
             return (
               <ActiveFilterBadge
                 key={filterKey}
@@ -220,10 +220,9 @@ const ActiveFiltersSection = ({
                 onRemove={() => {
                   setAppliedFilters((prev) => ({
                     ...prev,
-                    strings: {
-                      ...prev.strings,
-                      [filterKey]: "",
-                    },
+                    strings: Object.fromEntries(
+                      Object.entries(prev.strings).filter(([key]) => key !== filterKey)
+                    ),
                   }));
                 }}
               />
@@ -234,7 +233,7 @@ const ActiveFiltersSection = ({
         {Object.entries(appliedFilters.booleans)
           .filter(([_, value]) => value === true)
           .map(([filterKey]) => {
-            const filterDef = filterDefinitions.find((f) => f.title.toLowerCase() === filterKey);
+            const filterDef = filterDefinitions.find((f) => f.key === filterKey);
             return (
               <ActiveFilterBadge
                 key={filterKey}
@@ -242,10 +241,9 @@ const ActiveFiltersSection = ({
                 onRemove={() => {
                   setAppliedFilters((prev) => ({
                     ...prev,
-                    booleans: {
-                      ...prev.booleans,
-                      [filterKey]: false,
-                    },
+                    booleans: Object.fromEntries(
+                      Object.entries(prev.booleans).filter(([key]) => key !== filterKey)
+                    ),
                   }));
                 }}
               />
@@ -289,7 +287,7 @@ const SingleSelectFilter = ({
   appliedFilters: AppliedFilters;
   setAppliedFilters: SetAppliedFilters;
 }) => {
-  const filterKey = filter.title.toLowerCase();
+  const filterKey = filter.key;
   const selectedValue = appliedFilters.strings[filterKey] || "";
 
   const handleValueChange = (value: string) => {
@@ -302,6 +300,15 @@ const SingleSelectFilter = ({
     }));
   };
 
+  const clearValue = () => {
+    setAppliedFilters((prev) => ({
+      ...prev,
+      strings: Object.fromEntries(
+        Object.entries(prev.strings).filter(([key]) => key !== filterKey)
+      ),
+    }));
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -310,7 +317,7 @@ const SingleSelectFilter = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleValueChange("")}
+            onClick={() => clearValue()}
             className="text-muted-foreground hover:text-foreground h-auto p-0 text-xs"
           >
             Clear
@@ -347,7 +354,7 @@ const MultiSelectFilter = ({
   appliedFilters: AppliedFilters;
   setAppliedFilters: SetAppliedFilters;
 }) => {
-  const filterKey = filter.title.toLowerCase();
+  const filterKey = filter.key;
   const selectedValues = appliedFilters.arrays[filterKey] || [];
   const [searchTerm, setSearchTerm] = React.useState("");
 
@@ -490,7 +497,7 @@ const BooleanSelectFilter = ({
   appliedFilters: AppliedFilters;
   setAppliedFilters: SetAppliedFilters;
 }) => {
-  const filterKey = filter.title.toLowerCase();
+  const filterKey = filter.key;
   const isEnabled = appliedFilters.booleans[filterKey] === true;
 
   const handleToggle = (checked: boolean) => {

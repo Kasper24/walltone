@@ -49,7 +49,7 @@ const LibraryWallpaperEngineTab = () => {
           sorting: sorting,
           query,
           tags,
-          matchAll: appliedFilters?.booleans.matchall,
+          ...appliedFilters?.booleans,
         });
       }}
       sortingOptions={[
@@ -66,20 +66,24 @@ const LibraryWallpaperEngineTab = () => {
       filterDefinitions={[
         {
           type: "boolean",
-          title: "matchAll",
+          key: "matchAll",
+          title: "Match All",
         },
         {
           type: "multiple",
+          key: "types",
           title: "Types",
           values: ["Scene", "Video", "Web", "Application"],
         },
         {
           type: "multiple",
+          key: "ages",
           title: "Age",
           values: ["Everyone", "Questionable", "Mature"],
         },
         {
           type: "multiple",
+          key: "genres",
           title: "Genres",
           values: [
             "Abstract",
@@ -111,6 +115,7 @@ const LibraryWallpaperEngineTab = () => {
         },
         {
           type: "multiple",
+          key: "resolutions",
           title: "Resolutions",
           values: [
             "Standard Definition",
@@ -142,11 +147,13 @@ const LibraryWallpaperEngineTab = () => {
         },
         {
           type: "multiple",
+          key: "categories",
           title: "Categories",
           values: ["Wallpaper", "Preset", "Asset"],
         },
         {
           type: "multiple",
+          key: "assetTypes",
           title: "Asset Types",
           values: [
             "Particle",
@@ -163,6 +170,7 @@ const LibraryWallpaperEngineTab = () => {
         },
         {
           type: "multiple",
+          key: "assetGenres",
           title: "Asset Genres",
           values: [
             "Audio Visualizer",
@@ -179,6 +187,7 @@ const LibraryWallpaperEngineTab = () => {
         },
         {
           type: "multiple",
+          key: "scriptTypes",
           title: "Script Types",
           values: [
             "Boolean",
@@ -193,6 +202,7 @@ const LibraryWallpaperEngineTab = () => {
         },
         {
           type: "multiple",
+          key: "miscellaneous",
           title: "Miscellaneous",
           values: [
             "Approved",

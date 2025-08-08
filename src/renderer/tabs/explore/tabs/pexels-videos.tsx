@@ -59,17 +59,18 @@ const ExplorePexelsVideosTab = () => {
       filterDefinitions={[
         {
           type: "single",
-          title: "orientation",
+          key: "orientation",
+          title: "Orientation",
           values: ["landscape", "portrait", "square"],
         },
         {
           type: "single",
-          title: "size",
+          key: "size",
+          title: "Size",
           values: ["small", "medium", "large"],
         },
       ]}
       onWallpaperApply={async (wallpaper, monitors) => {
-        console.log(wallpaper.downloadUrl);
         await client.wallpaper.set.mutate({
           type: "video",
           id: wallpaper.id,

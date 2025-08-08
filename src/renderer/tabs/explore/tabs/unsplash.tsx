@@ -63,12 +63,14 @@ const ExploreUnsplashTab = () => {
       filterDefinitions={[
         {
           type: "single",
-          title: "orientation",
+          key: "orientation",
+          title: "Orientation",
           values: ["landscape", "portrait", "squarish"],
         },
         {
           type: "single",
-          title: "color",
+          key: "color",
+          title: "Color",
           values: [
             "black_and_white",
             "black",

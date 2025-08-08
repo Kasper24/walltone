@@ -59,17 +59,20 @@ const ExplorePexelsImagesTab = () => {
       filterDefinitions={[
         {
           type: "single",
-          title: "orientation",
+          key: "orientation",
+          title: "Orientation",
           values: ["landscape", "portrait", "square"],
         },
         {
           type: "single",
-          title: "size",
+          key: "size",
+          title: "Size",
           values: ["small", "medium", "large"],
         },
         {
           type: "single",
-          title: "color",
+          key: "color",
+          title: "Color",
           values: [
             "red",
             "orange",

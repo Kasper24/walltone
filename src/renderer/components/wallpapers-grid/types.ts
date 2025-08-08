@@ -20,6 +20,7 @@ export type OnWallpaperDownload<T extends BaseWallpaper> = (wallpaper: T) => Pro
 
 export interface FilterDefinition {
   type: "single" | "multiple" | "boolean";
+  key: string;
   title: string;
   values?: string[];
 }

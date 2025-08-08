@@ -56,7 +56,7 @@ const ExploreWallpaperEngineTab = () => {
           query,
           sorting,
           tags,
-          matchAll: appliedFilters?.booleans.matchall,
+          ...appliedFilters?.booleans,
         });
       }}
       sortingOptions={[
@@ -68,20 +68,24 @@ const ExploreWallpaperEngineTab = () => {
       filterDefinitions={[
         {
           type: "boolean",
-          title: "matchAll",
+          key: "matchAll",
+          title: "Match All",
         },
         {
           type: "multiple",
+          key: "types",
           title: "Types",
           values: ["Scene", "Video", "Web", "Application"],
         },
         {
           type: "multiple",
+          key: "ages",
           title: "Age",
           values: ["Everyone", "Questionable", "Mature"],
         },
         {
           type: "multiple",
+          key: "genres",
           title: "Genres",
           values: [
             "Abstract",
@@ -113,6 +117,7 @@ const ExploreWallpaperEngineTab = () => {
         },
         {
           type: "multiple",
+          key: "resolutions",
           title: "Resolutions",
           values: [
             "Standard Definition",
@@ -144,11 +149,13 @@ const ExploreWallpaperEngineTab = () => {
         },
         {
           type: "multiple",
+          key: "categories",
           title: "Categories",
           values: ["Wallpaper", "Preset", "Asset"],
         },
         {
           type: "multiple",
+          key: "assetTypes",
           title: "Asset Types",
           values: [
             "Particle",
@@ -165,6 +172,7 @@ const ExploreWallpaperEngineTab = () => {
         },
         {
           type: "multiple",
+          key: "assetGenres",
           title: "Asset Genres",
           values: [
             "Audio Visualizer",
@@ -181,6 +189,7 @@ const ExploreWallpaperEngineTab = () => {
         },
         {
           type: "multiple",
+          key: "scriptTypes",
           title: "Script Types",
           values: [
             "Boolean",
@@ -195,6 +204,7 @@ const ExploreWallpaperEngineTab = () => {
         },
         {
           type: "multiple",
+          key: "miscellaneous",
           title: "Miscellaneous",
           values: [
             "Approved",

@@ -24,21 +24,25 @@ const ExploreWallhavenTab = () => {
       filterDefinitions={[
         {
           type: "multiple",
+          key: "categories",
           title: "Categories",
           values: ["general", "anime", "people"],
         },
         {
           type: "multiple",
+          key: "purity",
           title: "Purity",
           values: ["sfw", "sketchy"],
         },
         {
           type: "multiple",
+          key: "resolutions",
           title: "Resolutions",
           values: ["1920x1080", "2560x1440", "3840x2160", "5120x2880", "7680x4320", "10240x5760"],
         },
         {
           type: "multiple",
+          key: "ratios",
           title: "Ratios",
           values: ["16:9", "16:10", "4:3", "21:9", "32:9"],
         },
