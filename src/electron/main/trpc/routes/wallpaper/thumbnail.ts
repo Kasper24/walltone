@@ -42,6 +42,8 @@ const getOrCreateThumbnail = async (wallpaper: LibraryWallpaper) => {
     else if (wallpaper.type === "video")
       await execute({
         ignoreErrors: true,
+        logStdout: false,
+        logStderr: false,
         command: "ffmpeg",
         args: [
           "-y",

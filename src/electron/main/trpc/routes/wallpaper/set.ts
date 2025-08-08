@@ -107,7 +107,7 @@ const setImageWallpaper = async (
     );
   });
 
-  await execute({ command: "swaybg", args, detached });
+  await execute({ command: "swaybg", args, detached, logStdout: false });
 };
 
 const setVideoWallpaper = async (
@@ -164,7 +164,7 @@ const setVideoWallpaper = async (
   // Add video path
   args.push(videoPath);
 
-  await execute({ command: "mpvpaper", args, detached });
+  await execute({ command: "mpvpaper", args, detached, logStdout: false });
 };
 
 const setWallpaperEngineWallpaper = async (
@@ -233,7 +233,12 @@ const setWallpaperEngineWallpaper = async (
     args.push("--no-fullscreen-pause");
   }
 
-  await execute({ command: "linux-wallpaperengine", args, detached });
+  await execute({
+    command: "linux-wallpaperengine",
+    args,
+    detached,
+    logStdout: false,
+  });
 };
 
 const screenshotWallpaperInCage = async (cmd: string[]) => {
