@@ -131,51 +131,44 @@ const schema: Schema<SettingsSchema> = {
     properties: {
       lastWallpaper: {
         type: "object",
-        patternProperties: {
-          ".*": {
+        properties: {
+          type: { type: "string", enum: ["image", "video", "wallpaper-engine"] },
+          id: { type: "string", minLength: 1 },
+          name: { type: "string", minLength: 1 },
+          applyPath: { type: "string", minLength: 1 },
+          monitors: {
+            type: "array",
+            minItems: 1,
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string", minLength: 1 },
+                scalingMethod: { type: "string" },
+              },
+              required: ["id"],
+            },
+          },
+          wallpaperEngineOptions: {
             type: "object",
             properties: {
-              type: { type: "string", enum: ["image", "video", "wallpaper-engine"] },
-              id: { type: "string", minLength: 1 },
-              name: { type: "string", minLength: 1 },
-              applyPath: { type: "string", minLength: 1 },
-              monitors: {
-                type: "array",
-                minItems: 1,
-                items: {
-                  type: "object",
-                  properties: {
-                    id: { type: "string", minLength: 1 },
-                    scalingMethod: { type: "string" },
-                  },
-                  required: ["id"],
-                },
-              },
-              wallpaperEngineOptions: {
-                type: "object",
-                properties: {
-                  silent: { type: "boolean" },
-                  volume: { type: "number", minimum: 0, maximum: 100 },
-                  noAutomute: { type: "boolean" },
-                  noAudioProcessing: { type: "boolean" },
-                  fps: { type: "number", minimum: 1, maximum: 200 },
-                  clamping: { type: "string", enum: ["clamp", "border", "repeat"] },
-                  disableMouse: { type: "boolean" },
-                  disableParallax: { type: "boolean" },
-                  noFullscreenPause: { type: "boolean" },
-                },
-              },
-              videoOptions: {
-                type: "object",
-                properties: {
-                  mute: { type: "boolean" },
-                },
-              },
+              silent: { type: "boolean" },
+              volume: { type: "number", minimum: 0, maximum: 100 },
+              noAutomute: { type: "boolean" },
+              noAudioProcessing: { type: "boolean" },
+              fps: { type: "number", minimum: 1, maximum: 200 },
+              clamping: { type: "string", enum: ["clamp", "border", "repeat"] },
+              disableMouse: { type: "boolean" },
+              disableParallax: { type: "boolean" },
+              noFullscreenPause: { type: "boolean" },
             },
-            required: ["type", "id", "name", "path", "monitors"],
+          },
+          videoOptions: {
+            type: "object",
+            properties: {
+              mute: { type: "boolean" },
+            },
           },
         },
-        additionalProperties: false,
         default: {},
       },
     },
