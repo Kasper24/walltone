@@ -1,4 +1,7 @@
 import type { ForgeConfig } from "@electron-forge/shared-types";
+import { MakerDeb } from "@electron-forge/maker-deb";
+import { MakerRpm } from "@electron-forge/maker-rpm";
+import { MakerZIP } from "@electron-forge/maker-zip";
 import { VitePlugin } from "@electron-forge/plugin-vite";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
@@ -15,30 +18,42 @@ const config: ForgeConfig = {
     electronZipDir: process.env.ELECTRON_FORGE_ELECTRON_ZIP_DIR,
   },
   makers: [
-    {
-      name: "@electron-forge/maker-deb",
-      config: {
-        options: {
-          icon: "assets/icon.png",
-        },
+    new MakerDeb({
+      options: {
+        name: "walltone",
+        version: "0.0.1",
+        productName: "Walltone",
+        description: "Wallpaper and theme management application",
+        homepage: "https://github.com/kasper24/walltone",
+        icon: "assets/icon.png",
+        categories: ["Utility"],
+        depends: [
+          "nss",
+          "libsecret-1-0",
+          "swaybg",
+          "mpvpaper",
+          "linux-wallpaperengine",
+          "cage",
+          "grim",
+          "ffmpeg",
+        ],
       },
-    },
-    {
-      name: "@electron-forge/maker-rpm",
-      config: {
-        options: {
-          icon: "assets/icon.png",
-        },
+    }),
+    new MakerRpm({
+      options: {
+        name: "walltone",
+        version: "0.0.1",
+        productName: "Walltone",
+        description: "Wallpaper and theme management application",
+        license: "GPL-3.0",
+        group: "Utility",
+        homepage: "https://github.com/kasper24/walltone",
+        icon: "assets/icon.png",
+        categories: ["Utility"],
+        requires: ["nss", "libsecret", "swaybg", "mpvpaper", "cage", "grim", "ffmpeg"],
       },
-    },
-    {
-      name: "@electron-forge/maker-zip",
-      config: {
-        options: {
-          icon: "assets/icon.png",
-        },
-      },
-    },
+    }),
+    new MakerZIP({}),
   ],
   plugins: [
     new VitePlugin({

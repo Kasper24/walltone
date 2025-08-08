@@ -3,7 +3,7 @@
   "name": "walltone",
   "productName": "walltone",
   "version": " 0.0.1",
-  "description": "Theme Manager",
+  "description": "Wallpaper and theme management application",
   "main": ".vite/build/main.js",
   "author": "Kasper <ofek4430@gmail.com>",
   "license": "GPL-3.0",
