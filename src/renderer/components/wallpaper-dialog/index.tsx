@@ -3,7 +3,7 @@ import { Palette, Save, Wallpaper, Copy, X, PaletteIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Slider } from "@uiw/react-color";
 import type { ThemeType, ThemePolarity, Theme } from "@electron/main/trpc/routes/theme/index.js";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
 import {
   DialogContent,
   DialogDescription,
@@ -46,7 +46,7 @@ const WallpaperDialog = <T extends BaseWallpaper>({
   controlDefinitions?: DynamicControlDefinition[];
   isOpen: boolean;
 }) => {
-  const { theme, setTheme } = useThemeGeneration(wallpaper.previewPath, isOpen);
+  const { theme, setTheme } = useThemeGeneration(wallpaper.thumbnailPath, isOpen);
   const { selectedColor, selectedColorKey, selectColor, updateColor, clearSelection } =
     useColorEditor();
   const { activeTheme, setActiveTheme, activeVariant, setActiveVariant, updateThemeColor } =
@@ -71,7 +71,7 @@ const WallpaperDialog = <T extends BaseWallpaper>({
   );
 
   return (
-    <DialogContent className="flex h-[90vh] max-h-[900px] flex-col p-0 select-none">
+    <DialogContent className="flex h-[95vh] max-h-[900px] flex-col p-0 select-none">
       <ScrollArea className="overflow-hidden">
         <div className="flex flex-shrink-0 flex-col p-6 pb-4">
           <Header wallpaper={wallpaper} />
@@ -88,9 +88,19 @@ const WallpaperDialog = <T extends BaseWallpaper>({
               onValueChange={(value) => setActiveTheme(value as ThemeType)}
               className="flex flex-1 flex-col"
             >
-              <TabsList className="mb-3 grid w-full flex-shrink-0 grid-cols-2">
-                <TabsTrigger value="base16">Base 16</TabsTrigger>
-                <TabsTrigger value="material">Material</TabsTrigger>
+              <TabsList className="bg-background grid w-full flex-shrink-0 grid-cols-2">
+                <TabsTrigger
+                  className="data-[state=active]:bg-foreground dark:data-[state=active]:bg-foreground dark:data-[state=active]:text-background"
+                  value="base16"
+                >
+                  Base 16
+                </TabsTrigger>
+                <TabsTrigger
+                  className="data-[state=active]:bg-foreground dark:data-[state=active]:bg-foreground dark:data-[state=active]:text-background"
+                  value="material"
+                >
+                  Material
+                </TabsTrigger>
               </TabsList>
 
               <div className="flex-shrink-0">
@@ -128,7 +138,7 @@ const WallpaperDialog = <T extends BaseWallpaper>({
           </div>
         </div>
 
-        <div className="flex-shrink-0 border-t p-6 pt-4">
+        <div className="flex-shrink-0 p-6 pt-4">
           <WallpaperActions
             wallpaper={wallpaper}
             theme={theme}
@@ -161,14 +171,14 @@ const WallpaperImage = <T extends BaseWallpaper>({ wallpaper }: { wallpaper: T }
       <CardContent className="p-1">
         {wallpaper.type !== "video" ? (
           <img
-            className="h-48 w-full rounded-lg object-cover sm:h-56 md:h-64"
-            src={wallpaper.previewPath}
+            className="h-48 w-full rounded-lg object-fill sm:h-56 md:h-64"
+            src={wallpaper.fullSizePath}
             alt={wallpaper.name}
           />
         ) : (
           <video
             className="h-48 w-full rounded-lg object-fill sm:h-56 md:h-64"
-            src={wallpaper.previewPath}
+            src={wallpaper.fullSizePath}
             autoPlay
             loop
             playsInline
@@ -273,7 +283,7 @@ const ThemePanel = ({
       </CardHeader>
 
       <CardContent className="flex-1 overflow-y-auto">
-        <ScrollArea className="h-64 pr-4">
+        <ScrollArea className="h-72 pr-4">
           <div className="grid grid-cols-4 gap-3">
             {isLoading ? (
               <ThemeColorsSkeleton />

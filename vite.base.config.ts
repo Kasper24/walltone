@@ -10,6 +10,7 @@ export const external = [
   "conf",
   "keytar",
   "canvas",
+  "sharp",
   // ...Object.keys("dependencies" in pkg ? (pkg.dependencies as Record<string, unknown>) : {}),
 ];
 

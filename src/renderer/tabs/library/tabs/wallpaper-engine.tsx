@@ -39,7 +39,7 @@ const LibraryWallpaperEngineTab = () => {
           },
         ],
       }}
-      queryKeys={[`library-wallpaper-engine`]}
+      queryKeys={[`wallpapers.library.wallpaperEngine`]}
       queryFn={async ({ pageParam, query, sorting, appliedFilters }) => {
         const tags = Object.entries(appliedFilters?.arrays || {}).flatMap(([_, values]) => values);
 

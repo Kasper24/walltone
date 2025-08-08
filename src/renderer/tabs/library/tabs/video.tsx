@@ -38,7 +38,7 @@ const LibraryVideoTab = () => {
           },
         ],
       }}
-      queryKeys={["library-video"]}
+      queryKeys={["wallpapers.library.video"]}
       queryFn={async ({ pageParam, query }) =>
         await client.wallpaper.search.query({
           type: "video",

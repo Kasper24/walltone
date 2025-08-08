@@ -7,6 +7,7 @@ const execute = ({
   env = {},
   shell = false,
   detached = false,
+  ignoreErrors = false,
   logStdout = true,
   logStderr = true,
 }: {
@@ -15,6 +16,7 @@ const execute = ({
   env?: NodeJS.ProcessEnv;
   shell?: boolean;
   detached?: boolean;
+  ignoreErrors?: boolean;
   logStdout?: boolean;
   logStderr?: boolean;
 }): Promise<{ stdout: string; stderr: string }> => {
@@ -46,6 +48,11 @@ const execute = ({
     });
 
     child.on("close", (code) => {
+      if (ignoreErrors && code !== 0) {
+        console.warn(`[${command}] Process exited with code ${code}, but ignoring errors`);
+        return resolve({ stdout, stderr });
+      }
+
       if (code === 0) {
         if (logStderr) console.log(`[${command}] Process completed successfully`);
         resolve({ stdout, stderr });
@@ -58,7 +65,7 @@ const execute = ({
 
     child.on("error", (error) => {
       if (logStderr) console.error(`[${command}] Process error:`, error);
-      reject(error);
+      if (!ignoreErrors) reject(error);
     });
   });
 };

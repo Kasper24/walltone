@@ -46,7 +46,7 @@ const ExploreWallpaperEngineTab = () => {
           },
         ],
       }}
-      queryKeys={[`explore-wallpaper-engine`]}
+      queryKeys={[`wallpapers.explore.wallpaperEngine`]}
       queryFn={async ({ pageParam, query, sorting, appliedFilters, configValue }) => {
         const tags = Object.entries(appliedFilters?.arrays || {}).flatMap(([_, values]) => values);
 
@@ -212,6 +212,7 @@ const ExploreWallpaperEngineTab = () => {
       onWallpaperDownload={async (wallpaper) => {
         const apiKey = await client.settings.get.query({
           key: "apiKeys.wallpaperEngine",
+          decrypt: true,
         });
 
         await client.api.wallpaperEngine.subscribe.mutate({

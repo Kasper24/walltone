@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
-import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
+import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
 
 interface PexelsPhoto {
   id: number;
@@ -69,10 +69,11 @@ interface PexelsSearchResponse<T> {
 
 const transformPhotos = (photos: PexelsPhoto[]): ApiWallpaper[] => {
   return photos.map((photo) => ({
-    type: "api",
+    type: "image",
     id: photo.id.toString(),
     name: photo.alt || `Photo by ${photo.photographer}`,
-    previewPath: photo.src.large,
+    thumbnailPath: photo.src.large,
+    fullSizePath: photo.src.original,
     downloadUrl: photo.src.original,
   }));
 };
@@ -87,10 +88,11 @@ const transformVideos = (videos: PexelsVideo[]): ApiWallpaper[] => {
     });
 
     return {
-      type: "api",
+      type: "video",
       id: video.id.toString(),
       name: `Video by ${video.user.name}`,
-      previewPath: video.image,
+      thumbnailPath: video.image,
+      fullSizePath: bestVideo.link,
       downloadUrl: bestVideo.link,
     };
   });

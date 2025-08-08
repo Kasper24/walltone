@@ -34,9 +34,11 @@ import { useDebouncedCallback } from "use-debounce";
 
 function useSettings<T>({
   settingKey,
+  additionalQueryKeysToInvalidate = [],
   encrypted = false,
 }: {
   settingKey: SettingKey | string;
+  additionalQueryKeysToInvalidate?: string[];
   encrypted?: boolean;
 }) {
   const queryClient = useQueryClient();
@@ -65,6 +67,9 @@ function useSettings<T>({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [settingKey] });
+      additionalQueryKeysToInvalidate.forEach((key) => {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -84,6 +89,9 @@ function useSettings<T>({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [settingKey] });
+      additionalQueryKeysToInvalidate.forEach((key) => {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -96,6 +104,9 @@ function useSettings<T>({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [settingKey] });
+      additionalQueryKeysToInvalidate.forEach((key) => {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -111,6 +122,9 @@ function useSettings<T>({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [settingKey] });
+      additionalQueryKeysToInvalidate.forEach((key) => {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -171,6 +185,7 @@ const ThemeSetting = () => {
 
 interface InputSettingProps {
   settingKey: SettingKey | string;
+  additionalQueryKeysToInvalidate?: string[];
   encrypted?: boolean;
   filePicker?: "file" | "folder";
   placeholder?: string;
@@ -179,6 +194,7 @@ interface InputSettingProps {
 
 const InputSetting = ({
   settingKey,
+  additionalQueryKeysToInvalidate = [],
   placeholder = "",
   encrypted = false,
   filePicker,
@@ -187,6 +203,7 @@ const InputSetting = ({
   const [showPassword, setShowPassword] = React.useState(false);
   const { isPending, isError, value, onChange, onBrowseFolder } = useSettings({
     settingKey,
+    additionalQueryKeysToInvalidate,
     encrypted,
   });
 
@@ -405,7 +422,13 @@ const SliderSetting = ({ settingKey, min = 0, max = 1, step = 0.01 }: SliderSett
   );
 };
 
-const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
+const FolderListSetting = ({
+  settingKey,
+  additionalQueryKeysToInvalidate,
+}: {
+  settingKey: SettingKey;
+  additionalQueryKeysToInvalidate?: string[];
+}) => {
   const { isPending, isError, value, onAdd, onDelete } = useSettings<string[]>({ settingKey });
 
   const pathsWithId = React.useMemo(
@@ -432,6 +455,7 @@ const FolderListSetting = ({ settingKey }: { settingKey: SettingKey }) => {
           <div className="flex gap-2" key={path.id}>
             <InputSetting
               settingKey={`${settingKey}[${index}]`}
+              additionalQueryKeysToInvalidate={additionalQueryKeysToInvalidate}
               placeholder="Enter folder path"
               filePicker="folder"
             />

@@ -2,7 +2,7 @@ import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { ThemeType, ThemePolarity, Theme } from "@electron/main/trpc/routes/theme/index.js";
-import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/index.js";
+import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
 import {
   type OnWallpaperApply,
   type OnWallpaperDownload,
@@ -10,57 +10,6 @@ import {
 
 import { client } from "@renderer/lib/trpc.js";
 import { DynamicControlValues } from "./types.js";
-
-export const getSrcForThemeGeneration = (imageSrc: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    if (imageSrc.startsWith("video://")) {
-      const video = document.createElement("video");
-      video.src = imageSrc;
-      video.crossOrigin = "anonymous"; // Required for canvas security
-      video.muted = true;
-
-      const onSeeked = () => {
-        try {
-          const canvas = document.createElement("canvas");
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            return reject(new Error("Could not get 2D canvas context."));
-          }
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          // The dataURL is a base64 string representing the image.
-          const dataUrl = canvas.toDataURL("image/png");
-          resolve(dataUrl);
-        } catch (e) {
-          reject(e);
-        } finally {
-          // Clean up to prevent memory leaks.
-          video.removeEventListener("seeked", onSeeked);
-          video.removeEventListener("error", onError);
-        }
-      };
-
-      const onError = (e: Event | string) => {
-        reject(new Error(`Failed to load video for theme generation: ${e}`));
-        video.removeEventListener("seeked", onSeeked);
-        video.removeEventListener("error", onError);
-      };
-
-      video.addEventListener("seeked", onSeeked);
-      video.addEventListener("error", onError);
-
-      // Once the video metadata is loaded, we can seek to a frame.
-      video.onloadedmetadata = () => {
-        video.currentTime = 1; // Seek to the 1-second mark.
-      };
-
-      video.load();
-    } else {
-      resolve(imageSrc);
-    }
-  });
-};
 
 export const useThemeGeneration = (imageSrc: string, enabled: boolean) => {
   const [theme, setTheme] = React.useState<Theme | undefined>();
@@ -70,7 +19,7 @@ export const useThemeGeneration = (imageSrc: string, enabled: boolean) => {
     enabled,
     queryFn: async () => {
       return await client.theme.generate.query({
-        imageSrc: await getSrcForThemeGeneration(imageSrc),
+        imageSrc: imageSrc,
       });
     },
   });
@@ -166,28 +115,28 @@ export const useMonitorSelection = (scalingOptions?: { key: string; text: string
     if (monitorsQuery.data && monitorsQuery.data.length > 0) {
       const firstMonitor = monitorsQuery.data[0];
       if (firstMonitor) {
-        setSelectedMonitors(new Set([firstMonitor.name]));
-        setMonitorScalingMethods({ [firstMonitor.name]: defaultScalingMethod });
+        setSelectedMonitors(new Set([firstMonitor.id]));
+        setMonitorScalingMethods({ [firstMonitor.id]: defaultScalingMethod });
       }
     }
   }, [monitorsQuery.data, defaultScalingMethod]);
 
   const toggleMonitor = React.useCallback(
-    (name: string) => {
+    (id: string) => {
       setSelectedMonitors((prev) => {
         const newSet = new Set(prev);
-        if (newSet.has(name)) {
-          newSet.delete(name);
+        if (newSet.has(id)) {
+          newSet.delete(id);
           setMonitorScalingMethods((prevMethods) => {
             const newMethods = { ...prevMethods };
-            delete newMethods[name];
+            delete newMethods[id];
             return newMethods;
           });
         } else {
-          newSet.add(name);
+          newSet.add(id);
           setMonitorScalingMethods((prevMethods) => ({
             ...prevMethods,
-            [name]: defaultScalingMethod,
+            [id]: defaultScalingMethod,
           }));
         }
         return newSet;
@@ -196,16 +145,16 @@ export const useMonitorSelection = (scalingOptions?: { key: string; text: string
     [defaultScalingMethod]
   );
 
-  const updateScalingMethod = React.useCallback((name: string, scalingMethod: string) => {
+  const updateScalingMethod = React.useCallback((id: string, scalingMethod: string) => {
     setMonitorScalingMethods((prev) => ({
       ...prev,
-      [name]: scalingMethod,
+      [id]: scalingMethod,
     }));
   }, []);
 
   const selectAll = React.useCallback(() => {
     if (monitorsQuery.data) {
-      const allnames = monitorsQuery.data.map((monitor) => monitor.name);
+      const allnames = monitorsQuery.data.map((monitor) => monitor.id);
       setSelectedMonitors(new Set(allnames));
 
       const allMethods = allnames.reduce(
@@ -271,7 +220,7 @@ export const useWallpaperActions = <T extends BaseWallpaper>(wallpaper: T) => {
       controlValues,
     }: {
       onApply: OnWallpaperApply<T>;
-      monitorConfigs: { name: string; scalingMethod: string }[];
+      monitorConfigs: { id: string; scalingMethod: string }[];
       controlValues?: DynamicControlValues;
     }) => {
       return await onApply(wallpaper, monitorConfigs, controlValues);
