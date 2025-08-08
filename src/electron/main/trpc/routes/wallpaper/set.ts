@@ -30,8 +30,6 @@ const saveLastWallpaper = async (input: SetWallpaperInput) => {
 };
 
 const screenshotWallpaper = async (input: SetWallpaperInput) => {
-  if (!input.screenshot) return;
-
   if (input.type === "image") {
     await copyWallpaperToDestinations(input.id, input.name, input.path);
   } else if (input.type === "video") {
@@ -64,11 +62,11 @@ const screenshotWallpaper = async (input: SetWallpaperInput) => {
   }
 };
 
-const setWallpaper = async (input: SetWallpaperInput) => {
+const setWallpaper = async (input: SetWallpaperInput, detached: boolean) => {
   if (input.type === "image") {
-    await setImageWallpaper(input.path, input.monitors);
+    await setImageWallpaper(input.path, input.monitors, detached);
   } else if (input.type === "video") {
-    await setVideoWallpaper(input.path, input.monitors, input.videoOptions);
+    await setVideoWallpaper(input.path, input.monitors, input.videoOptions, detached);
   } else if (input.type === "wallpaper-engine") {
     const assetsPath = await caller.settings.get({
       key: "wallpaperSources.wallpaperEngineAssetsFolder",
@@ -85,14 +83,16 @@ const setWallpaper = async (input: SetWallpaperInput) => {
       assetsPath,
       input.path,
       input.monitors,
-      input.wallpaperEngineOptions
+      input.wallpaperEngineOptions,
+      detached
     );
   }
 };
 
 const setImageWallpaper = async (
   imagePath: string,
-  monitors: { id: string; scalingMethod?: string }[]
+  monitors: { id: string; scalingMethod?: string }[],
+  detached: boolean
 ) => {
   const args: string[] = [];
 
@@ -107,7 +107,7 @@ const setImageWallpaper = async (
     );
   });
 
-  await execute({ command: "swaybg", args });
+  await execute({ command: "swaybg", args, detached });
 };
 
 const setVideoWallpaper = async (
@@ -115,7 +115,8 @@ const setVideoWallpaper = async (
   monitors: { id: string; scalingMethod?: string }[],
   options?: {
     mute?: boolean;
-  }
+  },
+  detached?: boolean
 ) => {
   // Build mpv options array
   const mpvOptions: string[] = ["loop"];
@@ -163,7 +164,7 @@ const setVideoWallpaper = async (
   // Add video path
   args.push(videoPath);
 
-  await execute({ command: "mpvpaper", args });
+  await execute({ command: "mpvpaper", args, detached });
 };
 
 const setWallpaperEngineWallpaper = async (
@@ -180,7 +181,8 @@ const setWallpaperEngineWallpaper = async (
     disableMouse?: boolean;
     disableParallax?: boolean;
     noFullscreenPause?: boolean;
-  }
+  },
+  detached?: boolean
 ) => {
   const args = [
     ...monitors.flatMap((monitor) => [
@@ -231,7 +233,7 @@ const setWallpaperEngineWallpaper = async (
     args.push("--no-fullscreen-pause");
   }
 
-  await execute({ command: "linux-wallpaperengine", args });
+  await execute({ command: "linux-wallpaperengine", args, detached });
 };
 
 const screenshotWallpaperInCage = async (cmd: string[]) => {

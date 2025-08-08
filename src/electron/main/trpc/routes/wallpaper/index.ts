@@ -43,7 +43,6 @@ export const setWallpaperSchema = z.object({
   name: z.string().min(1),
   path: z.string().min(1),
   monitors: monitorsSchema.min(1),
-  screenshot: z.boolean().default(true),
   wallpaperEngineOptions: z
     .object({
       silent: z.boolean().optional(),
@@ -115,7 +114,7 @@ export const wallpaperRouter = router({
     await saveLastWallpaper(input);
     await killWallpaperProcesses();
     await screenshotWallpaper(input);
-    await setWallpaper(input);
+    await setWallpaper(input, false);
   }),
 
   restoreOnStart: publicProcedure.mutation(async () => {
@@ -129,10 +128,9 @@ export const wallpaperRouter = router({
     })) as SettingsSchema["internal"]["lastWallpaper"];
 
     Object.values(lastWallpaper).forEach(async (wallpaper) => {
-      await caller.wallpaper.set({
-        ...wallpaper,
-        screenshot: false,
-      });
+      await populateMonitorsIfEmpty(wallpaper);
+      await killWallpaperProcesses();
+      await setWallpaper(wallpaper, true);
     });
   }),
 });
