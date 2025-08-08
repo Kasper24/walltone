@@ -201,14 +201,6 @@ const SETTINGS_CONFIG: SettingsSection[] = [
     icon: KeyRound,
     settings: [
       {
-        settingKey: "apiKeys.unsplash",
-        additionalQueryKeysToInvalidate: ["wallpapers.explore.unsplash"],
-        title: "Unsplash API Key",
-        description: "Required for retrieving wallpapers from Unsplash",
-        type: "encrypted",
-        placeholder: "Enter your Unsplash API key",
-      },
-      {
         settingKey: "apiKeys.pexels",
         additionalQueryKeysToInvalidate: [
           "wallpapers.explore.pexelsImages",
@@ -218,6 +210,25 @@ const SETTINGS_CONFIG: SettingsSection[] = [
         description: "Required for retrieving wallpapers from Pexels",
         type: "encrypted",
         placeholder: "Enter your Pexels API key",
+      },
+      {
+        settingKey: "apiKeys.pixabay",
+        additionalQueryKeysToInvalidate: [
+          "wallpapers.explore.pixabayImages",
+          "wallpapers.explore.pixabayVideos",
+        ],
+        title: "Pixabay API Key",
+        description: "Required for retrieving wallpapers from Pixabay",
+        type: "encrypted",
+        placeholder: "Enter your Pixabay API key",
+      },
+      {
+        settingKey: "apiKeys.unsplash",
+        additionalQueryKeysToInvalidate: ["wallpapers.explore.unsplash"],
+        title: "Unsplash API Key",
+        description: "Required for retrieving wallpapers from Unsplash",
+        type: "encrypted",
+        placeholder: "Enter your Unsplash API key",
       },
       {
         settingKey: "apiKeys.wallpaperEngine",

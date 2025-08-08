@@ -56,6 +56,7 @@ export interface SettingsSchema {
   /** API keys for third-party services. */
   apiKeys?: {
     pexels: string;
+    pixabay: string;
     unsplash: string;
     wallpaperEngine: string;
   };
