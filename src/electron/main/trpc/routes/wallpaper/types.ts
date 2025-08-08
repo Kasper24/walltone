@@ -33,7 +33,7 @@ export interface WallpaperEngineWallpaper extends BaseWallpaper {
   dateAdded: number;
   tags: string[];
   workshopId: string;
-  file: string;
+  sceneFile: string;
   sceneType: string;
 }
 

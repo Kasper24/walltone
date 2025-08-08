@@ -118,7 +118,7 @@ const getWallpaperEngineWallpapers = async () => {
                   fullSizePath: `image://${path.join(subdirectoryPath, parsedData.preview)}`,
                   dateAdded: stat.mtime.getTime(),
                   workshopId: dirent.name,
-                  file: parsedData.file,
+                  sceneFile: parsedData.file,
                   sceneType: parsedData.type,
                   tags,
                 });
