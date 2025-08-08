@@ -16,8 +16,14 @@ const getFileHash = async (filePath: string): Promise<string> => {
 };
 
 const getOrCreateThumbnail = async (wallpaper: LibraryWallpaper) => {
-  await fs.mkdir(THUMB_CACHE_DIR, { recursive: true });
+  // If the wallpaper is a GIF, we return the full size path directly
+  // as we do not generate thumbnails for GIFs.
+  if (path.extname(wallpaper.fullSizePath).toLowerCase() === ".gif") {
+    return wallpaper.fullSizePath;
+  }
+
   const fullSizePath = wallpaper.fullSizePath.replace("image://", "").replace("video://", "");
+  await fs.mkdir(THUMB_CACHE_DIR, { recursive: true });
 
   const hash = await getFileHash(fullSizePath);
   const thumbPath = path.join(THUMB_CACHE_DIR, `${hash}.jpeg`);
@@ -65,28 +71,11 @@ const getOrCreateThumbnail = async (wallpaper: LibraryWallpaper) => {
   return `image://${thumbPath}`;
 };
 
-const resolveThumbnailPath = async (wallpaper: LibraryWallpaper) => {
-  if (wallpaper.type === "image") {
-    return await getOrCreateThumbnail(wallpaper);
-  } else if (wallpaper.type === "video") {
-    return await getOrCreateThumbnail(wallpaper);
-  } else if (wallpaper.type === "wallpaper-engine") {
-    // If the preview is a gif, just use it directly
-    if (path.extname(wallpaper.thumbnailPath).toLowerCase() === ".gif") {
-      return wallpaper.thumbnailPath;
-    }
-    // Otherwise, generate a thumbnail
-    return await getOrCreateThumbnail(wallpaper);
-  }
-
-  return "";
-};
-
 parentPort?.on("message", async ({ data }: { data: WallpaperData<LibraryWallpaper> }) => {
   try {
     data.data = await Promise.all(
       data.data.map(async (wallpaper) => {
-        wallpaper.thumbnailPath = await resolveThumbnailPath(wallpaper);
+        wallpaper.thumbnailPath = await getOrCreateThumbnail(wallpaper);
         return wallpaper;
       })
     );
