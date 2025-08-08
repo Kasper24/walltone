@@ -4,7 +4,7 @@ import z from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { caller } from "@electron/main/trpc/routes/index.js";
 import { type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
-import { type LibraryWallpaper } from "./types.js";
+import { type WallpaperData, type LibraryWallpaper } from "./types.js";
 import {
   getImageAndVideoWallpapers,
   getWallpaperEngineWallpapers,
@@ -86,7 +86,7 @@ export const wallpaperRouter = router({
     const sorted = sortWallpapers(filtered, input.sorting);
     const paginated = paginateData(sorted, input.page, input.perPage);
 
-    return await new Promise((resolve, reject) => {
+    return (await new Promise((resolve, reject) => {
       const workerPath = path.join(import.meta.dirname, "thumbnail-generator.js");
       const worker = new Worker(workerPath);
 
@@ -106,7 +106,7 @@ export const wallpaperRouter = router({
       });
 
       worker.postMessage({ data: paginated });
-    });
+    })) as unknown as Promise<WallpaperData<LibraryWallpaper>>;
   }),
 
   set: publicProcedure.input(setWallpaperSchema).mutation(async ({ input }) => {
