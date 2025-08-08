@@ -43,9 +43,13 @@ const ExploreWallhavenTab = () => {
           values: ["16:9", "16:10", "4:3", "21:9", "32:9"],
         },
       ]}
-      onWallpaperDownload={async (wallpaper) => {
-        await client.file.download.mutate({
-          url: wallpaper.downloadUrl,
+      onWallpaperApply={async (wallpaper, monitors) => {
+        await client.wallpaper.set.mutate({
+          type: "image",
+          id: wallpaper.id,
+          name: wallpaper.name,
+          applyPath: wallpaper.downloadUrl,
+          monitors,
         });
       }}
     />

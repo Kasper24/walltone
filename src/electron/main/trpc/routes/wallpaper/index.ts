@@ -13,7 +13,8 @@ import {
   paginateData,
 } from "./search.js";
 import {
-  populateMonitorsIfEmpty,
+  downloadRemoteWallpaper,
+  getMonitors,
   saveLastWallpaper,
   killWallpaperProcesses,
   screenshotWallpaper,
@@ -110,7 +111,11 @@ export const wallpaperRouter = router({
   }),
 
   set: publicProcedure.input(setWallpaperSchema).mutation(async ({ input }) => {
-    await populateMonitorsIfEmpty(input);
+    if (input.applyPath.startsWith("http://") || input.applyPath.startsWith("https://"))
+      input.applyPath = await downloadRemoteWallpaper(input);
+
+    if (input.monitors.length === 0) input.monitors = await getMonitors();
+
     await saveLastWallpaper(input);
     await killWallpaperProcesses();
     await screenshotWallpaper(input);
@@ -128,7 +133,8 @@ export const wallpaperRouter = router({
     })) as SettingsSchema["internal"]["lastWallpaper"];
 
     Object.values(lastWallpaper).forEach(async (wallpaper) => {
-      await populateMonitorsIfEmpty(wallpaper);
+      if (wallpaper.monitors.length === 0) wallpaper.monitors = await getMonitors();
+
       await killWallpaperProcesses();
       await setWallpaper(wallpaper, true);
     });

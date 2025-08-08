@@ -68,9 +68,14 @@ const ExplorePexelsVideosTab = () => {
           values: ["small", "medium", "large"],
         },
       ]}
-      onWallpaperDownload={async (wallpaper) => {
-        await client.file.download.mutate({
-          url: wallpaper.downloadUrl,
+      onWallpaperApply={async (wallpaper, monitors) => {
+        console.log(wallpaper.downloadUrl);
+        await client.wallpaper.set.mutate({
+          type: "video",
+          id: wallpaper.id,
+          name: wallpaper.name,
+          applyPath: wallpaper.downloadUrl,
+          monitors,
         });
       }}
     />

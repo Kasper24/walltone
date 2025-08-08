@@ -84,9 +84,13 @@ const ExploreUnsplashTab = () => {
           ],
         },
       ]}
-      onWallpaperDownload={async (wallpaper) => {
-        await client.file.download.mutate({
-          url: wallpaper.downloadUrl,
+      onWallpaperApply={async (wallpaper, monitors) => {
+        await client.wallpaper.set.mutate({
+          type: "image",
+          id: wallpaper.id,
+          name: wallpaper.name,
+          applyPath: wallpaper.downloadUrl,
+          monitors,
         });
       }}
     />

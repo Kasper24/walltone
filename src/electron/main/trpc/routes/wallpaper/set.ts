@@ -1,3 +1,4 @@
+import os from "os";
 import path from "path";
 import { promises as fs } from "fs";
 import { TRPCError } from "@trpc/server";
@@ -6,14 +7,65 @@ import { caller } from "@electron/main/trpc/routes/index.js";
 import { type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
 import { SetWallpaperInput } from "./types.js";
 
-const CAGE_INIT_TIME = 5;
+const VIDEO_INIT_TIME = 1;
+const WALLPAPER_ENGINE_INIT_TIME = 5;
 const CAGE_SCREENSHOT_PATH = "/tmp/walltone-wallpaper-screenshot.png";
+const WALLPAPERS_DOWNLOAD_CACHE_DIR = path.join(
+  os.homedir(),
+  ".cache",
+  "walltone",
+  "wallpapers-downloads"
+);
 
-const populateMonitorsIfEmpty = async (input: SetWallpaperInput) => {
-  if (input.monitors.length === 0)
-    input.monitors = (await caller.monitor.search()).map((monitor) => ({
-      id: monitor.id,
-    }));
+const mimeToExtension = (mime: string): string | null => {
+  const map: Record<string, string> = {
+    "image/jpg": ".jpg",
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+    "video/mp4": ".mp4",
+    "video/webm": ".webm",
+    "video/mov": ".mov",
+  };
+  return map[mime.toLowerCase()] ?? null;
+};
+
+const downloadRemoteWallpaper = async (input: SetWallpaperInput) => {
+  await fs.mkdir(WALLPAPERS_DOWNLOAD_CACHE_DIR, { recursive: true });
+
+  const response = await fetch(input.applyPath);
+  if (!response.ok) throw new Error(`Failed to download: ${response.statusText}`);
+  if (!response.body) throw new Error("Response body is null or undefined.");
+
+  const contentType = response.headers.get("content-type");
+  if (!contentType) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Content-Type header is missing.",
+    });
+  }
+
+  const ext = mimeToExtension(contentType);
+  const downloadPath = path.join(WALLPAPERS_DOWNLOAD_CACHE_DIR, `${input.id}${ext}`);
+
+  if (!ext) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `File type '${ext}' is not allowed.`,
+    });
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  await fs.writeFile(downloadPath, Buffer.from(arrayBuffer));
+
+  return downloadPath;
+};
+
+const getMonitors = async () => {
+  return (await caller.monitor.search()).map((monitor) => ({
+    id: monitor.id,
+  }));
 };
 
 const killWallpaperProcesses = async () => {
@@ -33,7 +85,7 @@ const screenshotWallpaper = async (input: SetWallpaperInput) => {
   if (input.type === "image") {
     await copyWallpaperToDestinations(input.id, input.name, input.applyPath);
   } else if (input.type === "video") {
-    await screenshotWallpaperInCage(["mpv", "panscan=1.0", input.applyPath]);
+    await screenshotWallpaperInCage(["mpv", "panscan=1.0", input.applyPath], VIDEO_INIT_TIME);
     await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
   } else if (input.type === "wallpaper-engine") {
     const assetsPath = await caller.settings.get({
@@ -47,17 +99,20 @@ const screenshotWallpaper = async (input: SetWallpaperInput) => {
       });
     }
 
-    await screenshotWallpaperInCage([
-      "linux-wallpaperengine",
-      "--silent",
-      "--fps",
-      "1",
-      "--assets-dir",
-      assetsPath,
-      "--window",
-      "0x0x1280x720",
-      input.applyPath,
-    ]);
+    await screenshotWallpaperInCage(
+      [
+        "linux-wallpaperengine",
+        "--silent",
+        "--fps",
+        "1",
+        "--assets-dir",
+        assetsPath,
+        "--window",
+        "0x0x1280x720",
+        input.applyPath,
+      ],
+      WALLPAPER_ENGINE_INIT_TIME
+    );
     await copyWallpaperToDestinations(input.id, input.name, CAGE_SCREENSHOT_PATH);
   }
 };
@@ -241,12 +296,12 @@ const setWallpaperEngineWallpaper = async (
   });
 };
 
-const screenshotWallpaperInCage = async (cmd: string[]) => {
+const screenshotWallpaperInCage = async (cmd: string[], delay: number) => {
   const args = [
     "--",
     "sh",
     "-c",
-    `${cmd.join(" ")} & pid=$!; sleep ${CAGE_INIT_TIME} && grim -g "0,0 1280x720" ${CAGE_SCREENSHOT_PATH} && kill $pid`,
+    `${cmd.join(" ")} & pid=$!; sleep ${delay} && grim -g "0,0 1280x720" ${CAGE_SCREENSHOT_PATH} && kill $pid`,
   ];
   await execute({ command: "cage", args, env: { WLR_BACKENDS: "headless" } });
 };
@@ -275,7 +330,8 @@ const copyWallpaperToDestinations = async (
 };
 
 export {
-  populateMonitorsIfEmpty,
+  downloadRemoteWallpaper,
+  getMonitors,
   saveLastWallpaper,
   killWallpaperProcesses,
   screenshotWallpaper,
