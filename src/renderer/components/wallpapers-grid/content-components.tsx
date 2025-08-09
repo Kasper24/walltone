@@ -25,6 +25,7 @@ import {
 import { Button } from "@renderer/components/ui/button.js";
 import { Badge } from "@renderer/components/ui/badge.js";
 import { Separator } from "@renderer/components/ui/separator.js";
+import { Skeleton } from "@renderer/components/ui/skeleton.js";
 import { BlurhashPreview } from "@renderer/components/ui/blurhash-preview.js";
 import WallpaperDialog from "@renderer/components/wallpaper-dialog/index.js";
 import { type DynamicControlDefinition } from "@renderer/components/wallpaper-dialog/types.js";
@@ -484,7 +485,9 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
           const columnWidth = 300;
           const rowHeight = 250;
           const columnCount = Math.max(1, Math.floor(width / columnWidth));
-          const rowCount = Math.ceil(allWallpapers.length / columnCount);
+          const skeletonRows = 1;
+          const skeletonCount = isFetchingNextPage ? columnCount * skeletonRows : 0;
+          const rowCount = Math.ceil((allWallpapers.length + skeletonCount) / columnCount);
 
           return (
             <Grid
@@ -497,28 +500,38 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
               rowCount={rowCount}
               cellRenderer={({ columnIndex, rowIndex, key, style }) => {
                 const index = rowIndex * columnCount + columnIndex;
-                if (index >= allWallpapers.length) return null;
-                const wallpaper = allWallpapers[index];
-                return (
-                  <div key={key} style={style} className="p-1.5">
-                    <Wallpaper
-                      wallpaper={wallpaper}
-                      onWallpaperApply={onWallpaperApply}
-                      onWallpaperDownload={onWallpaperDownload}
-                      scalingOptions={scalingOptions}
-                      controlDefinitions={controlDefinitions}
-                    />
-                  </div>
-                );
+
+                if (index < allWallpapers.length) {
+                  const wallpaper = allWallpapers[index];
+                  return (
+                    <div key={key} style={style} className="p-1.5">
+                      <Wallpaper
+                        wallpaper={wallpaper}
+                        onWallpaperApply={onWallpaperApply}
+                        onWallpaperDownload={onWallpaperDownload}
+                        scalingOptions={scalingOptions}
+                        controlDefinitions={controlDefinitions}
+                      />
+                    </div>
+                  );
+                }
+
+                // Skeleton placeholder
+                if (index < allWallpapers.length + skeletonCount) {
+                  return (
+                    <div key={key} style={style} className="p-1.5">
+                      <Skeleton className="bg-muted h-full w-full rounded-lg"></Skeleton>
+                    </div>
+                  );
+                }
               }}
               onSectionRendered={({ rowStopIndex, columnStopIndex }) => {
-                // Infinite loading: if last row is visible, fetch next page
+                // Infinite loading: fetch next page when within threshold of the end
+                const thresholdRows = 15; // Fetch when 15 rows from the end (adjust as needed)
                 const lastVisibleIndex = rowStopIndex * columnCount + columnStopIndex;
-                if (
-                  lastVisibleIndex >= allWallpapers.length - columnCount &&
-                  hasNextPage &&
-                  !isFetchingNextPage
-                ) {
+                const thresholdIndex = allWallpapers.length - columnCount * thresholdRows;
+
+                if (lastVisibleIndex >= thresholdIndex && hasNextPage && !isFetchingNextPage) {
                   fetchNextPage();
                 }
               }}
@@ -526,16 +539,6 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
           );
         }}
       </AutoSizer>
-      {isFetchingNextPage && (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-end justify-center">
-          <div className="bg-background/80 pointer-events-auto mb-8 flex items-center gap-2 rounded-full px-6 py-3 shadow-lg">
-            <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
-            <span className="text-muted-foreground text-sm font-medium">
-              Loading more wallpapers…
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
