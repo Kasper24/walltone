@@ -13,7 +13,7 @@ import { ThemeProvider } from "@renderer/providers/theme/provider.js";
 import { CurrentTabProvider } from "@renderer/providers/current-tab/provider.js";
 import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import { Toaster } from "@renderer/components/ui/sonner.js";
-import { routes } from "@renderer/routes/index.js";
+import { NavigationPaths, routes } from "@renderer/routes/index.js";
 
 const queryClient = new QueryClient();
 
@@ -75,7 +75,7 @@ const NavigationBar = () => {
   );
 };
 
-const NavigationItem = ({ to, name }: { to: string; name: string }) => {
+const NavigationItem = ({ to, name }: { to: NavigationPaths; name: string }) => {
   const { setCurrentTab } = useCurrentTab();
 
   return (

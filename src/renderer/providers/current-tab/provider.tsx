@@ -1,7 +1,5 @@
 import * as React from "react";
-import { routes } from "@renderer/routes/index.js";
-
-type NavigationPaths = (typeof routes)[keyof typeof routes]["path"];
+import { type NavigationPaths } from "@renderer/routes/index.js";
 
 interface CurrentTabContextType {
   currentTab: NavigationPaths;

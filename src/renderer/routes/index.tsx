@@ -10,6 +10,8 @@ import LibraryVideoTab from "@renderer/pages/library/video.js";
 import LibraryWallpaperEngineTab from "@renderer/pages/library/wallpaper-engine.js";
 import SettingsTab from "@renderer/pages/settings/index.js";
 
+export type NavigationPaths = (typeof routes)[keyof typeof routes]["path"];
+
 export const routes = {
   discoverPexelsImages: {
     path: "/discover/pexels-images" as const,
