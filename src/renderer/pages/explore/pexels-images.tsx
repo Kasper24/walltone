@@ -1,41 +1,41 @@
 import { ExternalLink, Key, RefreshCcw, Settings } from "lucide-react";
 import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
-import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
+import { useNavigate } from "@renderer/hooks/use-navigate.js";
 import { client } from "@renderer/lib/trpc.js";
 
-const ExplorePixabayImagesTab = () => {
-  const { setCurrentTab } = useCurrentTab();
+const ExplorePexelsImagesTab = () => {
+  const navigate = useNavigate();
 
   return (
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "apiKeys.pixabay",
+          key: "apiKeys.pexels",
           decrypt: true,
         },
-        title: "Pixabay API Key Required",
-        description: "To browse Pixabay wallpapers, you need to configure your API key first.",
+        title: "Pexels API Key Required",
+        description: "To browse Pexels wallpapers, you need to configure your API key first.",
         icon: Key,
         helperText:
           "API keys are free and only take a few minutes to set up. They help identify your application and prevent abuse of the service.",
         setupInstructions: [
-          "Visit the Pixabay api key page and create a new API key",
+          "Visit the Pexels api key page and create a new API key",
           "Copy your Access Key and paste it in the settings",
         ],
         actions: [
           {
-            title: "Get Pixabay API Key",
+            title: "Get Pexels API Key",
             description: "Opens in new window",
             icon: ExternalLink,
             variant: "default",
-            onClick: () => window.open("https://pixabay.com/api/docs/", "_blank"),
+            onClick: () => window.open("https://www.pexels.com/api/key/", "_blank"),
           },
           {
             title: "Open Settings",
             description: "Refresh the image library to load new wallpapers",
             icon: Settings,
             variant: "outline",
-            onClick: () => setCurrentTab("settings"),
+            onClick: () => navigate("/settings"),
           },
           {
             title: "Check Again",
@@ -46,93 +46,47 @@ const ExplorePixabayImagesTab = () => {
           },
         ],
       }}
-      queryKeys={[`wallpapers.explore.pixabayImages`]}
+      queryKeys={[`wallpapers.explore.pexelsImages`]}
       queryFn={async ({ pageParam, query, appliedFilters, configValue }) =>
-        await client.api.pixabay.search.query({
-          type: "image",
+        await client.api.pexels.search.query({
+          type: "photos",
           apiKey: configValue!,
           page: pageParam,
           query,
-          ...appliedFilters?.booleans,
           ...appliedFilters?.strings,
         })
       }
       filterDefinitions={[
         {
           type: "single",
-          key: "imageType",
-          title: "Image Type",
-          values: ["all", "photo", "illustration", "vector"],
-        },
-        {
-          type: "single",
           key: "orientation",
           title: "Orientation",
-          values: ["all", "horizontal", "vertical"],
+          values: ["landscape", "portrait", "square"],
         },
         {
           type: "single",
-          key: "category",
-          title: "Category",
-          values: [
-            "backgrounds",
-            "fashion",
-            "nature",
-            "science",
-            "education",
-            "feelings",
-            "health",
-            "people",
-            "religion",
-            "places",
-            "animals",
-            "industry",
-            "computer",
-            "food",
-            "sports",
-            "transportation",
-            "travel",
-            "buildings",
-            "business",
-            "music",
-          ],
+          key: "size",
+          title: "Size",
+          values: ["small", "medium", "large"],
         },
         {
           type: "single",
           key: "color",
           title: "Color",
           values: [
-            "grayscale",
-            "transparent",
             "red",
             "orange",
             "yellow",
             "green",
             "turquoise",
             "blue",
-            "lilac",
+            "violet",
             "pink",
-            "white",
-            "gray",
-            "black",
             "brown",
+            "black",
+            "gray",
+            "white",
           ],
-        },
-        {
-          type: "boolean",
-          key: "editorsChoice",
-          title: "Editors Choice",
-        },
-        {
-          type: "boolean",
-          key: "safeSearch",
-          title: "Safe Search",
-        },
-        {
-          type: "single",
-          key: "order",
-          title: "Order",
-          values: ["popular", "latest"],
         },
       ]}
       onWallpaperApply={async (wallpaper, monitors) => {
@@ -148,4 +102,4 @@ const ExplorePixabayImagesTab = () => {
   );
 };
 
-export default ExplorePixabayImagesTab;
+export default ExplorePexelsImagesTab;

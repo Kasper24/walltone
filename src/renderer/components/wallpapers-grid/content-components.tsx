@@ -27,7 +27,7 @@ import { Badge } from "@renderer/components/ui/badge.js";
 import { Separator } from "@renderer/components/ui/separator.js";
 import WallpaperDialog from "@renderer/components/wallpaper-dialog/index.js";
 import { type DynamicControlDefinition } from "@renderer/components/wallpaper-dialog/types.js";
-import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
+import { useNavigate } from "@renderer/hooks/use-navigate.js";
 import { ConfigurationRequirement, OnWallpaperApply, OnWallpaperDownload } from "./types.js";
 
 export const ConfigurationScreen = <TConfigKey extends SettingKey>({
@@ -273,7 +273,7 @@ export const EmptyWallpapers = ({
   onClearSearch?: () => void;
   refetch: () => void;
 }) => {
-  const { setCurrentTab } = useCurrentTab();
+  const navigate = useNavigate();
   const isSearchResult = query && query.trim().length > 0;
 
   return (
@@ -372,7 +372,7 @@ export const EmptyWallpapers = ({
                 <Button
                   variant="default"
                   className="h-11 w-full justify-start"
-                  onClick={() => setCurrentTab("settings")}
+                  onClick={() => navigate("/settings")}
                 >
                   <Settings className="mr-3 h-4 w-4" />
                   <div className="text-left">
@@ -466,7 +466,7 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
   }
 
   return (
-    <div className={"h-[80vh] w-full"}>
+    <div className={"h-[85vh] w-full"}>
       <AutoSizer
         onResize={() => {
           // Force re-render on resize to recompute grid size

@@ -1,10 +1,10 @@
 import { ExternalLink, Key, RefreshCcw, Settings } from "lucide-react";
 import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
-import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
+import { useNavigate } from "@renderer/hooks/use-navigate.js";
 import { client } from "@renderer/lib/trpc.js";
 
 const ExplorePixabayVideosTab = () => {
-  const { setCurrentTab } = useCurrentTab();
+  const navigate = useNavigate();
 
   return (
     <WallpapersGrid
@@ -35,7 +35,7 @@ const ExplorePixabayVideosTab = () => {
             description: "Refresh the image library to load new wallpapers",
             icon: Settings,
             variant: "outline",
-            onClick: () => setCurrentTab("settings"),
+            onClick: () => navigate("/settings"),
           },
           {
             title: "Check Again",

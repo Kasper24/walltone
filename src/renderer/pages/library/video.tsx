@@ -1,10 +1,10 @@
 import { Folder, RefreshCcw, Settings } from "lucide-react";
 import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
-import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
+import { useNavigate } from "@renderer/hooks/use-navigate.js";
 import { client } from "@renderer/lib/trpc.js";
 
 const LibraryVideoTab = () => {
-  const { setCurrentTab } = useCurrentTab();
+  const navigate = useNavigate();
 
   return (
     <WallpapersGrid
@@ -27,7 +27,7 @@ const LibraryVideoTab = () => {
             description: "Configure your video library folders",
             icon: Settings,
             variant: "default",
-            onClick: () => setCurrentTab("settings"),
+            onClick: () => navigate("/settings"),
           },
           {
             title: "Check Again",

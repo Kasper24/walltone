@@ -1,69 +1,67 @@
-import { ExternalLink, Key, RefreshCcw, Settings } from "lucide-react";
-import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
+import { Folder, RefreshCcw, Settings } from "lucide-react";
 import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
+import { useNavigate } from "@renderer/hooks/use-navigate.js";
 import { client } from "@renderer/lib/trpc.js";
 
-const ExploreWallpaperEngineTab = () => {
-  const { setCurrentTab } = useCurrentTab();
+const LibraryWallpaperEngineTab = () => {
+  const navigate = useNavigate();
 
   return (
     <WallpapersGrid
       requiresConfiguration={{
         setting: {
-          key: "apiKeys.wallpaperEngine",
-          decrypt: true,
+          key: "wallpaperSources.wallpaperEngineFolders",
         },
-        title: "Wallpaper Engine API Key Required",
-        description: "To browse Unsplash wallpapers, you need to configure your API key first.",
-        icon: Key,
-        helperText:
-          "API keys are free and only take a few minutes to set up. They help identify your application and prevent abuse of the service.",
+        title: "Wallpaper Engine Library Configuration",
+        description:
+          "To browse wallpaper engine wallpapers, you need to add wallpaper folders first.",
+        icon: Folder,
         setupInstructions: [
-          "Visit the steam API key page",
-          "Copy your Access Key and paste it in the settings",
+          "Add folders containing wallpapers in the settings",
+          "Ensure the folders are accessible by the application",
         ],
+        helperText:
+          "Add folders containing your wallpapers to browse and manage them from this interface.",
         actions: [
           {
-            title: "Get Wallpaper Engine API Key",
-            description: "Opens in new window",
-            icon: ExternalLink,
-            variant: "default",
-            onClick: () => window.open("https://steamcommunity.com/dev/apikey", "_blank"),
-          },
-          {
             title: "Open Settings",
-            description: "Refresh the image library to load new wallpapers",
+            description: "Configure your image library folders",
             icon: Settings,
-            variant: "outline",
-            onClick: () => setCurrentTab("settings"),
+            variant: "default",
+            onClick: () => navigate("/settings"),
           },
           {
             title: "Check Again",
-            description: "Refresh to load new wallpapers",
+            description: "Refresh the image library to load new wallpapers",
             icon: RefreshCcw,
             variant: "ghost",
-            onClick: (refresh) => refresh(),
+            onClick: (refetch) => refetch(),
           },
         ],
       }}
-      queryKeys={[`wallpapers.explore.wallpaperEngine`]}
-      queryFn={async ({ pageParam, query, sorting, appliedFilters, configValue }) => {
+      queryKeys={[`wallpapers.library.wallpaperEngine`]}
+      queryFn={async ({ pageParam, query, sorting, appliedFilters }) => {
         const tags = Object.entries(appliedFilters?.arrays || {}).flatMap(([_, values]) => values);
 
-        return await client.api.wallpaperEngine.search.query({
-          apiKey: configValue!,
+        return await client.wallpaper.search.query({
+          type: "wallpaper-engine",
           page: pageParam,
+          sorting: sorting,
           query,
-          sorting,
           tags,
           ...appliedFilters?.booleans,
         });
       }}
       sortingOptions={[
-        { key: "0", text: "Vote" },
-        { key: "1", text: "Date" },
-        { key: "3", text: "Trend" },
-        { key: "9", text: "Subscriptions" },
+        { key: "name", text: "Name" },
+        { key: "id", text: "ID" },
+        { key: "date_added", text: "Date Added" },
+      ]}
+      scalingOptions={[
+        { key: "default", text: "Default" },
+        { key: "stretch", text: "Stretch" },
+        { key: "fit", text: "Fit" },
+        { key: "fill", text: "Fill" },
       ]}
       filterDefinitions={[
         {
@@ -219,19 +217,92 @@ const ExploreWallpaperEngineTab = () => {
           ],
         },
       ]}
-      onWallpaperDownload={async (wallpaper) => {
-        const apiKey = await client.settings.get.query({
-          key: "apiKeys.wallpaperEngine",
-          decrypt: true,
-        });
-
-        await client.api.wallpaperEngine.subscribe.mutate({
-          apiKey,
+      controlDefinitions={[
+        {
+          type: "boolean",
+          key: "silent",
+          title: "Silent",
+          description: "Mute background audio",
+          defaultValue: false,
+        },
+        {
+          type: "range",
+          key: "volume",
+          title: "Volume",
+          description: "Audio volume level",
+          defaultValue: 100,
+          options: { min: 0, max: 100, step: 1 },
+        },
+        {
+          type: "boolean",
+          key: "noAutomute",
+          title: "No Auto Mute",
+          description: "Don't mute when other apps play audio",
+          defaultValue: false,
+        },
+        {
+          type: "boolean",
+          key: "noAudioProcessing",
+          title: "No Audio Processing",
+          description: "Disable audio reactive features",
+          defaultValue: false,
+        },
+        {
+          type: "range",
+          key: "fps",
+          title: "FPS Limit",
+          description: "Limit frame rate",
+          defaultValue: 24,
+          options: { min: 10, max: 144, step: 1 },
+        },
+        {
+          type: "select",
+          key: "clamping",
+          title: "Texture Clamping",
+          description: "Set texture clamping mode",
+          defaultValue: "clamp",
+          options: {
+            values: [
+              { key: "clamp", text: "Clamp" },
+              { key: "border", text: "Border" },
+              { key: "repeat", text: "Repeat" },
+            ],
+          },
+        },
+        {
+          type: "boolean",
+          key: "disableMouse",
+          title: "Disable Mouse",
+          description: "Disable mouse interactions",
+          defaultValue: false,
+        },
+        {
+          type: "boolean",
+          key: "disableParallax",
+          title: "Disable Parallax",
+          description: "Disable parallax effects",
+          defaultValue: false,
+        },
+        {
+          type: "boolean",
+          key: "noFullscreenPause",
+          title: "No Fullscreen Pause",
+          description: "Don't pause when apps go fullscreen",
+          defaultValue: false,
+        },
+      ]}
+      onWallpaperApply={async (wallpaper, monitors, controlValues) => {
+        await client.wallpaper.set.mutate({
+          type: "wallpaper-engine",
           id: wallpaper.id,
+          name: wallpaper.name,
+          applyPath: wallpaper.applyPath,
+          monitors,
+          wallpaperEngineOptions: controlValues,
         });
       }}
     />
   );
 };
 
-export default ExploreWallpaperEngineTab;
+export default LibraryWallpaperEngineTab;

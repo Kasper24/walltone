@@ -45,7 +45,7 @@ const WallpaperGridControls = <TSorting extends string>({
   onRefresh: () => void;
 }) => {
   return (
-    <div className="flex gap-x-4">
+    <div className="ml-2 flex gap-x-4">
       <Input
         autoFocus
         placeholder="Search wallpapers..."
@@ -72,7 +72,7 @@ const WallpaperGridControls = <TSorting extends string>({
           appliedFilters={appliedFilters}
           setAppliedFilters={setAppliedFilters}
         />
-        <Button variant="ghost" onClick={onRefresh}>
+        <Button variant="ghost" size="icon" onClick={onRefresh}>
           <RefreshCw />
         </Button>
       </div>
