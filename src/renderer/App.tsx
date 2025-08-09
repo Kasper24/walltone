@@ -1,6 +1,4 @@
-import React from "react";
 import { Settings } from "lucide-react";
-import { HashRouter, Routes, Route, Link, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Button } from "@renderer/components/ui/button.js";
 import {
@@ -12,6 +10,8 @@ import {
   NavigationMenuTrigger,
 } from "@renderer/components/ui/navigation-menu.js";
 import { ThemeProvider } from "@renderer/providers/theme/provider.js";
+import { CurrentTabProvider } from "@renderer/providers/current-tab/provider.js";
+import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import { Toaster } from "@renderer/components/ui/sonner.js";
 import { routes } from "@renderer/routes/index.js";
 
@@ -21,34 +21,22 @@ const App = () => {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <QueryClientProvider client={queryClient}>
-        <main className="bg-background h-screen w-screen overflow-hidden select-none">
-          <div className="m-10">
-            <HashRouter>
+        <CurrentTabProvider>
+          <main className="bg-background h-screen w-screen overflow-hidden select-none">
+            <div className="m-10">
               <NavigationBar />
-              <Routes>
-                {Object.values(routes).map((route) => (
-                  <Route path={route.path} element={route.element} />
-                ))}
-              </Routes>
-            </HashRouter>
-            <Toaster />
-          </div>
-        </main>
+              <Tabs />
+              <Toaster />
+            </div>
+          </main>
+        </CurrentTabProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );
 };
 
 const NavigationBar = () => {
-  const navigate = useNavigate();
-  const navigated = React.useRef(false);
-
-  React.useEffect(() => {
-    if (!navigated.current) {
-      navigate("/discover/pexels-images");
-      navigated.current = true;
-    }
-  }, [navigate]);
+  const { setCurrentTab } = useCurrentTab();
 
   return (
     <div className="mb-4 flex items-center justify-between">
@@ -80,22 +68,36 @@ const NavigationBar = () => {
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
-      <Button variant="ghost" size="icon">
-        <Link to="/settings">
-          <Settings />
-        </Link>
+      <Button variant="ghost" size="icon" onClick={() => setCurrentTab("/settings")}>
+        <Settings />
       </Button>
     </div>
   );
 };
 
 const NavigationItem = ({ to, name }: { to: string; name: string }) => {
+  const { setCurrentTab } = useCurrentTab();
+
   return (
     <li>
-      <NavigationMenuLink className="text-md" asChild>
-        <Link to={to}>{name}</Link>
+      <NavigationMenuLink className="text-md" onClick={() => setCurrentTab(to)}>
+        {name}
       </NavigationMenuLink>
     </li>
+  );
+};
+
+const Tabs = () => {
+  const { currentTab } = useCurrentTab();
+
+  return (
+    <>
+      {Object.values(routes).map((route) => (
+        <div key={route.path} hidden={currentTab !== route.path}>
+          {route.element}
+        </div>
+      ))}
+    </>
   );
 };
 

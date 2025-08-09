@@ -4,8 +4,8 @@ import { routes } from "@renderer/routes/index.js";
 type NavigationPaths = (typeof routes)[keyof typeof routes]["path"];
 
 const useNavigate = () => {
-  const navigate = useReactRouterNavigate();
-  return (path: NavigationPaths) => navigate(path);
+  const navigate = useReactRoutersetCurrentTab();
+  return (path: NavigationPaths) => setCurrentTab(path);
 };
 
 export { useNavigate };

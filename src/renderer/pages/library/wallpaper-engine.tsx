@@ -1,10 +1,10 @@
 import { Folder, RefreshCcw, Settings } from "lucide-react";
 import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
-import { useNavigate } from "@renderer/hooks/use-navigate.js";
+import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import { client } from "@renderer/lib/trpc.js";
 
 const LibraryWallpaperEngineTab = () => {
-  const navigate = useNavigate();
+  const { setCurrentTab } = useCurrentTab();
 
   return (
     <WallpapersGrid
@@ -28,7 +28,7 @@ const LibraryWallpaperEngineTab = () => {
             description: "Configure your image library folders",
             icon: Settings,
             variant: "default",
-            onClick: () => navigate("/settings"),
+            onClick: () => setCurrentTab("/settings"),
           },
           {
             title: "Check Again",

@@ -27,7 +27,7 @@ import { Badge } from "@renderer/components/ui/badge.js";
 import { Separator } from "@renderer/components/ui/separator.js";
 import WallpaperDialog from "@renderer/components/wallpaper-dialog/index.js";
 import { type DynamicControlDefinition } from "@renderer/components/wallpaper-dialog/types.js";
-import { useNavigate } from "@renderer/hooks/use-navigate.js";
+import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import { ConfigurationRequirement, OnWallpaperApply, OnWallpaperDownload } from "./types.js";
 
 export const ConfigurationScreen = <TConfigKey extends SettingKey>({
@@ -273,7 +273,7 @@ export const EmptyWallpapers = ({
   onClearSearch?: () => void;
   refetch: () => void;
 }) => {
-  const navigate = useNavigate();
+  const { setCurrentTab } = useCurrentTab();
   const isSearchResult = query && query.trim().length > 0;
 
   return (
@@ -372,7 +372,7 @@ export const EmptyWallpapers = ({
                 <Button
                   variant="default"
                   className="h-11 w-full justify-start"
-                  onClick={() => navigate("/settings")}
+                  onClick={() => setCurrentTab("/settings")}
                 >
                   <Settings className="mr-3 h-4 w-4" />
                   <div className="text-left">
