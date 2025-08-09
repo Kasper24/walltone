@@ -9,21 +9,24 @@ import { AppliedFilters, ConfigurationRequirement, WallpapersGridProps } from ".
 import { DotNotationValueOf } from "node_modules/conf/dist/source/types.js";
 
 export const useWallpaperSearch = () => {
-  const [inputValue, setInputValue] = React.useState("");
   const [debouncedInputValue, setDebouncedInputValue] = React.useState("");
+  const [_, startTransition] = React.useTransition();
 
-  const handleSearch = useDebouncedCallback((newQuery) => {
-    setDebouncedInputValue(newQuery);
+  const handleSearchDebounced = useDebouncedCallback((newQuery) => {
+    startTransition(() => {
+      setDebouncedInputValue(newQuery);
+    });
   }, 300);
 
+  const handleSearch = (newQuery: string) => {
+    handleSearchDebounced(newQuery);
+  };
+
   const clearSearch = () => {
-    setInputValue("");
     setDebouncedInputValue("");
   };
 
   return {
-    inputValue,
-    setInputValue,
     debouncedInputValue,
     handleSearch,
     clearSearch,
@@ -103,8 +106,6 @@ export const useWallpaperData = <
   configValue: DotNotationValueOf<SettingsSchema, TConfigKey>;
   isConfigurationValid: boolean;
 }) => {
-  const { ref, inView } = useInView();
-
   const query = useInfiniteQuery({
     queryKey: [...queryKeys, debouncedInputValue, sorting, JSON.stringify(appliedFilters)],
     queryFn: ({ pageParam = 1 }) =>
@@ -123,17 +124,12 @@ export const useWallpaperData = <
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  React.useEffect(() => {
-    if (inView) {
-      query.fetchNextPage();
-    }
-  }, [query, inView]);
-
-  const allWallpapers = query.data?.pages.flatMap((page) => page.data ?? []) || [];
+  const allWallpapers = React.useMemo(() => {
+    return query.data?.pages.flatMap((page) => page.data ?? []) || [];
+  }, [query.data?.pages]);
 
   return {
     ...query,
     allWallpapers,
-    infiniteScrollRef: ref,
   };
 };

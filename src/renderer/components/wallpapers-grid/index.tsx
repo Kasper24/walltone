@@ -24,9 +24,9 @@ import {
   SetAppliedFilters,
   FilterDefinition,
 } from "./types.js";
+import React from "react";
 
 const WallpaperGridControls = <TSorting extends string>({
-  inputValue,
   onInputChange,
   onSortingChange,
   sortingOptions,
@@ -35,7 +35,6 @@ const WallpaperGridControls = <TSorting extends string>({
   setAppliedFilters,
   onRefresh,
 }: {
-  inputValue: string;
   onInputChange: (value: string) => void;
   onSortingChange: (value: TSorting) => void;
   sortingOptions?: { key: TSorting; text: string }[];
@@ -44,13 +43,18 @@ const WallpaperGridControls = <TSorting extends string>({
   setAppliedFilters: SetAppliedFilters;
   onRefresh: () => void;
 }) => {
+  const [inputValue, setInputValue] = React.useState("");
+
   return (
     <div className="ml-2 flex gap-x-4">
       <Input
         autoFocus
         placeholder="Search wallpapers..."
         value={inputValue}
-        onChange={(event) => onInputChange(event.target.value)}
+        onChange={(event) => {
+          setInputValue(event.target.value);
+          onInputChange(event.target.value);
+        }}
       />
       <div className="flex gap-2">
         {sortingOptions && sortingOptions.length > 0 && (
@@ -96,9 +100,7 @@ const WallpapersGrid = <
   requiresConfiguration,
   controlDefinitions,
 }: WallpapersGridProps<T, TSorting, TConfigKey>) => {
-  const { inputValue, setInputValue, debouncedInputValue, handleSearch, clearSearch } =
-    useWallpaperSearch();
-
+  const { debouncedInputValue, handleSearch, clearSearch } = useWallpaperSearch();
   const { sorting, setSorting, appliedFilters, setAppliedFilters } =
     useWallpaperFilters(sortingOptions);
 
@@ -146,9 +148,7 @@ const WallpapersGrid = <
   return (
     <div className="space-y-4">
       <WallpaperGridControls
-        inputValue={inputValue}
         onInputChange={(value) => {
-          setInputValue(value);
           handleSearch(value);
         }}
         onSortingChange={setSorting}
