@@ -73,9 +73,13 @@ const getOrCreateThumbnail = async (wallpaper: LibraryWallpaper) => {
 };
 
 const generateBlurHash = async (wallpaper: LibraryWallpaper) => {
-  const fullSizePath = wallpaper.fullSizePath.replace("image://", "").replace("video://", "");
-  const buf = await sharp(fullSizePath).resize(32, 32).ensureAlpha().raw().toBuffer();
-  return encode(Uint8ClampedArray.from(buf), 32, 32, 4, 4);
+  const fullSizePath = wallpaper.thumbnailPath.replace("image://", "").replace("video://", "");
+  try {
+    const buf = await sharp(fullSizePath).resize(32, 32).ensureAlpha().raw().toBuffer();
+    return encode(Uint8ClampedArray.from(buf), 32, 32, 4, 4);
+  } catch {
+    return undefined;
+  }
 };
 
 parentPort?.on("message", async ({ data }: { data: WallpaperData<LibraryWallpaper> }) => {
