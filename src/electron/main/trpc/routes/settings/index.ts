@@ -82,11 +82,11 @@ const schema: Schema<SettingsSchema> = {
       base16: {
         type: "object",
         properties: {
-          accentMinSaturation: { type: "number", default: 0.3, minimum: 0, maximum: 1 },
+          accentMinSaturation: { type: "number", default: 0, minimum: 0, maximum: 1 },
           accentMaxSaturation: { type: "number", default: 1, minimum: 0, maximum: 1 },
           accentMinLuminance: { type: "number", default: 0.08, minimum: 0, maximum: 1 },
           accentMaxLuminance: { type: "number", default: 0.8, minimum: 0, maximum: 1 },
-          accentSaturation: { type: "number", default: 0.5, minimum: -10, maximum: 10 },
+          accentSaturation: { type: "number", default: 0.3, minimum: -10, maximum: 10 },
           accentDarken: { type: "number", default: 0, minimum: -10, maximum: 10 },
           accentLighten: { type: "number", default: 0, minimum: -10, maximum: 10 },
           backgroundSaturation: { type: "number", default: 0, minimum: -10, maximum: 10 },
