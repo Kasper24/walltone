@@ -28,9 +28,8 @@ const BlurhashPreview = ({
   }, []);
 
   const contentWithOnLoad = React.cloneElement(Content, {
-    onLoad: () => {
-      setIsLoading(false);
-    },
+    ...(Content.type === "img" && { onLoad: () => setIsLoading(false) }),
+    ...(Content.type === "video" && { onLoadedData: () => setIsLoading(false) }),
   });
 
   return (
