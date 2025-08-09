@@ -18,6 +18,7 @@ import { Badge } from "@renderer/components/ui/badge.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@renderer/components/ui/tabs.js";
 import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
 import LoadingButton from "@renderer/components/ui/loading-button.js";
+import { BlurhashPreview } from "@renderer/components/ui/blurhash-preview.js";
 import {
   type OnWallpaperApply,
   type OnWallpaperDownload,
@@ -169,21 +170,23 @@ const WallpaperImage = <T extends BaseWallpaper>({ wallpaper }: { wallpaper: T }
   return (
     <Card className="p-1">
       <CardContent className="p-1">
-        {wallpaper.type !== "video" ? (
-          <img
-            className="h-48 w-full rounded-lg object-fill sm:h-56 md:h-64"
-            src={wallpaper.fullSizePath}
-            alt={wallpaper.name}
-          />
-        ) : (
-          <video
-            className="h-48 w-full rounded-lg object-fill sm:h-56 md:h-64"
-            src={wallpaper.fullSizePath}
-            autoPlay
-            loop
-            playsInline
-          ></video>
-        )}
+        <BlurhashPreview
+          blurHash={wallpaper.blurHash}
+          className="h-48 w-full rounded-lg object-fill sm:h-56 md:h-64"
+          Content={
+            wallpaper.type !== "video" ? (
+              <img className="h-full w-full object-fill" src={wallpaper.fullSizePath} />
+            ) : (
+              <video
+                className="h-full w-full object-fill"
+                src={wallpaper.fullSizePath}
+                autoPlay
+                loop
+                playsInline
+              ></video>
+            )
+          }
+        />
       </CardContent>
     </Card>
   );

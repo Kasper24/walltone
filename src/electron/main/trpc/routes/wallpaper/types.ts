@@ -5,6 +5,7 @@ export interface BaseWallpaper {
   type: "image" | "video" | "wallpaper-engine";
   id: string;
   name: string;
+  blurHash?: string;
   thumbnailPath: string;
   fullSizePath: string;
 }

@@ -4,6 +4,7 @@ import path from "path";
 import crypto from "crypto";
 import { promises as fs } from "fs";
 import sharp from "sharp";
+import { encode } from "blurhash";
 import { execute } from "@electron/main/lib/index.js";
 import { LibraryWallpaper, WallpaperData } from "./types.js";
 
@@ -71,11 +72,18 @@ const getOrCreateThumbnail = async (wallpaper: LibraryWallpaper) => {
   return `image://${thumbPath}`;
 };
 
+const generateBlurHash = async (wallpaper: LibraryWallpaper) => {
+  const fullSizePath = wallpaper.fullSizePath.replace("image://", "").replace("video://", "");
+  const buf = await sharp(fullSizePath).resize(32, 32).ensureAlpha().raw().toBuffer();
+  return encode(Uint8ClampedArray.from(buf), 32, 32, 4, 4);
+};
+
 parentPort?.on("message", async ({ data }: { data: WallpaperData<LibraryWallpaper> }) => {
   try {
     data.data = await Promise.all(
       data.data.map(async (wallpaper) => {
         wallpaper.thumbnailPath = await getOrCreateThumbnail(wallpaper);
+        wallpaper.blurHash = await generateBlurHash(wallpaper);
         return wallpaper;
       })
     );

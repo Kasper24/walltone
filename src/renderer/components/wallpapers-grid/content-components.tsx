@@ -25,6 +25,7 @@ import {
 import { Button } from "@renderer/components/ui/button.js";
 import { Badge } from "@renderer/components/ui/badge.js";
 import { Separator } from "@renderer/components/ui/separator.js";
+import { BlurhashPreview } from "@renderer/components/ui/blurhash-preview.js";
 import WallpaperDialog from "@renderer/components/wallpaper-dialog/index.js";
 import { type DynamicControlDefinition } from "@renderer/components/wallpaper-dialog/types.js";
 import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
@@ -159,12 +160,18 @@ export const Wallpaper = <T extends BaseWallpaper>({
     <div className="group relative h-full w-full overflow-hidden rounded-lg">
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="flex h-full w-full">
-          <img
-            className="bg-secondary h-full w-full transform rounded-lg object-cover transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
-            src={wallpaper.thumbnailPath}
-            alt={wallpaper.name}
-            loading="lazy"
-            decoding="async"
+          <BlurhashPreview
+            blurHash={wallpaper.blurHash}
+            className="h-48 w-full rounded-lg sm:h-56 md:h-64"
+            Content={
+              <img
+                className="bg-secondary h-full w-full transform rounded-lg object-cover transition-transform duration-300 group-hover:scale-110 group-hover:blur-sm"
+                src={wallpaper.thumbnailPath}
+                alt={wallpaper.name}
+                loading="lazy"
+                decoding="async"
+              />
+            }
           />
           <div className="bg-background pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-50">
             <span className="p-3 text-center font-semibold">{wallpaper.name}</span>

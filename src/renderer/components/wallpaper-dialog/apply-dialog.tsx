@@ -24,6 +24,7 @@ import { Slider } from "@renderer/components/ui/slider.js";
 import { Switch } from "@renderer/components/ui/switch.js";
 import { Label } from "@renderer/components/ui/label.js";
 import { ScrollArea } from "@renderer/components/ui/scroll-area.js";
+import { BlurhashPreview } from "@renderer/components/ui/blurhash-preview.js";
 import { OnWallpaperApply } from "@renderer/components/wallpapers-grid/types.js";
 import { useMonitorSelection, useWallpaperActions } from "./hooks.js";
 import {
@@ -208,22 +209,24 @@ const ApplyDialogError = ({ onRetry }: { onRetry: () => void }) => {
 const WallpaperPreview = ({ wallpaper }: { wallpaper: BaseWallpaper }) => {
   return (
     <div className="flex justify-center">
-      {wallpaper.type !== "video" ? (
-        <img
-          className="h-20 w-32 rounded-md object-cover"
-          src={wallpaper.thumbnailPath}
-          alt={wallpaper.name}
-        />
-      ) : (
-        <video
-          className="h-20 w-32 rounded-md object-fill"
-          src={wallpaper.thumbnailPath}
-          autoPlay
-          loop
-          muted
-          playsInline
-        ></video>
-      )}
+      <BlurhashPreview
+        blurHash={wallpaper.blurHash}
+        className="h-20 w-32 rounded-md"
+        Content={
+          wallpaper.type !== "video" ? (
+            <img className="object-fill" src={wallpaper.thumbnailPath} alt={wallpaper.name} />
+          ) : (
+            <video
+              className="object-fill"
+              src={wallpaper.thumbnailPath}
+              autoPlay
+              loop
+              muted
+              playsInline
+            ></video>
+          )
+        }
+      />
     </div>
   );
 };
