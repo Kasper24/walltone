@@ -203,8 +203,8 @@ const SETTINGS_CONFIG: SettingsSection[] = [
       {
         settingKey: "apiKeys.pexels",
         additionalQueryKeysToInvalidate: [
-          "wallpapers.explore.pexelsImages",
-          "wallpapers.explore.pexelsVideos",
+          "wallpapers.discover.pexelsImages",
+          "wallpapers.discover.pexelsVideos",
         ],
         title: "Pexels API Key",
         description: "Required for retrieving wallpapers from Pexels",
@@ -214,8 +214,8 @@ const SETTINGS_CONFIG: SettingsSection[] = [
       {
         settingKey: "apiKeys.pixabay",
         additionalQueryKeysToInvalidate: [
-          "wallpapers.explore.pixabayImages",
-          "wallpapers.explore.pixabayVideos",
+          "wallpapers.discover.pixabayImages",
+          "wallpapers.discover.pixabayVideos",
         ],
         title: "Pixabay API Key",
         description: "Required for retrieving wallpapers from Pixabay",
@@ -224,7 +224,7 @@ const SETTINGS_CONFIG: SettingsSection[] = [
       },
       {
         settingKey: "apiKeys.unsplash",
-        additionalQueryKeysToInvalidate: ["wallpapers.explore.unsplash"],
+        additionalQueryKeysToInvalidate: ["wallpapers.discover.unsplash"],
         title: "Unsplash API Key",
         description: "Required for retrieving wallpapers from Unsplash",
         type: "encrypted",
@@ -232,7 +232,7 @@ const SETTINGS_CONFIG: SettingsSection[] = [
       },
       {
         settingKey: "apiKeys.wallpaperEngine",
-        additionalQueryKeysToInvalidate: ["wallpapers.explore.wallpaperEngine"],
+        additionalQueryKeysToInvalidate: ["wallpapers.discover.wallpaperEngine"],
         title: "Steam API Key",
         description: "Required for retrieving wallpapers from Wallpaper Engine",
         type: "encrypted",

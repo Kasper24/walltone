@@ -3,7 +3,7 @@ import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
 import { useNavigate } from "@renderer/hooks/use-navigate.js";
 import { client } from "@renderer/lib/trpc.js";
 
-const ExploreWallpaperEngineTab = () => {
+const DiscoverWallpaperEngineTab = () => {
   const navigate = useNavigate();
 
   return (
@@ -46,7 +46,7 @@ const ExploreWallpaperEngineTab = () => {
           },
         ],
       }}
-      queryKeys={[`wallpapers.explore.wallpaperEngine`]}
+      queryKeys={[`wallpapers.discover.wallpaperEngine`]}
       queryFn={async ({ pageParam, query, sorting, appliedFilters, configValue }) => {
         const tags = Object.entries(appliedFilters?.arrays || {}).flatMap(([_, values]) => values);
 
@@ -234,4 +234,4 @@ const ExploreWallpaperEngineTab = () => {
   );
 };
 
-export default ExploreWallpaperEngineTab;
+export default DiscoverWallpaperEngineTab;

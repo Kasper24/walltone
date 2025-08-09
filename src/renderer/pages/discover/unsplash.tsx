@@ -3,7 +3,7 @@ import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
 import { useNavigate } from "@renderer/hooks/use-navigate.js";
 import { client } from "@renderer/lib/trpc.js";
 
-const ExploreUnsplashTab = () => {
+const DiscoverUnsplashTab = () => {
   const navigate = useNavigate();
 
   return (
@@ -46,7 +46,7 @@ const ExploreUnsplashTab = () => {
           },
         ],
       }}
-      queryKeys={[`wallpapers.explore.unsplash`]}
+      queryKeys={[`wallpapers.discover.unsplash`]}
       queryFn={async ({ pageParam, query, sorting, appliedFilters, configValue }) =>
         await client.api.unsplash.search.query({
           apiKey: configValue!,
@@ -99,4 +99,4 @@ const ExploreUnsplashTab = () => {
   );
 };
 
-export default ExploreUnsplashTab;
+export default DiscoverUnsplashTab;

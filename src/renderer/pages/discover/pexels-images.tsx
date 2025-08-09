@@ -3,7 +3,7 @@ import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
 import { useNavigate } from "@renderer/hooks/use-navigate.js";
 import { client } from "@renderer/lib/trpc.js";
 
-const ExplorePexelsVideosTab = () => {
+const DiscoverPexelsImagesTab = () => {
   const navigate = useNavigate();
 
   return (
@@ -46,10 +46,10 @@ const ExplorePexelsVideosTab = () => {
           },
         ],
       }}
-      queryKeys={[`wallpapers.explore.pexelsVideos`]}
+      queryKeys={[`wallpapers.discover.pexelsImages`]}
       queryFn={async ({ pageParam, query, appliedFilters, configValue }) =>
         await client.api.pexels.search.query({
-          type: "videos",
+          type: "photos",
           apiKey: configValue!,
           page: pageParam,
           query,
@@ -69,10 +69,29 @@ const ExplorePexelsVideosTab = () => {
           title: "Size",
           values: ["small", "medium", "large"],
         },
+        {
+          type: "single",
+          key: "color",
+          title: "Color",
+          values: [
+            "red",
+            "orange",
+            "yellow",
+            "green",
+            "turquoise",
+            "blue",
+            "violet",
+            "pink",
+            "brown",
+            "black",
+            "gray",
+            "white",
+          ],
+        },
       ]}
       onWallpaperApply={async (wallpaper, monitors) => {
         await client.wallpaper.set.mutate({
-          type: "video",
+          type: "image",
           id: wallpaper.id,
           name: wallpaper.name,
           applyPath: wallpaper.downloadUrl,
@@ -83,4 +102,4 @@ const ExplorePexelsVideosTab = () => {
   );
 };
 
-export default ExplorePexelsVideosTab;
+export default DiscoverPexelsImagesTab;

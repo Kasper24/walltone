@@ -3,7 +3,7 @@ import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
 import { useNavigate } from "@renderer/hooks/use-navigate.js";
 import { client } from "@renderer/lib/trpc.js";
 
-const ExplorePixabayVideosTab = () => {
+const DiscoverPixabayImagesTab = () => {
   const navigate = useNavigate();
 
   return (
@@ -46,10 +46,10 @@ const ExplorePixabayVideosTab = () => {
           },
         ],
       }}
-      queryKeys={[`wallpapers.explore.pixabayVideos`]}
+      queryKeys={[`wallpapers.discover.pixabayImages`]}
       queryFn={async ({ pageParam, query, appliedFilters, configValue }) =>
         await client.api.pixabay.search.query({
-          type: "video",
+          type: "image",
           apiKey: configValue!,
           page: pageParam,
           query,
@@ -60,9 +60,9 @@ const ExplorePixabayVideosTab = () => {
       filterDefinitions={[
         {
           type: "single",
-          key: "videoType",
-          title: "Video Type",
-          values: ["all", "film", "animation"],
+          key: "imageType",
+          title: "Image Type",
+          values: ["all", "photo", "illustration", "vector"],
         },
         {
           type: "single",
@@ -137,7 +137,7 @@ const ExplorePixabayVideosTab = () => {
       ]}
       onWallpaperApply={async (wallpaper, monitors) => {
         await client.wallpaper.set.mutate({
-          type: "video",
+          type: "image",
           id: wallpaper.id,
           name: wallpaper.name,
           applyPath: wallpaper.downloadUrl,
@@ -148,4 +148,4 @@ const ExplorePixabayVideosTab = () => {
   );
 };
 
-export default ExplorePixabayVideosTab;
+export default DiscoverPixabayImagesTab;

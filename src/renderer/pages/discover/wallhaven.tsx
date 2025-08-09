@@ -2,10 +2,10 @@ import WallpapersGrid from "@renderer/components/wallpapers-grid/index.js";
 import { client } from "@renderer/lib/trpc.js";
 import { WallhavenSorting } from "@electron/main/trpc/routes/api/wallhaven/index.js";
 
-const ExploreWallhavenTab = () => {
+const DiscoverWallhavenTab = () => {
   return (
     <WallpapersGrid
-      queryKeys={[`explore-wallhaven`]}
+      queryKeys={[`wallpapers.discover.wallhaven`]}
       queryFn={async ({ pageParam, query, sorting, appliedFilters }) =>
         await client.api.wallhaven.search.query({
           page: pageParam,
@@ -60,4 +60,4 @@ const ExploreWallhavenTab = () => {
   );
 };
 
-export default ExploreWallhavenTab;
+export default DiscoverWallhavenTab;
