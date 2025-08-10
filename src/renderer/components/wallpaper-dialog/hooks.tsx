@@ -185,9 +185,9 @@ export const useMonitorSelection = (scalingOptions?: { key: string; text: string
   };
 };
 
-export const useWallpaperActions = <T extends BaseWallpaper>(wallpaper: T) => {
+export const useWallpaperActions = <TWallpaper extends BaseWallpaper>(wallpaper: TWallpaper) => {
   const downloadMutation = useMutation({
-    mutationFn: async (onDownload: OnWallpaperDownload<T>) => {
+    mutationFn: async (onDownload: OnWallpaperDownload<TWallpaper>) => {
       return await onDownload(wallpaper);
     },
     onSuccess: () => {
@@ -219,7 +219,7 @@ export const useWallpaperActions = <T extends BaseWallpaper>(wallpaper: T) => {
       monitorConfigs,
       controlValues,
     }: {
-      onApply: OnWallpaperApply<T>;
+      onApply: OnWallpaperApply<TWallpaper>;
       monitorConfigs: { id: string; scalingMethod: string }[];
       controlValues?: DynamicControlValues;
     }) => {

@@ -33,14 +33,14 @@ import {
   SetDynamicControlValues,
 } from "./types.js";
 
-const ApplyWallpaperDialog = <T extends BaseWallpaper>({
+const ApplyWallpaperDialog = <TWallpaper extends BaseWallpaper>({
   wallpaper,
   onApply,
   scalingOptions,
   controlDefinitions,
 }: {
-  wallpaper: T;
-  onApply?: OnWallpaperApply<T>;
+  wallpaper: TWallpaper;
+  onApply?: OnWallpaperApply<TWallpaper>;
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
 }) => {

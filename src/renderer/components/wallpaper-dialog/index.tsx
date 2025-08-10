@@ -32,7 +32,7 @@ import {
 import ApplyWallpaperDialog from "./apply-dialog.js";
 import { type DynamicControlDefinition } from "./types.js";
 
-const WallpaperDialog = <T extends BaseWallpaper>({
+const WallpaperDialog = <TWallpaper extends BaseWallpaper>({
   wallpaper,
   onApply,
   onDownload,
@@ -40,9 +40,9 @@ const WallpaperDialog = <T extends BaseWallpaper>({
   controlDefinitions,
   isOpen,
 }: {
-  wallpaper: T;
-  onApply?: OnWallpaperApply<T>;
-  onDownload?: OnWallpaperDownload<T>;
+  wallpaper: TWallpaper;
+  onApply?: OnWallpaperApply<TWallpaper>;
+  onDownload?: OnWallpaperDownload<TWallpaper>;
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
   isOpen: boolean;
@@ -154,7 +154,7 @@ const WallpaperDialog = <T extends BaseWallpaper>({
   );
 };
 
-const Header = <T extends BaseWallpaper>({ wallpaper }: { wallpaper: T }) => {
+const Header = <TWallpaper extends BaseWallpaper>({ wallpaper }: { wallpaper: TWallpaper }) => {
   return (
     <DialogHeader className="flex-shrink-0 space-y-2">
       <DialogTitle className="flex items-center gap-2">
@@ -166,7 +166,11 @@ const Header = <T extends BaseWallpaper>({ wallpaper }: { wallpaper: T }) => {
   );
 };
 
-const WallpaperImage = <T extends BaseWallpaper>({ wallpaper }: { wallpaper: T }) => {
+const WallpaperImage = <TWallpaper extends BaseWallpaper>({
+  wallpaper,
+}: {
+  wallpaper: TWallpaper;
+}) => {
   return (
     <Card className="p-1">
       <CardContent className="p-1">
@@ -368,7 +372,7 @@ const ThemeColors = ({
   );
 };
 
-const WallpaperActions = <T extends BaseWallpaper>({
+const WallpaperActions = <TWallpaper extends BaseWallpaper>({
   wallpaper,
   theme,
   onApply,
@@ -376,10 +380,10 @@ const WallpaperActions = <T extends BaseWallpaper>({
   scalingOptions,
   controlDefinitions,
 }: {
-  wallpaper: T;
+  wallpaper: TWallpaper;
   theme?: Theme;
-  onApply?: OnWallpaperApply<T>;
-  onDownload?: OnWallpaperDownload<T>;
+  onApply?: OnWallpaperApply<TWallpaper>;
+  onDownload?: OnWallpaperDownload<TWallpaper>;
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
 }) => {

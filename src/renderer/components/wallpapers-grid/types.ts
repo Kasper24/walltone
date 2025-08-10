@@ -10,13 +10,15 @@ import {
   DynamicControlValues,
 } from "@renderer/components/wallpaper-dialog/types.js";
 
-export type OnWallpaperApply<T extends BaseWallpaper> = (
-  wallpaper: T,
+export type OnWallpaperApply<TWallpaper extends BaseWallpaper> = (
+  wallpaper: TWallpaper,
   monitorConfigs: { id: string; scalingMethod: string }[],
   controlValues?: DynamicControlValues
 ) => Promise<void>;
 
-export type OnWallpaperDownload<T extends BaseWallpaper> = (wallpaper: T) => Promise<void>;
+export type OnWallpaperDownload<TWallpaper extends BaseWallpaper> = (
+  wallpaper: TWallpaper
+) => Promise<void>;
 
 export interface FilterDefinition {
   type: "single" | "multiple" | "boolean";
@@ -57,7 +59,7 @@ export interface ConfigurationRequirement<TConfigKey extends SettingKey> {
 }
 
 export interface WallpapersGridProps<
-  T extends BaseWallpaper,
+  TWallpaper extends BaseWallpaper,
   TSorting extends string,
   TConfigKey extends SettingKey,
 > {
@@ -68,7 +70,7 @@ export interface WallpapersGridProps<
     sorting: TSorting;
     appliedFilters?: AppliedFilters;
     configValue?: DotNotationValueOf<SettingsSchema, TConfigKey>;
-  }) => Promise<WallpaperData<T>>;
+  }) => Promise<WallpaperData<TWallpaper>>;
   queryEnabled?: boolean;
   sortingOptions?: {
     key: TSorting;
@@ -79,8 +81,8 @@ export interface WallpapersGridProps<
     key: string;
     text: string;
   }[];
-  onWallpaperApply?: OnWallpaperApply<T>;
-  onWallpaperDownload?: OnWallpaperDownload<T>;
+  onWallpaperApply?: OnWallpaperApply<TWallpaper>;
+  onWallpaperDownload?: OnWallpaperDownload<TWallpaper>;
   requiresConfiguration?: ConfigurationRequirement<TConfigKey>;
   controlDefinitions?: DynamicControlDefinition[];
 }

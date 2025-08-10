@@ -184,11 +184,11 @@ const sortWallpapers = (wallpapers: LibraryWallpaper[], sorting: string) => {
   }
 };
 
-const paginateData = <T extends LibraryWallpaper>(
-  data: T[],
+const paginateData = <TWallpaper extends LibraryWallpaper>(
+  data: TWallpaper[],
   page: number,
   itemsPerPage: number
-): WallpaperData<T> => {
+): WallpaperData<TWallpaper> => {
   const currentPage = page;
   const totalItems = data.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
