@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
+import logger from "@electron/main/lib/logger.js";
 
 interface UnsplashPhoto {
   id: string;
@@ -192,9 +193,9 @@ const unsplashSearchParamsSchema = z.object({
 
 export const unsplashRouter = router({
   search: publicProcedure.input(unsplashSearchParamsSchema).query(async ({ input }) => {
+    logger.info({ input }, "unsplash.search: start");
     const url = new URL("https://api.unsplash.com/search/photos");
     const params = url.searchParams;
-
     params.set("client_id", input.apiKey);
     params.set("page", input.page.toString());
     params.set("per_page", input.perPage.toString());
@@ -202,22 +203,24 @@ export const unsplashRouter = router({
     params.set("query", input.query);
     if (input.orientation) params.set("orientation", input.orientation);
     if (input.color) params.set("color", input.color);
-
     try {
       const response = await fetch(url.toString());
-      if (!response.ok)
+      if (!response.ok) {
+        logger.error(
+          { input, status: response.status, statusText: response.statusText },
+          "unsplash.search: api error"
+        );
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Unsplash API request failed: ${response.statusText}`,
         });
-
+      }
       const data: UnsplashSearchResult | UnsplashPhoto[] = await response.json();
-
       // Normalize the response format
       const photos = Array.isArray(data) ? data : data.results;
       const totalItems = Array.isArray(data) ? photos.length : data.total;
       const totalPages = Array.isArray(data) ? Infinity : data.total_pages;
-
+      logger.info({ input, total: photos.length }, "unsplash.search: success");
       return {
         data: photos ? transformWallpapers(photos) : [],
         currentPage: input.page,
@@ -228,9 +231,10 @@ export const unsplashRouter = router({
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
+      logger.error({ input, error: message }, "unsplash.search: failed");
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: `Pexels API request failed: ${message}`,
+        message: `Unsplash API request failed: ${message}`,
         cause: error,
       });
     }

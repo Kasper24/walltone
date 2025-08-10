@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
+import logger from "@electron/main/lib/logger.js";
 
 interface PexelsPhoto {
   id: number;
@@ -130,14 +131,13 @@ const pexelsSearchParamsSchema = z.object({
 
 export const pexelsRouter = router({
   search: publicProcedure.input(pexelsSearchParamsSchema).query(async ({ input }) => {
+    logger.info({ input }, "pexels.search: start");
     const baseUrl =
       input.type === "photos"
         ? "https://api.pexels.com/v1/search"
         : "https://api.pexels.com/videos/search";
-
     const url = new URL(baseUrl);
     const params = url.searchParams;
-
     params.set("query", input.query);
     params.set("page", input.page.toString());
     params.set("per_page", input.perPage.toString());
@@ -145,27 +145,29 @@ export const pexelsRouter = router({
     if (input.size) params.set("size", input.size);
     if (input.color) params.set("color", input.color);
     if (input.locale) params.set("locale", input.locale);
-
     try {
       const response = await fetch(url.toString(), {
         headers: { Authorization: input.apiKey },
       });
-      if (!response.ok)
+      if (!response.ok) {
+        logger.error(
+          { input, status: response.status, statusText: response.statusText },
+          "pexels.search: api error"
+        );
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Pexels API request failed: ${response.statusText}`,
         });
-
+      }
       const data: PexelsSearchResponse<PexelsPhoto | PexelsVideo> = await response.json();
       const numberOfPages = Math.ceil(data.total_results / input.perPage);
-
       let transformedData: ApiWallpaper[] = [];
       if (input.type === "photos" && data.photos) {
         transformedData = transformPhotos(data.photos as PexelsPhoto[]);
       } else if (input.type === "videos" && data.videos) {
         transformedData = transformVideos(data.videos as PexelsVideo[]);
       }
-
+      logger.info({ input, total: transformedData.length }, "pexels.search: success");
       return {
         data: transformedData,
         currentPage: data.page,
@@ -176,6 +178,7 @@ export const pexelsRouter = router({
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
+      logger.error({ input, error: message }, "pexels.search: failed");
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: `Pexels API request failed: ${message}`,

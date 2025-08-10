@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
+import logger from "@electron/main/lib/logger.js";
 
 export type WallhavenSorting = "date_added" | "random" | "views" | "favorites" | "toplist";
 export type WallhavenCategory = "general" | "anime" | "people";
@@ -86,9 +87,9 @@ const wallhavenSearchParamsSchema = z.object({
 
 export const wallhavenRouter = router({
   search: publicProcedure.input(wallhavenSearchParamsSchema).query(async ({ input }) => {
+    logger.info({ input }, "wallhaven.search: start");
     const url = new URL(`https://wallhaven.cc/api/v1/search`);
     const params = url.searchParams;
-
     if (input.query) params.set("q", input.query);
     if (input.categories) params.set("categories", convertCategories(input.categories));
     if (input.purity) params.set("purity", convertPurity(input.purity));
@@ -101,18 +102,21 @@ export const wallhavenRouter = router({
     if (input.colors) params.set("colors", input.colors.join(","));
     if (input.page) params.set("page", input.page.toString());
     if (input.seed) params.set("seed", input.seed);
-
     try {
       const response = await fetch(url.toString());
-      if (!response.ok)
+      if (!response.ok) {
+        logger.error(
+          { input, status: response.status, statusText: response.statusText },
+          "wallhaven.search: api error"
+        );
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Wallhaven API request failed: ${response.statusText}`,
         });
-
+      }
       const data: WallhavenSearchResult = await response.json();
       const totalPages = Math.ceil(data.meta.total / data.meta.per_page);
-
+      logger.info({ input, total: data.data.length }, "wallhaven.search: success");
       return {
         data: transformWallpapers(data.data),
         currentPage: data.meta.current_page,
@@ -123,6 +127,7 @@ export const wallhavenRouter = router({
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
+      logger.error({ input, error: message }, "wallhaven.search: failed");
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: `Wallhaven API request failed: ${message}`,

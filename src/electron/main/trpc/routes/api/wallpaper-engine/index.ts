@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
+import logger from "@electron/main/lib/logger.js";
 
 interface WallpaperEngineWorkshopItem {
   result: number;
@@ -97,9 +98,9 @@ const subscriptionSchema = z.object({
 
 export const wallpaperEngineRouter = router({
   search: publicProcedure.input(searchSchema).query(async ({ input }) => {
+    logger.info({ input }, "wallpaperEngine.search: start");
     const url = new URL("https://api.steampowered.com/IPublishedFileService/QueryFiles/v1");
     const params = url.searchParams;
-
     params.set("key", input.apiKey);
     params.set("creator_appid", "431960");
     params.set("appid", "431960");
@@ -115,18 +116,24 @@ export const wallpaperEngineRouter = router({
     }
     if (input.sorting) params.set("query_type", input.sorting);
     if (input.matchAll !== undefined) params.set("match_all_tags", `${input.matchAll}`);
-
     try {
       const response = await fetch(url);
-      if (!response.ok)
+      if (!response.ok) {
+        logger.error(
+          { input, status: response.status, statusText: response.statusText },
+          "wallpaperEngine.search: api error"
+        );
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Pexels API request failed: ${response.statusText}`,
         });
-
+      }
       const data: WallpaperEngineWorkshopSearchResponse = await response.json();
       const numberOfPages = Math.ceil(data.response.total / input.perPage);
-
+      logger.info(
+        { input, total: data.response.publishedfiledetails?.length },
+        "wallpaperEngine.search: success"
+      );
       return {
         data: data.response.publishedfiledetails
           ? transformWallpapers(data.response.publishedfiledetails)
@@ -139,6 +146,7 @@ export const wallpaperEngineRouter = router({
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
+      logger.error({ input, error: message }, "wallpaperEngine.search: failed");
       throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message, cause: error });
     }
   }),

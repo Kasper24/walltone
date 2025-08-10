@@ -8,6 +8,7 @@ import { execute, santize, renderString } from "@electron/main/lib/index.js";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { caller } from "@electron/main/trpc/routes/index.js";
 import { type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
+import logger from "@electron/main/lib/logger.js";
 
 const hexColor = () => z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex color format");
 
@@ -115,46 +116,52 @@ export const themeRouter = router({
     .input(generateSchema)
     .output(themeSchema)
     .query(async ({ input }) => {
+      logger.info({ input }, "theme.generate: start");
       const imageSrc = input.imageSrc.replace("image://", "").replace("video://", "");
       const quantizeLibrary = await caller.settings.get({
         key: "themeGeneration.quantizeLibrary",
       });
       const base16Settings = await caller.settings.get({ key: "themeGeneration.base16" });
-
-      return await new Promise((resolve, reject) => {
-        const workerPath = path.join(import.meta.dirname, "theme-generator.js");
-        const worker = new Worker(workerPath);
-
-        worker.on("message", (event) => {
-          const result = event.data;
-          if (event.status === "success") {
-            resolve(result);
-          } else {
-            reject(new Error(result?.error || "Worker failed with an unknown error."));
-          }
-          worker.terminate();
+      try {
+        return await new Promise((resolve, reject) => {
+          const workerPath = path.join(import.meta.dirname, "theme-generator.js");
+          const worker = new Worker(workerPath);
+          worker.on("message", (event) => {
+            const result = event.data;
+            if (event.status === "success") {
+              logger.info({ input }, "theme.generate: success");
+              resolve(result);
+            } else {
+              logger.error({ input, error: result?.error }, "theme.generate: worker failed");
+              reject(new Error(result?.error || "Worker failed with an unknown error."));
+            }
+            worker.terminate();
+          });
+          worker.on("error", (error) => {
+            logger.error({ input, error }, "theme.generate: worker error");
+            reject(error);
+            worker.terminate();
+          });
+          worker.postMessage({ imageSrc, quantizeLibrary, base16Settings });
         });
-
-        worker.on("error", (error) => {
-          reject(error);
-          worker.terminate();
-        });
-
-        worker.postMessage({ imageSrc, quantizeLibrary, base16Settings });
-      });
+      } catch (error) {
+        logger.error({ input, error }, "theme.generate: failed");
+        throw error;
+      }
     }),
 
   set: publicProcedure.input(setSchema).mutation(async ({ input }) => {
+    logger.info({ input }, "theme.set: start");
     const templates = (await caller.settings.get({
       key: "themeOutput.templates",
     })) as SettingsSchema["themeOutput"]["templates"];
-
-    if (!templates)
+    if (!templates) {
+      logger.error({ input }, "theme.set: templates not set");
       throw new TRPCError({
         code: "NOT_FOUND",
         message: "Templates are not set.",
       });
-
+    }
     const context = {
       wallpaper: {
         ...input.wallpaper,
@@ -163,57 +170,69 @@ export const themeRouter = router({
       },
       theme: themeToChroma(input.theme),
     };
-
-    await Promise.all(
-      templates.map(async (tpl) => {
-        if (!tpl.src || !tpl.dest) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Invalid template configuration: ${JSON.stringify(tpl)}`,
-          });
-        }
-
-        try {
-          const content = await fs.readFile(tpl.src, "utf-8");
-          const rendered = await renderString(content, context);
-
+    try {
+      await Promise.all(
+        templates.map(async (tpl) => {
+          if (!tpl.src || !tpl.dest) {
+            logger.error({ tpl }, "theme.set: invalid template config");
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Invalid template configuration: ${JSON.stringify(tpl)}`,
+            });
+          }
           try {
-            const destination = await renderString(tpl.dest, context);
-            await fs.mkdir(path.dirname(destination), { recursive: true });
-            await fs.writeFile(destination, rendered, "utf-8");
-
-            if (tpl.postHook) {
-              try {
-                const postHook = await renderString(tpl.postHook, context);
-                const [cmd, ...args] = postHook.split(" ");
-                await execute({ command: cmd, args, shell: true });
-              } catch (error) {
-                const errorMessage =
-                  error instanceof Error ? error.message : "Unknown error occurred";
-                throw new TRPCError({
-                  code: "INTERNAL_SERVER_ERROR",
-                  message: `Error running post-hook command: ${tpl.postHook}: ${errorMessage}`,
-                  cause: error,
-                });
+            const content = await fs.readFile(tpl.src, "utf-8");
+            const rendered = await renderString(content, context);
+            try {
+              const destination = await renderString(tpl.dest, context);
+              await fs.mkdir(path.dirname(destination), { recursive: true });
+              await fs.writeFile(destination, rendered, "utf-8");
+              logger.info({ tpl, destination }, "theme.set: wrote file");
+              if (tpl.postHook) {
+                try {
+                  const postHook = await renderString(tpl.postHook, context);
+                  const [cmd, ...args] = postHook.split(" ");
+                  await execute({ command: cmd, args, shell: true });
+                  logger.info({ tpl, postHook }, "theme.set: ran post-hook");
+                } catch (error) {
+                  logger.error(
+                    { tpl, postHook: tpl.postHook, error },
+                    "theme.set: post-hook failed"
+                  );
+                  const errorMessage =
+                    error instanceof Error ? error.message : "Unknown error occurred";
+                  throw new TRPCError({
+                    code: "INTERNAL_SERVER_ERROR",
+                    message: `Error running post-hook command: ${tpl.postHook}: ${errorMessage}`,
+                    cause: error,
+                  });
+                }
               }
+            } catch (error) {
+              logger.error({ tpl, error }, "theme.set: failed to write file");
+              const errorMessage =
+                error instanceof Error ? error.message : "Unknown error occurred";
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: `Error writing file to ${tpl.dest}: ${errorMessage}`,
+                cause: error,
+              });
             }
           } catch (error) {
+            logger.error({ tpl, error }, "theme.set: failed to read template");
             const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
             throw new TRPCError({
               code: "INTERNAL_SERVER_ERROR",
-              message: `Error writing file to ${tpl.dest}: ${errorMessage}`,
+              message: `Error reading template file ${tpl.src}: ${errorMessage}`,
               cause: error,
             });
           }
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `Error reading template file ${tpl.src}: ${errorMessage}`,
-            cause: error,
-          });
-        }
-      })
-    );
+        })
+      );
+      logger.info({ input }, "theme.set: success");
+    } catch (error) {
+      logger.error({ input, error }, "theme.set: failed");
+      throw error;
+    }
   }),
 });

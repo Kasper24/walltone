@@ -6,6 +6,8 @@ import { promises as fs } from "fs";
 import sharp from "sharp";
 import { encode } from "blurhash";
 import { execute } from "@electron/main/lib/index.js";
+import logger from "@electron/main/lib/logger.js";
+
 import { LibraryWallpaper, WallpaperData } from "./types.js";
 
 const THUMB_CACHE_DIR = path.join(os.homedir(), ".cache", "walltone", "thumbnails");
@@ -31,42 +33,57 @@ const getOrCreateThumbnail = async (wallpaper: LibraryWallpaper) => {
 
   try {
     await fs.access(thumbPath);
-    console.log("Cache hit: ", wallpaper.fullSizePath);
+    logger.debug(
+      { fullSizePath: wallpaper.fullSizePath, thumbPath },
+      "Thumbnail cache hit for wallpaper"
+    );
   } catch {
-    console.log("Cache miss: ", wallpaper.fullSizePath);
+    logger.debug(
+      { fullSizePath: wallpaper.fullSizePath, thumbPath },
+      "Thumbnail cache miss, generating new thumbnail"
+    );
 
     if (wallpaper.type === "image" || wallpaper.type === "wallpaper-engine")
-      await sharp(fullSizePath)
-        .rotate()
-        .resize(THUMBNAIL_WIDTH, null, {
-          withoutEnlargement: true,
-        })
-        .jpeg({
-          quality: 80,
-          mozjpeg: true,
-        })
-        .toFile(thumbPath);
+      try {
+        await sharp(fullSizePath)
+          .rotate()
+          .resize(THUMBNAIL_WIDTH, null, {
+            withoutEnlargement: true,
+          })
+          .jpeg({
+            quality: 80,
+            mozjpeg: true,
+          })
+          .toFile(thumbPath);
+        logger.info({ fullSizePath, thumbPath }, "Successfully generated image thumbnail");
+      } catch (err) {
+        logger.error({ err, fullSizePath, thumbPath }, "Failed to generate image thumbnail");
+      }
     else if (wallpaper.type === "video")
-      await execute({
-        ignoreErrors: true,
-        logStdout: false,
-        logStderr: false,
-        command: "ffmpeg",
-        args: [
-          "-y",
-          "-ss",
-          "1", // seek to 1s
-          "-i",
-          fullSizePath,
-          "-frames:v",
-          "1", // grab one frame
-          "-vf",
-          `scale='if(gt(iw,${THUMBNAIL_WIDTH}),${THUMBNAIL_WIDTH},iw)':-1`,
-          "-q:v",
-          "1", // quality (1 = best, 31 = worst)
-          thumbPath, // save directly to file
-        ],
-      });
+      try {
+        await execute({
+          logStdout: false,
+          logStderr: false,
+          command: "ffmpeg",
+          args: [
+            "-y",
+            "-ss",
+            "1", // seek to 1s
+            "-i",
+            fullSizePath,
+            "-frames:v",
+            "1", // grab one frame
+            "-vf",
+            `scale='if(gt(iw,${THUMBNAIL_WIDTH}),${THUMBNAIL_WIDTH},iw)':-1`,
+            "-q:v",
+            "1", // quality (1 = best, 31 = worst)
+            thumbPath, // save directly to file
+          ],
+        });
+        logger.info({ fullSizePath, thumbPath }, "Successfully generated video thumbnail");
+      } catch (err) {
+        logger.error({ err, fullSizePath, thumbPath }, "Failed to generate video thumbnail");
+      }
   }
 
   return `image://${thumbPath}`;

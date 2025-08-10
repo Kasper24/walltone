@@ -5,6 +5,7 @@ import Conf, { Schema } from "conf";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { SetWallpaperInput } from "@electron/main/trpc/routes/wallpaper/types.js";
+import logger from "@electron/main/lib/logger.js";
 
 export interface SettingsSchema {
   /** Settings for the application's appearance and startup behavior. */
@@ -233,12 +234,18 @@ const deleteSchema = z.object({
 
 export const settingsRouter = router({
   get: publicProcedure.input(getSchema).query(async ({ input }) => {
+    logger.info({ input }, "settings.get: start");
     try {
       if (input.decrypt) {
-        return keytar.getPassword("walltone", input.key);
+        const value = await keytar.getPassword("walltone", input.key);
+        logger.info({ input }, "settings.get: success (keytar)");
+        return value;
       }
-      return store.get(input.key);
+      const value = store.get(input.key);
+      logger.info({ input }, "settings.get: success");
+      return value;
     } catch (error) {
+      logger.error({ input, error }, "settings.get: failed");
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: `Failed to get value ${input.key}`,
@@ -248,19 +255,22 @@ export const settingsRouter = router({
   }),
 
   set: publicProcedure.input(setSchema).mutation(async ({ input }) => {
+    logger.info({ input }, "settings.set: start");
     try {
       if (input.filePicker) {
         const selectedPath = await filePicker(input.filePicker);
         if (!selectedPath) return;
         input.value = selectedPath;
       }
-
       if (input.encrypt) {
         await keytar.setPassword("walltone", input.key, String(input.value ?? ""));
+        logger.info({ input }, "settings.set: success (keytar)");
       } else {
         store.set(input.key, input.value);
+        logger.info({ input }, "settings.set: success");
       }
     } catch (error) {
+      logger.error({ input, error }, "settings.set: failed");
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: `Failed to set value at ${input.key}`,
@@ -270,6 +280,7 @@ export const settingsRouter = router({
   }),
 
   add: publicProcedure.input(addSchema).mutation(async ({ input }) => {
+    logger.info({ input }, "settings.add: start");
     try {
       if (input.filePicker) {
         const selectedPath = await filePicker(input.filePicker);
@@ -278,15 +289,17 @@ export const settingsRouter = router({
       }
       const targetArray = store.get(input.key) as unknown[];
       if (!Array.isArray(targetArray)) {
+        logger.error({ input }, "settings.add: not an array");
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Cannot add to target of type ${typeof targetArray}`,
         });
       }
-
       targetArray.push(input.value);
       store.set(input.key, targetArray);
+      logger.info({ input }, "settings.add: success");
     } catch (error) {
+      logger.error({ input, error }, "settings.add: failed");
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: `Failed to add value at ${input.key}`,
@@ -296,22 +309,26 @@ export const settingsRouter = router({
   }),
 
   delete: publicProcedure.input(deleteSchema).mutation(async ({ input }) => {
+    logger.info({ input }, "settings.delete: start");
     try {
       if (input.encrypted) {
         await keytar.deletePassword("walltone", input.key);
+        logger.info({ input }, "settings.delete: deleted encrypted");
       } else {
         const arr = store.get(input.key);
         if (!Array.isArray(arr)) {
+          logger.error({ input }, "settings.delete: not an array");
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: `Cannot delete from target of type ${typeof arr}`,
           });
         }
-
         arr.splice(input.index, 1);
         store.set(input.key, arr);
+        logger.info({ input }, "settings.delete: deleted from array");
       }
     } catch (error) {
+      logger.error({ input, error }, "settings.delete: failed");
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: `Failed to delete value at ${input.key}`,

@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
+import logger from "@electron/main/lib/logger.js";
 
 export interface PixabayImage {
   id: number;
@@ -153,9 +154,9 @@ const pixabaySearchParamsSchema = z.object({
 
 export const pixabayRouter = router({
   search: publicProcedure.input(pixabaySearchParamsSchema).query(async ({ input }) => {
+    logger.info({ input }, "pixabay.search: start");
     const isImage = input.type === "image";
     const endpoint = isImage ? "https://pixabay.com/api/" : "https://pixabay.com/api/videos/";
-
     const url = new URL(endpoint);
     url.searchParams.set("key", input.apiKey);
     url.searchParams.set("q", input.query);
@@ -172,20 +173,23 @@ export const pixabayRouter = router({
     if (input.editorsChoice)
       url.searchParams.set("editors_choice", input.editorsChoice ? "true" : "false");
     if (input.safeSearch) url.searchParams.set("safesearch", input.safeSearch ? "true" : "false");
-
     try {
       const response = await fetch(url.toString());
-      if (!response.ok)
+      if (!response.ok) {
+        logger.error(
+          { input, status: response.status, statusText: response.statusText },
+          "pixabay.search: api error"
+        );
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Pixabay API request failed: ${response.statusText}`,
         });
-
+      }
       const data: PixabaySearchResponse<PixabayImage | PixabayVideo> = await response.json();
       const hits = data.hits || [];
       const totalItems = data.totalHits || 0;
       const totalPages = Math.ceil(totalItems / input.perPage);
-
+      logger.info({ input, total: hits.length }, "pixabay.search: success");
       return {
         data: isImage
           ? transformPixabayImages(hits as PixabayImage[])
@@ -198,6 +202,7 @@ export const pixabayRouter = router({
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
+      logger.error({ input, error: message }, "pixabay.search: failed");
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: `Pixabay API request failed: ${message}`,
