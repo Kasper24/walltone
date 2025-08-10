@@ -47,6 +47,13 @@ const DiscoverWallhavenTab = () => {
           values: ["16:9", "16:10", "4:3", "21:9", "32:9"],
         },
       ]}
+      scalingOptions={[
+        { key: "stretch", text: "Stretch" },
+        { key: "fit", text: "Fit" },
+        { key: "fill", text: "Fill" },
+        { key: "center", text: "Center" },
+        { key: "tile", text: "Tile" },
+      ]}
       onWallpaperApply={async (wallpaper, monitors) => {
         await client.wallpaper.set.mutate({
           type: "image",

@@ -86,6 +86,13 @@ const DiscoverUnsplashTab = () => {
           ],
         },
       ]}
+      scalingOptions={[
+        { key: "stretch", text: "Stretch" },
+        { key: "fit", text: "Fit" },
+        { key: "fill", text: "Fill" },
+        { key: "center", text: "Center" },
+        { key: "tile", text: "Tile" },
+      ]}
       onWallpaperApply={async (wallpaper, monitors) => {
         await client.wallpaper.set.mutate({
           type: "image",

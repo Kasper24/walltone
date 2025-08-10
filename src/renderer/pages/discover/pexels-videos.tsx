@@ -70,6 +70,13 @@ const DiscoverPexelsVideosTab = () => {
           values: ["small", "medium", "large"],
         },
       ]}
+      scalingOptions={[
+        { key: "fill", text: "Fill" },
+        { key: "fit", text: "Fit" },
+        { key: "center", text: "Center" },
+        { key: "stretch", text: "Stretch" },
+        { key: "tile", text: "Tile" },
+      ]}
       onWallpaperApply={async (wallpaper, monitors) => {
         await client.wallpaper.set.mutate({
           type: "video",
