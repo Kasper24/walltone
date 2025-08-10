@@ -220,10 +220,10 @@ const DiscoverWallpaperEngineTab = () => {
         },
       ]}
       onWallpaperDownload={async (wallpaper) => {
-        const apiKey = await client.settings.get.query({
+        const apiKey = (await client.settings.get.query({
           key: "apiKeys.wallpaperEngine",
           decrypt: true,
-        });
+        })) as string;
 
         await client.api.wallpaperEngine.subscribe.mutate({
           apiKey,
