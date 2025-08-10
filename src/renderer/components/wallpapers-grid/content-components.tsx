@@ -488,13 +488,14 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
           const skeletonRows = 1;
           const skeletonCount = isFetchingNextPage ? columnCount * skeletonRows : 0;
           const rowCount = Math.ceil((allWallpapers.length + skeletonCount) / columnCount);
+          const scrollbarGap = 3;
 
           return (
             <Grid
               ref={gridRef}
               width={width}
               height={height}
-              columnWidth={Math.floor(width / columnCount) - 3}
+              columnWidth={Math.floor(width / columnCount) - scrollbarGap}
               columnCount={columnCount}
               rowHeight={rowHeight}
               rowCount={rowCount}
@@ -504,7 +505,7 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
                 if (index < allWallpapers.length) {
                   const wallpaper = allWallpapers[index];
                   return (
-                    <div key={key} style={style} className="p-1.5">
+                    <div key={`skeleton-${key}`} style={style} className="p-1.5">
                       <Wallpaper
                         wallpaper={wallpaper}
                         onWallpaperApply={onWallpaperApply}
@@ -519,7 +520,7 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
                 // Skeleton placeholder
                 if (index < allWallpapers.length + skeletonCount) {
                   return (
-                    <div key={key} style={style} className="p-1.5">
+                    <div key={`wallpaper-${key}`} style={style} className="p-1.5">
                       <Skeleton className="bg-muted h-full w-full rounded-lg"></Skeleton>
                     </div>
                   );
@@ -527,7 +528,7 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
               }}
               onSectionRendered={({ rowStopIndex, columnStopIndex }) => {
                 // Infinite loading: fetch next page when within threshold of the end
-                const thresholdRows = 15; // Fetch when 15 rows from the end (adjust as needed)
+                const thresholdRows = 30; // Fetch when X rows from the end
                 const lastVisibleIndex = rowStopIndex * columnCount + columnStopIndex;
                 const thresholdIndex = allWallpapers.length - columnCount * thresholdRows;
 
