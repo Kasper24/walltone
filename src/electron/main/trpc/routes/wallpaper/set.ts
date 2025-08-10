@@ -1,21 +1,18 @@
-import os from "os";
 import path from "path";
 import { promises as fs } from "fs";
+import envPaths from "env-paths";
 import { TRPCError } from "@trpc/server";
 import { execute, killProcess, santize, renderString } from "@electron/main/lib/index.js";
 import { caller } from "@electron/main/trpc/routes/index.js";
 import { type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
 import { SetWallpaperInput } from "./types.js";
 
+const paths = envPaths("walltone");
+
 const VIDEO_INIT_TIME = 1;
 const WALLPAPER_ENGINE_INIT_TIME = 5;
-const CAGE_SCREENSHOT_PATH = "/tmp/walltone-wallpaper-screenshot.png";
-const WALLPAPERS_DOWNLOAD_CACHE_DIR = path.join(
-  os.homedir(),
-  ".cache",
-  "walltone",
-  "wallpapers-downloads"
-);
+const CAGE_SCREENSHOT_PATH = path.join(paths.temp, "walltone-wallpaper-screenshot.png");
+const WALLPAPERS_DOWNLOAD_CACHE_DIR = path.join(paths.cache, "downloads");
 
 const mimeToExtension = (mime: string): string | null => {
   const map: Record<string, string> = {

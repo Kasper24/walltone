@@ -1,9 +1,10 @@
-import os from "os";
 import path from "path";
+import envPaths from "env-paths";
 import pino from "pino";
 import pinoPretty from "pino-pretty";
 
-const logsDir = path.join(os.homedir(), ".cache", "walltone", "logs");
+const paths = envPaths("walltone");
+const logsDir = path.join(paths.log);
 const logFilePath = path.join(logsDir, "app.log");
 
 const isProduction = process.env.NODE_ENV === "production";

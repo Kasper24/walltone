@@ -13,7 +13,7 @@ const initializeApp = async () => {
 
   createIPCHandler({ router: appRouter, windows: [mainWindow] });
 
-  await caller.wallpaper.restoreOnStart();
+  caller.wallpaper.restoreOnStart();
 
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();

@@ -3,14 +3,16 @@ import os from "os";
 import path from "path";
 import crypto from "crypto";
 import { promises as fs } from "fs";
+import envPaths from "env-paths";
 import sharp from "sharp";
 import { encode } from "blurhash";
 import { execute } from "@electron/main/lib/index.js";
 import logger from "@electron/main/lib/logger.js";
+import { type LibraryWallpaper, type WallpaperData } from "./types.js";
 
-import { LibraryWallpaper, WallpaperData } from "./types.js";
+const paths = envPaths("walltone");
 
-const THUMB_CACHE_DIR = path.join(os.homedir(), ".cache", "walltone", "thumbnails");
+const THUMB_CACHE_DIR = path.join(paths.cache, "thumbnails");
 const THUMBNAIL_WIDTH = 640;
 
 const getFileHash = async (filePath: string): Promise<string> => {
