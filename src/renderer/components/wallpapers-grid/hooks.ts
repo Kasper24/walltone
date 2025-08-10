@@ -60,14 +60,14 @@ export const useConfiguration = <TConfigKey extends SettingKey>(
     isPending: isConfigPending,
     isError: isConfigError,
     refetch: refetchConfig,
-  } = useQuery({
+  } = useQuery<DotNotationValueOf<SettingsSchema, TConfigKey>>({
     enabled: !!requiresConfiguration,
     queryKey: [`${requiresConfiguration?.setting.key}`],
     queryFn: async () => {
-      return await client.settings.get.query({
+      return (await client.settings.get.query({
         key: requiresConfiguration!.setting.key,
         decrypt: requiresConfiguration!.setting.decrypt || false,
-      });
+      })) as DotNotationValueOf<SettingsSchema, TConfigKey>;
     },
   });
 
@@ -102,7 +102,7 @@ export const useWallpaperData = <
   debouncedInputValue: string;
   sorting: TSorting;
   appliedFilters: AppliedFilters;
-  configValue: DotNotationValueOf<SettingsSchema, TConfigKey>;
+  configValue?: DotNotationValueOf<SettingsSchema, TConfigKey>;
   isConfigurationValid: boolean;
 }) => {
   const query = useInfiniteQuery({
