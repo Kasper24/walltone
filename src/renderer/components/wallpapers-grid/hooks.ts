@@ -1,5 +1,4 @@
 import React from "react";
-import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useDebouncedCallback } from "use-debounce";
 import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";

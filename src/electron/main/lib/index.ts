@@ -12,8 +12,6 @@ const execute = (params: {
   logStdout?: boolean;
   logStderr?: boolean;
 }): Promise<{ stdout: string; stderr: string }> => {
-  logger.info({ ...params }, `execute() called with params`);
-
   const {
     command,
     args = [],
@@ -40,8 +38,6 @@ const execute = (params: {
       shell,
     });
 
-    logger.info({ command, args, env, shell, detached, pid: child.pid }, "Spawned child process");
-
     let stdout = "";
     let stderr = "";
 
@@ -49,24 +45,72 @@ const execute = (params: {
       const text = data.toString();
       stdout += text;
       if (logStdout)
-        logger.debug({ command, args, pid: child.pid, text: text.trim() }, "Process STDOUT");
+        logger.debug(
+          {
+            func: "execute",
+            command,
+            args,
+            env,
+            shell,
+            detached,
+            pid: child.pid,
+            text: text.trim(),
+          },
+          "Process STDOUT"
+        );
     });
 
     child.stderr.on("data", (data) => {
       const text = data.toString();
       stderr += text;
       if (logStderr)
-        logger.warn({ command, args, pid: child.pid, text: text.trim() }, "Process STDERR");
+        logger.warn(
+          {
+            func: "execute",
+            command,
+            args,
+            env,
+            shell,
+            detached,
+            pid: child.pid,
+            text: text.trim(),
+          },
+          "Process STDERR"
+        );
     });
 
     child.on("close", (code, signal) => {
       logger.info(
-        { command, args, env, shell, detached, pid: child.pid, code, signal, stdout, stderr },
+        {
+          func: "execute",
+          command,
+          args,
+          env,
+          shell,
+          detached,
+          pid: child.pid,
+          code,
+          signal,
+          stdout,
+          stderr,
+        },
         "Process closed"
       );
       if (ignoreErrors && code !== 0) {
         logger.warn(
-          { command, args, env, shell, detached, pid: child.pid, code, signal, stdout, stderr },
+          {
+            func: "execute",
+            command,
+            args,
+            env,
+            shell,
+            detached,
+            pid: child.pid,
+            code,
+            signal,
+            stdout,
+            stderr,
+          },
           "Process exited with error, but ignoring"
         );
         return resolve({ stdout, stderr });
@@ -75,7 +119,19 @@ const execute = (params: {
       if (code === 0) {
         if (logStderr)
           logger.info(
-            { command, args, env, shell, detached, pid: child.pid, code, signal, stdout, stderr },
+            {
+              func: "execute",
+              command,
+              args,
+              env,
+              shell,
+              detached,
+              pid: child.pid,
+              code,
+              signal,
+              stdout,
+              stderr,
+            },
             "Process completed successfully"
           );
         resolve({ stdout, stderr });
@@ -84,6 +140,7 @@ const execute = (params: {
         if (logStderr)
           logger.error(
             {
+              func: "execute",
               command,
               args,
               env,
@@ -103,7 +160,10 @@ const execute = (params: {
     });
 
     child.on("error", (error) => {
-      logger.error({ command, args, env, shell, detached, pid: child.pid, error }, "Process error");
+      logger.error(
+        { func: "execute", command, args, env, shell, detached, pid: child.pid, error },
+        "Process error"
+      );
       if (!ignoreErrors) reject(error);
       else resolve({ stdout, stderr });
     });
