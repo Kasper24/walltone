@@ -99,8 +99,8 @@ const DiscoverPixabayImagesTab = () => {
         },
         {
           type: "single",
-          key: "color",
-          title: "Color",
+          key: "colors",
+          title: "Colors",
           values: [
             "grayscale",
             "transparent",
