@@ -17,8 +17,8 @@ if (isProduction) {
       level: "info",
     },
     pino.multistream([
-      { stream: process.stdout },
-      { stream: pino.destination({ dest: logFilePath, mkdir: true }) },
+      { stream: process.stdout, level: "info" },
+      { stream: pino.destination({ dest: logFilePath, mkdir: true }), level: "info" },
     ])
   );
 } else {
@@ -38,9 +38,12 @@ if (isProduction) {
 
   logger = pino(
     {
-      level: "info",
+      level: "debug",
     },
-    pino.multistream([{ stream: prettyConsole }, { stream: prettyFile }])
+    pino.multistream([
+      { stream: prettyConsole, level: "debug" },
+      { stream: prettyFile, level: "debug" },
+    ])
   );
 }
 
