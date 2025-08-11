@@ -4,42 +4,26 @@ import { logFilePath } from "@electron/main/lib/paths.js";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-let logger: pino.Logger;
-
-if (isProduction) {
-  logger = pino(
+const logger = pino(
+  {
+    level: isProduction ? "info" : "debug",
+  },
+  pino.multistream([
     {
-      level: "info",
+      stream: isProduction
+        ? process.stdout
+        : pinoPretty({
+            colorize: true,
+            translateTime: "SYS:standard",
+            ignore: "pid,hostname",
+          }),
+      level: isProduction ? "info" : "debug",
     },
-    pino.multistream([
-      { stream: process.stdout, level: "info" },
-      { stream: pino.destination({ dest: logFilePath, mkdir: true }), level: "info" },
-    ])
-  );
-} else {
-  const prettyConsole = pinoPretty({
-    colorize: true,
-    translateTime: "SYS:standard",
-    ignore: "pid,hostname",
-  });
-
-  const prettyFile = pinoPretty({
-    colorize: false, // no colors in file
-    translateTime: "SYS:standard",
-    ignore: "pid,hostname",
-    destination: logFilePath,
-    mkdir: true,
-  });
-
-  logger = pino(
     {
-      level: "debug",
+      stream: pino.destination({ dest: logFilePath, mkdir: true }),
+      level: isProduction ? "info" : "debug",
     },
-    pino.multistream([
-      { stream: prettyConsole, level: "debug" },
-      { stream: prettyFile, level: "debug" },
-    ])
-  );
-}
+  ])
+);
 
 export { logger };
