@@ -127,8 +127,8 @@ export const wallpaperRouter = router({
 
   onWallpaperError: publicProcedure.subscription(() => {
     return observable((emit) => {
-      function onWallpaperError(data: unknown) {
-        emit.next({ data });
+      function onWallpaperError(error: string) {
+        emit.next(error);
       }
 
       eventsEmitter.on("wallpaper-error", onWallpaperError);

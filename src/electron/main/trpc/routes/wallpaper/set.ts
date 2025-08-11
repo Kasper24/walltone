@@ -80,7 +80,7 @@ const setWallpaper = async (input: SetWallpaperInput) => {
       );
     }
   } catch (error) {
-    eventsEmitter.emit("wallpaper-error", { error });
+    eventsEmitter.emit("wallpaper-error", error instanceof Error ? error.message : "Unknown error");
   }
 };
 

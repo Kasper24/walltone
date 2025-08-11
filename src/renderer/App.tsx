@@ -24,7 +24,7 @@ const App = () => {
   React.useEffect(() => {
     const sub = client.wallpaper.onWallpaperError.subscribe(undefined, {
       onData(data) {
-        toast.error(data?.data?.error?.message || "Wallpaper error");
+        toast.error(data as string);
       },
     });
     return () => sub.unsubscribe();

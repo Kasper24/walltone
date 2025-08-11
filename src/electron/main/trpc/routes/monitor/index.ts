@@ -1,6 +1,5 @@
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { screen } from "electron";
-import logger from "@electron/main/lib/logger.js";
 
 export type Monitor = {
   id: string;
