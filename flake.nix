@@ -15,7 +15,10 @@
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        };
         walltone = pkgs.callPackage ./packaging/nix/package.nix { };
       in
       {
