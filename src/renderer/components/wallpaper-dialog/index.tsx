@@ -29,7 +29,7 @@ import {
   useThemeEditor,
   useWallpaperActions,
 } from "./hooks.js";
-import ApplyWallpaperDialog from "./apply-dialog.js";
+import ApplyWallpaperDialog from "../wallpaper-apply-dialog/index.js";
 import { type DynamicControlDefinition } from "./types.js";
 
 const WallpaperDialog = <TWallpaper extends BaseWallpaper>({
@@ -72,7 +72,7 @@ const WallpaperDialog = <TWallpaper extends BaseWallpaper>({
   );
 
   return (
-    <DialogContent className="flex h-[95vh] max-h-[900px] flex-col p-0 select-none">
+    <DialogContent className="flex h-[90vh] max-h-[900px] flex-col p-0 select-none">
       <ScrollArea className="overflow-hidden">
         <div className="flex flex-shrink-0 flex-col p-6 pb-4">
           <Header wallpaper={wallpaper} />
@@ -159,7 +159,7 @@ const Header = <TWallpaper extends BaseWallpaper>({ wallpaper }: { wallpaper: TW
     <DialogHeader className="flex-shrink-0 space-y-2">
       <DialogTitle className="flex items-center gap-2">
         <Wallpaper className="h-5 w-5" />
-        <span className="line-clamp-1">{wallpaper.name}</span>
+        <span className="line-clamp-1 max-w-11/12">{wallpaper.name}</span>
       </DialogTitle>
       <DialogDescription>Generate and customize color themes from this wallpaper</DialogDescription>
     </DialogHeader>

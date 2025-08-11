@@ -2,7 +2,6 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { type ApiWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
-import logger from "@electron/main/lib/logger.js";
 
 export interface PixabayImage {
   id: number;
@@ -154,42 +153,39 @@ const pixabaySearchParamsSchema = z.object({
 
 export const pixabayRouter = router({
   search: publicProcedure.input(pixabaySearchParamsSchema).query(async ({ input }) => {
-    logger.info({ input }, "pixabay.search: start");
     const isImage = input.type === "image";
     const endpoint = isImage ? "https://pixabay.com/api/" : "https://pixabay.com/api/videos/";
     const url = new URL(endpoint);
-    url.searchParams.set("key", input.apiKey);
-    url.searchParams.set("q", input.query);
-    url.searchParams.set("page", input.page.toString());
-    url.searchParams.set("per_page", input.perPage.toString());
-    if (input.colors) url.searchParams.set("colors", input.colors);
-    if (input.imageType && isImage) url.searchParams.set("image_type", input.imageType);
-    if (input.videoType && !isImage) url.searchParams.set("video_type", input.videoType);
-    if (input.orientation) url.searchParams.set("orientation", input.orientation);
-    if (input.category) url.searchParams.set("category", input.category);
-    if (input.order) url.searchParams.set("order", input.order);
-    if (input.minWidth) url.searchParams.set("min_width", input.minWidth.toString());
-    if (input.minHeight) url.searchParams.set("min_height", input.minHeight.toString());
-    if (input.editorsChoice)
-      url.searchParams.set("editors_choice", input.editorsChoice ? "true" : "false");
-    if (input.safeSearch) url.searchParams.set("safesearch", input.safeSearch ? "true" : "false");
+    const params = url.searchParams;
+    params.set("key", input.apiKey);
+    params.set("q", input.query);
+    params.set("page", input.page.toString());
+    params.set("per_page", input.perPage.toString());
+    if (input.colors) params.set("colors", input.colors);
+    if (input.imageType && isImage) params.set("image_type", input.imageType);
+    if (input.videoType && !isImage) params.set("video_type", input.videoType);
+    if (input.orientation) params.set("orientation", input.orientation);
+    if (input.category) params.set("category", input.category);
+    if (input.order) params.set("order", input.order);
+    if (input.minWidth) params.set("min_width", input.minWidth.toString());
+    if (input.minHeight) params.set("min_height", input.minHeight.toString());
+    if (input.editorsChoice) params.set("editors_choice", input.editorsChoice ? "true" : "false");
+    if (input.safeSearch) params.set("safesearch", input.safeSearch ? "true" : "false");
+
     try {
       const response = await fetch(url.toString());
       if (!response.ok) {
-        logger.error(
-          { input, status: response.status, statusText: response.statusText },
-          "pixabay.search: api error"
-        );
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Pixabay API request failed: ${response.statusText}`,
         });
       }
+
       const data: PixabaySearchResponse<PixabayImage | PixabayVideo> = await response.json();
       const hits = data.hits || [];
       const totalItems = data.totalHits || 0;
       const totalPages = Math.ceil(totalItems / input.perPage);
-      logger.info({ input, total: hits.length }, "pixabay.search: success");
+
       return {
         data: isImage
           ? transformPixabayImages(hits as PixabayImage[])
@@ -202,7 +198,6 @@ export const pixabayRouter = router({
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      logger.error({ input, error: message }, "pixabay.search: failed");
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: `Pixabay API request failed: ${message}`,

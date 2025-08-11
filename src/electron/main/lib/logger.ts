@@ -1,11 +1,6 @@
-import path from "path";
-import envPaths from "env-paths";
 import pino from "pino";
 import pinoPretty from "pino-pretty";
-
-const paths = envPaths("walltone");
-const logsDir = path.join(paths.log);
-const logFilePath = path.join(logsDir, "app.log");
+import { logFilePath } from "@electron/main/lib/paths.js";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -47,4 +42,4 @@ if (isProduction) {
   );
 }
 
-export default logger;
+export { logger };

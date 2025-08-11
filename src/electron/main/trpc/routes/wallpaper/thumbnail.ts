@@ -1,18 +1,15 @@
 import { parentPort } from "worker_threads";
-import os from "os";
 import path from "path";
 import crypto from "crypto";
 import { promises as fs } from "fs";
-import envPaths from "env-paths";
 import sharp from "sharp";
 import { encode } from "blurhash";
 import { execute } from "@electron/main/lib/index.js";
-import logger from "@electron/main/lib/logger.js";
+import { logger } from "@electron/main/lib/logger.js";
+
 import { type LibraryWallpaper, type WallpaperData } from "./types.js";
+import { thumbnailDir } from "@electron/main/lib/paths.js";
 
-const paths = envPaths("walltone");
-
-const THUMB_CACHE_DIR = path.join(paths.cache, "thumbnails");
 const THUMBNAIL_WIDTH = 640;
 
 const getFileHash = async (filePath: string): Promise<string> => {
@@ -28,10 +25,10 @@ const getOrCreateThumbnail = async (wallpaper: LibraryWallpaper) => {
   }
 
   const fullSizePath = wallpaper.fullSizePath.replace("image://", "").replace("video://", "");
-  await fs.mkdir(THUMB_CACHE_DIR, { recursive: true });
+  await fs.mkdir(thumbnailDir, { recursive: true });
 
   const hash = await getFileHash(fullSizePath);
-  const thumbPath = path.join(THUMB_CACHE_DIR, `${hash}.jpeg`);
+  const thumbPath = path.join(thumbnailDir, `${hash}.jpeg`);
 
   try {
     await fs.access(thumbPath);
@@ -40,11 +37,6 @@ const getOrCreateThumbnail = async (wallpaper: LibraryWallpaper) => {
       "Thumbnail cache hit for wallpaper"
     );
   } catch {
-    logger.debug(
-      { fullSizePath: wallpaper.fullSizePath, thumbPath },
-      "Thumbnail cache miss, generating new thumbnail"
-    );
-
     if (wallpaper.type === "image" || wallpaper.type === "wallpaper-engine")
       try {
         await sharp(fullSizePath)
@@ -64,8 +56,6 @@ const getOrCreateThumbnail = async (wallpaper: LibraryWallpaper) => {
     else if (wallpaper.type === "video")
       try {
         await execute({
-          logStdout: false,
-          logStderr: false,
           command: "ffmpeg",
           args: [
             "-y",
@@ -92,9 +82,9 @@ const getOrCreateThumbnail = async (wallpaper: LibraryWallpaper) => {
 };
 
 const generateBlurHash = async (wallpaper: LibraryWallpaper) => {
-  const fullSizePath = wallpaper.thumbnailPath.replace("image://", "").replace("video://", "");
+  const thumbnailPath = wallpaper.thumbnailPath.replace("image://", "").replace("video://", "");
   try {
-    const buf = await sharp(fullSizePath).resize(32, 32).ensureAlpha().raw().toBuffer();
+    const buf = await sharp(thumbnailPath).resize(32, 32).ensureAlpha().raw().toBuffer();
     return encode(Uint8ClampedArray.from(buf), 32, 32, 4, 4);
   } catch {
     return undefined;

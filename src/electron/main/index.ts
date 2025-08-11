@@ -65,8 +65,9 @@ app.on("web-contents-created", (_, contents) => {
   });
 });
 
-app.on("before-quit", function () {
+app.on("before-quit", async function () {
   isQuitting = true;
+  await caller.wallpaper.killWallpapersOnExit();
 });
 
 registerProtocols();

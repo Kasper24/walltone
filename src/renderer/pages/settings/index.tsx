@@ -67,6 +67,12 @@ const SETTINGS_CONFIG: SettingsSection[] = [
         description: "Restore the last wallpaper on startup",
         type: "boolean",
       },
+      {
+        settingKey: "app.killWallpaperOnExit",
+        title: "Kill Wallpaper on Exit",
+        description: "Terminate wallpaper processes when exiting the app",
+        type: "boolean",
+      },
     ],
   },
   {

@@ -13,6 +13,7 @@
   cage,
   grim,
   ffmpeg,
+  steamcmd,
   vips,
   lib,
 }:
@@ -83,6 +84,7 @@ buildNpmPackage rec {
           cage
           grim
           ffmpeg
+          steamcmd
         ]
       }
 

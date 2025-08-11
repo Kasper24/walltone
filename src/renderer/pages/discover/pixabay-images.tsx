@@ -143,11 +143,15 @@ const DiscoverPixabayImagesTab = () => {
         { key: "tile", text: "Tile" },
       ]}
       onWallpaperApply={async (wallpaper, monitors) => {
+        const applyPath = await client.api.download.mutate({
+          id: wallpaper.id,
+          applyPath: wallpaper.downloadUrl,
+        });
         await client.wallpaper.set.mutate({
           type: "image",
           id: wallpaper.id,
           name: wallpaper.name,
-          applyPath: wallpaper.downloadUrl,
+          applyPath: applyPath,
           monitors,
         });
       }}

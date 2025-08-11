@@ -1,8 +1,11 @@
+import path from "path";
+import { promises as fs } from "fs";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { execute } from "@electron/main/lib/index.js";
+import { wallpapersDownloadPath } from "@electron/main/lib/paths.js";
 import { publicProcedure, router } from "@electron/main/trpc/index.js";
 import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
-import logger from "@electron/main/lib/logger.js";
 
 interface WallpaperEngineWorkshopItem {
   result: number;
@@ -91,14 +94,15 @@ const searchSchema = z.object({
   matchAll: z.boolean().optional(),
 });
 
-const subscriptionSchema = z.object({
-  apiKey: z.string().min(1, "API Key is required"),
-  id: z.string().min(1, "Item ID is required"),
+const downloadSchema = z.object({
+  workshopId: z.string().min(1, "Workshop ID is required"),
+  username: z.string().min(1, "Username is required"),
+  password: z.string().optional(),
+  guard: z.string().optional(),
 });
 
 export const wallpaperEngineRouter = router({
   search: publicProcedure.input(searchSchema).query(async ({ input }) => {
-    logger.info({ input }, "wallpaperEngine.search: start");
     const url = new URL("https://api.steampowered.com/IPublishedFileService/QueryFiles/v1");
     const params = url.searchParams;
     params.set("key", input.apiKey);
@@ -110,30 +114,26 @@ export const wallpaperEngineRouter = router({
     params.set("return_tags", "true");
     params.set("return_previews", "true");
     params.set("return_short_description", "true");
+
     if (input.query) params.set("search_text", input.query);
     if (input.tags) {
       input.tags.forEach((tag, index) => params.append(`requiredtags[${index}]`, tag));
     }
     if (input.sorting) params.set("query_type", input.sorting);
     if (input.matchAll !== undefined) params.set("match_all_tags", `${input.matchAll}`);
+
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        logger.error(
-          { input, status: response.status, statusText: response.statusText },
-          "wallpaperEngine.search: api error"
-        );
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Pexels API request failed: ${response.statusText}`,
         });
       }
+
       const data: WallpaperEngineWorkshopSearchResponse = await response.json();
       const numberOfPages = Math.ceil(data.response.total / input.perPage);
-      logger.info(
-        { input, total: data.response.publishedfiledetails?.length },
-        "wallpaperEngine.search: success"
-      );
+
       return {
         data: data.response.publishedfiledetails
           ? transformWallpapers(data.response.publishedfiledetails)
@@ -146,56 +146,44 @@ export const wallpaperEngineRouter = router({
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      logger.error({ input, error: message }, "wallpaperEngine.search: failed");
       throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message, cause: error });
     }
   }),
 
-  subscribe: publicProcedure.input(subscriptionSchema).mutation(async ({ input }) => {
-    const url = new URL("https://api.steampowered.com/IPublishedFileService/Subscribe/v1/");
-    const params = url.searchParams;
-
-    params.set("key", input.apiKey);
-    params.set("publishedfileid", input.id);
-    params.set("list_type", "1");
-    params.set("appid", "431960");
-    params.set("notify_client", "true");
+  download: publicProcedure.input(downloadSchema).mutation(async ({ input }) => {
+    await fs.mkdir(wallpapersDownloadPath, { recursive: true });
 
     try {
-      const response = await fetch(url, { method: "POST", body: params });
-      if (!response.ok)
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Pexels API request failed: ${response.statusText}`,
-        });
-      return await response.json();
+      await execute({
+        command: "steamcmd",
+        args: [
+          "+force_install_dir",
+          wallpapersDownloadPath,
+          "+login",
+          input.username,
+          ...(input.password ? [input.password] : []),
+          ...(input.guard ? [input.guard] : []),
+          "+workshop_download_item",
+          "431960",
+          input.workshopId,
+          "+quit",
+        ],
+      });
+
+      return path.join(
+        wallpapersDownloadPath,
+        "steamapps",
+        "workshop",
+        "content",
+        "431960",
+        input.workshopId
+      );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message, cause: error });
-    }
-  }),
-
-  unsubscribe: publicProcedure.input(subscriptionSchema).mutation(async ({ input }) => {
-    const url = new URL("https://api.steampowered.com/IPublishedFileService/Unsubscribe/v1/");
-    const params = url.searchParams;
-
-    params.set("key", input.apiKey);
-    params.set("publishedfileid", input.id);
-    params.set("list_type", "1");
-    params.set("appid", "431960");
-    params.set("notify_client", "true");
-
-    try {
-      const response = await fetch(url, { method: "POST", body: params });
-      if (!response.ok)
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Pexels API request failed: ${response.statusText}`,
-        });
-      return await response.json();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message, cause: error });
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Failed to execute steamcmd: ${error instanceof Error ? error.message : "Unknown error"}`,
+        cause: error,
+      });
     }
   }),
 });
