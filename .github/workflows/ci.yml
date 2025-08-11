@@ -50,7 +50,7 @@ jobs:
         uses: cachix/install-nix-action@v31
 
       - name: Build Nix package
-        run: nix build
+        run: NIXPKGS_ALLOW_UNFREE=1 nix build --impure
 
   arch-build:
     name: Build Arch Linux Package
