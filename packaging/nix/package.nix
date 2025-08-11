@@ -75,6 +75,7 @@ buildNpmPackage rec {
 
   postInstall = ''
     makeWrapper ${lib.getExe electron} $out/bin/${pname} \
+      --set-default NODE_ENV production \
       --add-flags $out/lib/node_modules/${pname}/.vite/build/main.js \
       --prefix PATH : ${
         lib.makeBinPath [
