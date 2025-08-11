@@ -48,9 +48,10 @@ function useSettings<T>({
     data: value,
     isPending,
     isError,
-  } = useQuery({
+  } = useQuery<T>({
     queryKey: [settingKey],
-    queryFn: async () => await client.settings.get.query({ key: settingKey, decrypt: encrypted }),
+    queryFn: async () =>
+      (await client.settings.get.query({ key: settingKey, decrypt: encrypted })) as T,
   });
 
   React.useEffect(() => {

@@ -142,16 +142,16 @@ export const ConfigurationScreen = <TConfigKey extends SettingKey>({
   );
 };
 
-export const Wallpaper = <T extends BaseWallpaper>({
+export const Wallpaper = <TWallpaper extends BaseWallpaper>({
   wallpaper,
   onWallpaperApply,
   onWallpaperDownload,
   scalingOptions,
   controlDefinitions,
 }: {
-  wallpaper: T;
-  onWallpaperApply?: OnWallpaperApply<T>;
-  onWallpaperDownload?: OnWallpaperDownload<T>;
+  wallpaper: TWallpaper;
+  onWallpaperApply?: OnWallpaperApply<TWallpaper>;
+  onWallpaperDownload?: OnWallpaperDownload<TWallpaper>;
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
 }) => {
@@ -418,7 +418,7 @@ export const EmptyWallpapers = ({
   );
 };
 
-export const WallpaperGrid = <T extends BaseWallpaper>({
+export const WallpaperGrid = <TWallpaper extends BaseWallpaper>({
   isError,
   error,
   refetch,
@@ -445,11 +445,11 @@ export const WallpaperGrid = <T extends BaseWallpaper>({
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
   fetchNextPage: () => void;
-  allWallpapers: T[];
+  allWallpapers: TWallpaper[];
   debouncedInputValue: string;
   clearSearch: () => void;
-  onWallpaperApply?: OnWallpaperApply<T>;
-  onWallpaperDownload?: OnWallpaperDownload<T>;
+  onWallpaperApply?: OnWallpaperApply<TWallpaper>;
+  onWallpaperDownload?: OnWallpaperDownload<TWallpaper>;
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
 }) => {

@@ -155,31 +155,31 @@ export const pixabayRouter = router({
   search: publicProcedure.input(pixabaySearchParamsSchema).query(async ({ input }) => {
     const isImage = input.type === "image";
     const endpoint = isImage ? "https://pixabay.com/api/" : "https://pixabay.com/api/videos/";
-
     const url = new URL(endpoint);
-    url.searchParams.set("key", input.apiKey);
-    url.searchParams.set("q", input.query);
-    url.searchParams.set("page", input.page.toString());
-    url.searchParams.set("per_page", input.perPage.toString());
-    if (input.colors) url.searchParams.set("colors", input.colors);
-    if (input.imageType && isImage) url.searchParams.set("image_type", input.imageType);
-    if (input.videoType && !isImage) url.searchParams.set("video_type", input.videoType);
-    if (input.orientation) url.searchParams.set("orientation", input.orientation);
-    if (input.category) url.searchParams.set("category", input.category);
-    if (input.order) url.searchParams.set("order", input.order);
-    if (input.minWidth) url.searchParams.set("min_width", input.minWidth.toString());
-    if (input.minHeight) url.searchParams.set("min_height", input.minHeight.toString());
-    if (input.editorsChoice)
-      url.searchParams.set("editors_choice", input.editorsChoice ? "true" : "false");
-    if (input.safeSearch) url.searchParams.set("safesearch", input.safeSearch ? "true" : "false");
+    const params = url.searchParams;
+    params.set("key", input.apiKey);
+    params.set("q", input.query);
+    params.set("page", input.page.toString());
+    params.set("per_page", input.perPage.toString());
+    if (input.colors) params.set("colors", input.colors);
+    if (input.imageType && isImage) params.set("image_type", input.imageType);
+    if (input.videoType && !isImage) params.set("video_type", input.videoType);
+    if (input.orientation) params.set("orientation", input.orientation);
+    if (input.category) params.set("category", input.category);
+    if (input.order) params.set("order", input.order);
+    if (input.minWidth) params.set("min_width", input.minWidth.toString());
+    if (input.minHeight) params.set("min_height", input.minHeight.toString());
+    if (input.editorsChoice) params.set("editors_choice", input.editorsChoice ? "true" : "false");
+    if (input.safeSearch) params.set("safesearch", input.safeSearch ? "true" : "false");
 
     try {
       const response = await fetch(url.toString());
-      if (!response.ok)
+      if (!response.ok) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Pixabay API request failed: ${response.statusText}`,
         });
+      }
 
       const data: PixabaySearchResponse<PixabayImage | PixabayVideo> = await response.json();
       const hits = data.hits || [];

@@ -2,6 +2,8 @@ import path from "path";
 import { promises as fs } from "fs";
 import { TRPCError } from "@trpc/server";
 import { caller } from "@electron/main/trpc/routes/index.js";
+import { logger } from "@electron/main/lib/logger.js";
+
 import {
   type WallpaperEngineWallpaper,
   type LibraryWallpaper,
@@ -30,6 +32,12 @@ const getImageAndVideoWallpapers = async (type: "image" | "video") => {
   for (const folder of folders) {
     try {
       const files = await searchForFiles(folder, WALLPAPERS_TYPE_TO_EXTS[type]);
+
+      logger.info(
+        { type, folder, fileCount: files.length },
+        `Found ${files.length} ${type} files in folder: ${folder}`
+      );
+
       files.forEach(async (file) => {
         wallpapers.push({
           id: path.basename(file.path, path.extname(file.path)),
@@ -42,8 +50,10 @@ const getImageAndVideoWallpapers = async (type: "image" | "video") => {
           type: type,
         });
       });
+
+      logger.info({ type, folder }, `Completed processing for folder: ${folder}`);
     } catch (error) {
-      console.error(`Failed to search ${type} files in ${folder}:`, error);
+      logger.error({ err: error, type, folder }, `Failed to search ${type} files in ${folder}`);
     }
   }
 
@@ -125,12 +135,15 @@ const getWallpaperEngineWallpapers = async () => {
               }
             }
           } catch (jsonError) {
-            console.error(`Failed to read or parse ${jsonFilePath}:`, jsonError);
+            logger.error(
+              { err: jsonError, jsonFilePath, dir: subdirectoryPath },
+              `Failed to read or parse project.json for wallpaper engine item in ${subdirectoryPath}`
+            );
           }
         }
       }
     } catch (error) {
-      console.error(`Error reading wallpaper engine directory ${folder}:`, error);
+      logger.error({ err: error, folder }, `Error reading wallpaper engine directory ${folder}`);
     }
   }
 
@@ -167,11 +180,11 @@ const sortWallpapers = (wallpapers: LibraryWallpaper[], sorting: string) => {
   }
 };
 
-const paginateData = <T extends LibraryWallpaper>(
-  data: T[],
+const paginateData = <TWallpaper extends LibraryWallpaper>(
+  data: TWallpaper[],
   page: number,
   itemsPerPage: number
-): WallpaperData<T> => {
+): WallpaperData<TWallpaper> => {
   const currentPage = page;
   const totalItems = data.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);

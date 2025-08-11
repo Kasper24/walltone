@@ -1,27 +1,34 @@
 import { spawn } from "child_process";
 import { TRPCError } from "@trpc/server";
+import { logger } from "@electron/main/lib/logger.js";
 
-const execute = ({
-  command,
-  args = [],
-  env = {},
-  shell = false,
-  detached = false,
-  ignoreErrors = false,
-  logStdout = true,
-  logStderr = true,
-}: {
+type ExecuteParams = {
   command: string;
   args?: string[];
   env?: NodeJS.ProcessEnv;
   shell?: boolean;
   detached?: boolean;
-  ignoreErrors?: boolean;
   logStdout?: boolean;
   logStderr?: boolean;
-}): Promise<{ stdout: string; stderr: string }> => {
+  onStdout?: (text: string) => void;
+  onStderr?: (text: string) => void;
+};
+
+const execute = (params: ExecuteParams): Promise<{ stdout: string; stderr: string }> => {
+  const {
+    command,
+    args = [],
+    env = {},
+    shell = false,
+    detached = false,
+    logStdout = true,
+    logStderr = true,
+    onStdout,
+    onStderr,
+  } = params;
+
   return new Promise((resolve, reject) => {
-    console.log(`Executing: ${command} ${args.join(" ")}`);
+    logger.info({ params }, "Executing command");
 
     const child = spawn(command, args, {
       env: {
@@ -38,44 +45,87 @@ const execute = ({
     child.stdout.on("data", (data) => {
       const text = data.toString();
       stdout += text;
-      if (logStdout) console.log(`[${command}] STDOUT:`, text.trim());
+      if (onStdout) onStdout(text);
+
+      if (logStdout)
+        logger.debug(
+          {
+            pid: child.pid,
+            text: text.trim(),
+          },
+          "Process STDOUT"
+        );
     });
 
     child.stderr.on("data", (data) => {
       const text = data.toString();
       stderr += text;
-      if (logStdout) console.log(`[${command}] STDERR:`, text.trim());
+      if (onStderr) onStderr(text);
+
+      if (logStderr)
+        logger.warn(
+          {
+            pid: child.pid,
+            text: text.trim(),
+          },
+          "Process STDERR"
+        );
     });
 
-    child.on("close", (code) => {
-      if (ignoreErrors && code !== 0) {
-        console.warn(`[${command}] Process exited with code ${code}, but ignoring errors`);
-        return resolve({ stdout, stderr });
-      }
-
+    child.on("close", (code, signal) => {
       if (code === 0) {
-        if (logStderr) console.log(`[${command}] Process completed successfully`);
+        logger.info(
+          {
+            pid: child.pid,
+            code,
+            signal,
+          },
+          "Process completed successfully"
+        );
+
         resolve({ stdout, stderr });
       } else {
+        logger.error(
+          {
+            pid: child.pid,
+            code,
+            signal,
+          },
+          "Process failed"
+        );
+
         const error = new Error(`Process exited with code ${code}`);
-        if (logStderr) console.error(`[${command}] Process failed with code ${code}`);
         reject(error);
       }
     });
 
     child.on("error", (error) => {
-      if (logStderr) console.error(`[${command}] Process error:`, error);
-      if (!ignoreErrors) reject(error);
+      logger.error({ pid: child.pid, error }, "Process error");
+
+      reject(error);
     });
   });
 };
 
 const killProcess = async (processName: string) => {
+  logger.info({ processName }, "killProcess() called");
+
   try {
-    await execute({ command: "pkill", args: ["-f", processName] });
-    console.log(`Killed existing ${processName} processes`);
+    const result = await execute({ command: "pkill", args: ["-f", processName] });
+
+    logger.info(
+      { processName, result },
+      `Successfully killed all running '${processName}' processes.`
+    );
   } catch (error) {
-    console.log(`No ${processName} processes found or kill failed - ${error}`);
+    logger.warn(
+      {
+        processName,
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      `No '${processName}' processes found or failed to kill.`
+    );
   }
 };
 

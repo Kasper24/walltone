@@ -1,5 +1,4 @@
 import React from "react";
-import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useDebouncedCallback } from "use-debounce";
 import { type BaseWallpaper } from "@electron/main/trpc/routes/wallpaper/types.js";
@@ -61,14 +60,14 @@ export const useConfiguration = <TConfigKey extends SettingKey>(
     isPending: isConfigPending,
     isError: isConfigError,
     refetch: refetchConfig,
-  } = useQuery({
+  } = useQuery<DotNotationValueOf<SettingsSchema, TConfigKey>>({
     enabled: !!requiresConfiguration,
     queryKey: [`${requiresConfiguration?.setting.key}`],
     queryFn: async () => {
-      return await client.settings.get.query({
+      return (await client.settings.get.query({
         key: requiresConfiguration!.setting.key,
         decrypt: requiresConfiguration!.setting.decrypt || false,
-      });
+      })) as DotNotationValueOf<SettingsSchema, TConfigKey>;
     },
   });
 
@@ -103,7 +102,7 @@ export const useWallpaperData = <
   debouncedInputValue: string;
   sorting: TSorting;
   appliedFilters: AppliedFilters;
-  configValue: DotNotationValueOf<SettingsSchema, TConfigKey>;
+  configValue?: DotNotationValueOf<SettingsSchema, TConfigKey>;
   isConfigurationValid: boolean;
 }) => {
   const query = useInfiniteQuery({
@@ -120,8 +119,8 @@ export const useWallpaperData = <
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     getPreviousPageParam: (firstPage) => firstPage.prevPage,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retry: 1,
+    // retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const allWallpapers = React.useMemo(() => {

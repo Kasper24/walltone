@@ -40,8 +40,8 @@ export interface WallpaperEngineWallpaper extends BaseWallpaper {
 
 export type LibraryWallpaper = ImageWallpaper | VideoWallpaper | WallpaperEngineWallpaper;
 
-export interface WallpaperData<T extends BaseWallpaper> {
-  data: T[];
+export interface WallpaperData<TWallpaper extends BaseWallpaper> {
+  data: TWallpaper[];
   currentPage: number;
   prevPage: number | null;
   nextPage: number | null;

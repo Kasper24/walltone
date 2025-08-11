@@ -13,7 +13,7 @@ const initializeApp = async () => {
 
   createIPCHandler({ router: appRouter, windows: [mainWindow] });
 
-  await caller.wallpaper.restoreOnStart();
+  caller.wallpaper.restoreOnStart();
 
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
@@ -65,8 +65,9 @@ app.on("web-contents-created", (_, contents) => {
   });
 });
 
-app.on("before-quit", function () {
+app.on("before-quit", async function () {
   isQuitting = true;
+  await caller.wallpaper.killWallpapersOnExit();
 });
 
 registerProtocols();

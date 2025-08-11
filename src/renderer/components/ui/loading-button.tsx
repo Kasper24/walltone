@@ -9,7 +9,7 @@ interface Props extends React.ComponentProps<typeof Button> {
 
 const LoadingButton = ({ children, isLoading, ...props }: Props) => {
   return (
-    <Button {...props}>
+    <Button disabled={isLoading} {...props}>
       {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
       {children}
     </Button>

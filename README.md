@@ -58,6 +58,7 @@ It automatically generates beautiful color themes from your wallpapers, and lets
 - [`cage`](https://github.com/cage-kiosk/cage) -  runs wallpapers in an isolated, invisible Wayland session specifically so we can screenshot them without affecting the user’s desktop
 - [`grim`](https://github.com/emersion/grim) - takes a screenshot of the wallpaper running inside cage
 - [`ffmpeg`](https://github.com/FFmpeg/FFmpeg) - generate thumbnails for video files
+- [`steamcmd`](https://developer.valvesoftware.com/wiki/SteamCMD) - for download wallpaper engine wallpapers
 
 ### Arch Linux (AUR)
 

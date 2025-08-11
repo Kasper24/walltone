@@ -121,39 +121,47 @@ export const themeRouter = router({
       });
       const base16Settings = await caller.settings.get({ key: "themeGeneration.base16" });
 
-      return await new Promise((resolve, reject) => {
-        const workerPath = path.join(import.meta.dirname, "theme-generator.js");
-        const worker = new Worker(workerPath);
+      try {
+        return await new Promise((resolve, reject) => {
+          const workerPath = path.join(import.meta.dirname, "theme-generator.js");
+          const worker = new Worker(workerPath);
 
-        worker.on("message", (event) => {
-          const result = event.data;
-          if (event.status === "success") {
-            resolve(result);
-          } else {
-            reject(new Error(result?.error || "Worker failed with an unknown error."));
-          }
-          worker.terminate();
+          worker.on("message", (event) => {
+            const result = event.data;
+            if (event.status === "success") {
+              resolve(result);
+            } else {
+              reject(new Error(result?.error || "Worker failed with an unknown error."));
+            }
+            worker.terminate();
+          });
+
+          worker.on("error", (error) => {
+            reject(error);
+            worker.terminate();
+          });
+
+          worker.postMessage({ imageSrc, quantizeLibrary, base16Settings });
         });
-
-        worker.on("error", (error) => {
-          reject(error);
-          worker.terminate();
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Error generating theme: ${error instanceof Error ? error.message : "Unknown error"}`,
+          cause: error,
         });
-
-        worker.postMessage({ imageSrc, quantizeLibrary, base16Settings });
-      });
+      }
     }),
 
   set: publicProcedure.input(setSchema).mutation(async ({ input }) => {
     const templates = (await caller.settings.get({
       key: "themeOutput.templates",
     })) as SettingsSchema["themeOutput"]["templates"];
-
-    if (!templates)
+    if (!templates) {
       throw new TRPCError({
         code: "NOT_FOUND",
         message: "Templates are not set.",
       });
+    }
 
     const context = {
       wallpaper: {
@@ -164,56 +172,64 @@ export const themeRouter = router({
       theme: themeToChroma(input.theme),
     };
 
-    await Promise.all(
-      templates.map(async (tpl) => {
-        if (!tpl.src || !tpl.dest) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Invalid template configuration: ${JSON.stringify(tpl)}`,
-          });
-        }
-
-        try {
-          const content = await fs.readFile(tpl.src, "utf-8");
-          const rendered = await renderString(content, context);
+    try {
+      await Promise.all(
+        templates.map(async (tpl) => {
+          if (!tpl.src || !tpl.dest) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Invalid template configuration: ${JSON.stringify(tpl)}`,
+            });
+          }
 
           try {
-            const destination = await renderString(tpl.dest, context);
-            await fs.mkdir(path.dirname(destination), { recursive: true });
-            await fs.writeFile(destination, rendered, "utf-8");
+            const content = await fs.readFile(tpl.src, "utf-8");
+            const rendered = await renderString(content, context);
 
-            if (tpl.postHook) {
-              try {
-                const postHook = await renderString(tpl.postHook, context);
-                const [cmd, ...args] = postHook.split(" ");
-                await execute({ command: cmd, args, shell: true });
-              } catch (error) {
-                const errorMessage =
-                  error instanceof Error ? error.message : "Unknown error occurred";
-                throw new TRPCError({
-                  code: "INTERNAL_SERVER_ERROR",
-                  message: `Error running post-hook command: ${tpl.postHook}: ${errorMessage}`,
-                  cause: error,
-                });
+            try {
+              const destination = await renderString(tpl.dest, context);
+              await fs.mkdir(path.dirname(destination), { recursive: true });
+              await fs.writeFile(destination, rendered, "utf-8");
+              if (tpl.postHook) {
+                try {
+                  const postHook = await renderString(tpl.postHook, context);
+                  const [cmd, ...args] = postHook.split(" ");
+                  await execute({ command: cmd, args, shell: true });
+                } catch (error) {
+                  const errorMessage =
+                    error instanceof Error ? error.message : "Unknown error occurred";
+                  throw new TRPCError({
+                    code: "INTERNAL_SERVER_ERROR",
+                    message: `Error running post-hook command: ${tpl.postHook}: ${errorMessage}`,
+                    cause: error,
+                  });
+                }
               }
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : "Unknown error occurred";
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: `Error writing file to ${tpl.dest}: ${errorMessage}`,
+                cause: error,
+              });
             }
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
             throw new TRPCError({
               code: "INTERNAL_SERVER_ERROR",
-              message: `Error writing file to ${tpl.dest}: ${errorMessage}`,
+              message: `Error reading template file ${tpl.src}: ${errorMessage}`,
               cause: error,
             });
           }
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `Error reading template file ${tpl.src}: ${errorMessage}`,
-            cause: error,
-          });
-        }
-      })
-    );
+        })
+      );
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Error setting theme: ${error instanceof Error ? error.message : "Unknown error"}`,
+        cause: error,
+      });
+    }
   }),
 });

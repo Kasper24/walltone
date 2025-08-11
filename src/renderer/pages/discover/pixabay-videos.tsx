@@ -99,8 +99,8 @@ const DiscoverPixabayVideosTab = () => {
         },
         {
           type: "single",
-          key: "color",
-          title: "Color",
+          key: "colors",
+          title: "Colors",
           values: [
             "grayscale",
             "transparent",
@@ -135,12 +135,23 @@ const DiscoverPixabayVideosTab = () => {
           values: ["popular", "latest"],
         },
       ]}
+      scalingOptions={[
+        { key: "fill", text: "Fill" },
+        { key: "fit", text: "Fit" },
+        { key: "center", text: "Center" },
+        { key: "stretch", text: "Stretch" },
+        { key: "tile", text: "Tile" },
+      ]}
       onWallpaperApply={async (wallpaper, monitors) => {
+        const applyPath = await client.api.download.mutate({
+          id: wallpaper.id,
+          applyPath: wallpaper.downloadUrl,
+        });
         await client.wallpaper.set.mutate({
           type: "video",
           id: wallpaper.id,
           name: wallpaper.name,
-          applyPath: wallpaper.downloadUrl,
+          applyPath: applyPath,
           monitors,
         });
       }}

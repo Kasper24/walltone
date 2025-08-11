@@ -88,7 +88,6 @@ export const wallhavenRouter = router({
   search: publicProcedure.input(wallhavenSearchParamsSchema).query(async ({ input }) => {
     const url = new URL(`https://wallhaven.cc/api/v1/search`);
     const params = url.searchParams;
-
     if (input.query) params.set("q", input.query);
     if (input.categories) params.set("categories", convertCategories(input.categories));
     if (input.purity) params.set("purity", convertPurity(input.purity));
@@ -104,11 +103,12 @@ export const wallhavenRouter = router({
 
     try {
       const response = await fetch(url.toString());
-      if (!response.ok)
+      if (!response.ok) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Wallhaven API request failed: ${response.statusText}`,
         });
+      }
 
       const data: WallhavenSearchResult = await response.json();
       const totalPages = Math.ceil(data.meta.total / data.meta.per_page);

@@ -1,3 +1,5 @@
+import React from "react";
+import { toast } from "sonner";
 import { Settings } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Button } from "@renderer/components/ui/button.js";
@@ -14,10 +16,20 @@ import { CurrentTabProvider } from "@renderer/providers/current-tab/provider.js"
 import { useCurrentTab } from "@renderer/providers/current-tab/hook.js";
 import { Toaster } from "@renderer/components/ui/sonner.js";
 import { NavigationPaths, routes } from "@renderer/routes/index.js";
+import { client } from "@renderer/lib/trpc.js";
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  React.useEffect(() => {
+    const sub = client.wallpaper.onWallpaperError.subscribe(undefined, {
+      onData(data) {
+        toast.error(data as string);
+      },
+    });
+    return () => sub.unsubscribe();
+  }, []);
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <QueryClientProvider client={queryClient}>

@@ -99,8 +99,8 @@ const DiscoverPixabayImagesTab = () => {
         },
         {
           type: "single",
-          key: "color",
-          title: "Color",
+          key: "colors",
+          title: "Colors",
           values: [
             "grayscale",
             "transparent",
@@ -135,12 +135,23 @@ const DiscoverPixabayImagesTab = () => {
           values: ["popular", "latest"],
         },
       ]}
+      scalingOptions={[
+        { key: "stretch", text: "Stretch" },
+        { key: "fit", text: "Fit" },
+        { key: "fill", text: "Fill" },
+        { key: "center", text: "Center" },
+        { key: "tile", text: "Tile" },
+      ]}
       onWallpaperApply={async (wallpaper, monitors) => {
+        const applyPath = await client.api.download.mutate({
+          id: wallpaper.id,
+          applyPath: wallpaper.downloadUrl,
+        });
         await client.wallpaper.set.mutate({
           type: "image",
           id: wallpaper.id,
           name: wallpaper.name,
-          applyPath: wallpaper.downloadUrl,
+          applyPath: applyPath,
           monitors,
         });
       }}

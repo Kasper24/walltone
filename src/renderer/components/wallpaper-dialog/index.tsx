@@ -29,10 +29,10 @@ import {
   useThemeEditor,
   useWallpaperActions,
 } from "./hooks.js";
-import ApplyWallpaperDialog from "./apply-dialog.js";
+import ApplyWallpaperDialog from "../wallpaper-apply-dialog/index.js";
 import { type DynamicControlDefinition } from "./types.js";
 
-const WallpaperDialog = <T extends BaseWallpaper>({
+const WallpaperDialog = <TWallpaper extends BaseWallpaper>({
   wallpaper,
   onApply,
   onDownload,
@@ -40,9 +40,9 @@ const WallpaperDialog = <T extends BaseWallpaper>({
   controlDefinitions,
   isOpen,
 }: {
-  wallpaper: T;
-  onApply?: OnWallpaperApply<T>;
-  onDownload?: OnWallpaperDownload<T>;
+  wallpaper: TWallpaper;
+  onApply?: OnWallpaperApply<TWallpaper>;
+  onDownload?: OnWallpaperDownload<TWallpaper>;
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
   isOpen: boolean;
@@ -72,7 +72,7 @@ const WallpaperDialog = <T extends BaseWallpaper>({
   );
 
   return (
-    <DialogContent className="flex h-[95vh] max-h-[900px] flex-col p-0 select-none">
+    <DialogContent className="flex h-[90vh] max-h-[900px] flex-col p-0 select-none">
       <ScrollArea className="overflow-hidden">
         <div className="flex flex-shrink-0 flex-col p-6 pb-4">
           <Header wallpaper={wallpaper} />
@@ -154,19 +154,23 @@ const WallpaperDialog = <T extends BaseWallpaper>({
   );
 };
 
-const Header = <T extends BaseWallpaper>({ wallpaper }: { wallpaper: T }) => {
+const Header = <TWallpaper extends BaseWallpaper>({ wallpaper }: { wallpaper: TWallpaper }) => {
   return (
     <DialogHeader className="flex-shrink-0 space-y-2">
       <DialogTitle className="flex items-center gap-2">
         <Wallpaper className="h-5 w-5" />
-        <span className="line-clamp-1">{wallpaper.name}</span>
+        <span className="line-clamp-1 max-w-11/12">{wallpaper.name}</span>
       </DialogTitle>
       <DialogDescription>Generate and customize color themes from this wallpaper</DialogDescription>
     </DialogHeader>
   );
 };
 
-const WallpaperImage = <T extends BaseWallpaper>({ wallpaper }: { wallpaper: T }) => {
+const WallpaperImage = <TWallpaper extends BaseWallpaper>({
+  wallpaper,
+}: {
+  wallpaper: TWallpaper;
+}) => {
   return (
     <Card className="p-1">
       <CardContent className="p-1">
@@ -368,7 +372,7 @@ const ThemeColors = ({
   );
 };
 
-const WallpaperActions = <T extends BaseWallpaper>({
+const WallpaperActions = <TWallpaper extends BaseWallpaper>({
   wallpaper,
   theme,
   onApply,
@@ -376,10 +380,10 @@ const WallpaperActions = <T extends BaseWallpaper>({
   scalingOptions,
   controlDefinitions,
 }: {
-  wallpaper: T;
+  wallpaper: TWallpaper;
   theme?: Theme;
-  onApply?: OnWallpaperApply<T>;
-  onDownload?: OnWallpaperDownload<T>;
+  onApply?: OnWallpaperApply<TWallpaper>;
+  onDownload?: OnWallpaperDownload<TWallpaper>;
   scalingOptions?: { key: string; text: string }[];
   controlDefinitions?: DynamicControlDefinition[];
 }) => {

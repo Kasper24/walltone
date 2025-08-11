@@ -11,6 +11,7 @@ export interface SettingsSchema {
   app: {
     uiTheme: "light" | "dark";
     restoreWallpaperOnStart: boolean;
+    killWallpaperOnExit: boolean;
   };
 
   /** Settings that control how themes are generated from an image. */
@@ -68,6 +69,7 @@ const schema: Schema<SettingsSchema> = {
     properties: {
       uiTheme: { type: "string", enum: ["light", "dark"], default: "dark" },
       restoreWallpaperOnStart: { type: "boolean", default: true },
+      killWallpaperOnExit: { type: "boolean", default: true },
     },
     default: {},
   },
@@ -234,9 +236,7 @@ const deleteSchema = z.object({
 export const settingsRouter = router({
   get: publicProcedure.input(getSchema).query(async ({ input }) => {
     try {
-      if (input.decrypt) {
-        return keytar.getPassword("walltone", input.key);
-      }
+      if (input.decrypt) return await keytar.getPassword("walltone", input.key);
       return store.get(input.key);
     } catch (error) {
       throw new TRPCError({
@@ -255,11 +255,8 @@ export const settingsRouter = router({
         input.value = selectedPath;
       }
 
-      if (input.encrypt) {
-        await keytar.setPassword("walltone", input.key, String(input.value ?? ""));
-      } else {
-        store.set(input.key, input.value);
-      }
+      if (input.encrypt) await keytar.setPassword("walltone", input.key, String(input.value ?? ""));
+      else store.set(input.key, input.value);
     } catch (error) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",

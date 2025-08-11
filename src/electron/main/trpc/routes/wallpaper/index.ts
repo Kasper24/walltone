@@ -1,7 +1,9 @@
 import path from "path";
 import { Worker } from "worker_threads";
 import z from "zod";
-import { publicProcedure, router } from "@electron/main/trpc/index.js";
+import { TRPCError } from "@trpc/server";
+import { observable } from "@trpc/server/observable";
+import { eventsEmitter, publicProcedure, router } from "@electron/main/trpc/index.js";
 import { caller } from "@electron/main/trpc/routes/index.js";
 import { type SettingsSchema } from "@electron/main/trpc/routes/settings/index.js";
 import { type WallpaperData, type LibraryWallpaper } from "./types.js";
@@ -13,7 +15,6 @@ import {
   paginateData,
 } from "./search.js";
 import {
-  downloadRemoteWallpaper,
   getMonitors,
   saveLastWallpaper,
   killWallpaperProcesses,
@@ -111,15 +112,31 @@ export const wallpaperRouter = router({
   }),
 
   set: publicProcedure.input(setWallpaperSchema).mutation(async ({ input }) => {
-    if (input.applyPath.startsWith("http://") || input.applyPath.startsWith("https://"))
-      input.applyPath = await downloadRemoteWallpaper(input);
-
     if (input.monitors.length === 0) input.monitors = await getMonitors();
 
     await saveLastWallpaper(input);
     await killWallpaperProcesses();
-    await screenshotWallpaper(input);
-    await setWallpaper(input, false);
+    await Promise.resolve(setTimeout(() => {}, 1000)); // Allow time for last wallpaper to be saved
+
+    try {
+      await screenshotWallpaper(input);
+    } finally {
+      await setWallpaper(input);
+    }
+  }),
+
+  onWallpaperError: publicProcedure.subscription(() => {
+    return observable((emit) => {
+      function onWallpaperError(error: string) {
+        emit.next(error);
+      }
+
+      eventsEmitter.on("wallpaper-error", onWallpaperError);
+
+      return () => {
+        eventsEmitter.off("wallpaper-error", onWallpaperError);
+      };
+    });
   }),
 
   restoreOnStart: publicProcedure.mutation(async () => {
@@ -132,11 +149,27 @@ export const wallpaperRouter = router({
       key: "internal.lastWallpaper",
     })) as SettingsSchema["internal"]["lastWallpaper"];
 
-    Object.values(lastWallpaper).forEach(async (wallpaper) => {
-      if (wallpaper.monitors.length === 0) wallpaper.monitors = await getMonitors();
+    try {
+      await Promise.all(
+        Object.values(lastWallpaper).map(async (wallpaper) => {
+          if (wallpaper.monitors.length === 0) wallpaper.monitors = await getMonitors();
+          await killWallpaperProcesses();
+          await setWallpaper(wallpaper);
+        })
+      );
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Error setting wallpaper: ${error instanceof Error ? error.message : "Unknown error"}`,
+        cause: error,
+      });
+    }
+  }),
 
-      await killWallpaperProcesses();
-      await setWallpaper(wallpaper, true);
+  killWallpapersOnExit: publicProcedure.mutation(async () => {
+    const killOnExit = await caller.settings.get({
+      key: "app.killWallpaperOnExit",
     });
+    if (killOnExit) await killWallpaperProcesses();
   }),
 });

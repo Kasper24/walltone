@@ -194,7 +194,6 @@ export const unsplashRouter = router({
   search: publicProcedure.input(unsplashSearchParamsSchema).query(async ({ input }) => {
     const url = new URL("https://api.unsplash.com/search/photos");
     const params = url.searchParams;
-
     params.set("client_id", input.apiKey);
     params.set("page", input.page.toString());
     params.set("per_page", input.perPage.toString());
@@ -205,15 +204,14 @@ export const unsplashRouter = router({
 
     try {
       const response = await fetch(url.toString());
-      if (!response.ok)
+      if (!response.ok) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Unsplash API request failed: ${response.statusText}`,
         });
+      }
 
       const data: UnsplashSearchResult | UnsplashPhoto[] = await response.json();
-
-      // Normalize the response format
       const photos = Array.isArray(data) ? data : data.results;
       const totalItems = Array.isArray(data) ? photos.length : data.total;
       const totalPages = Array.isArray(data) ? Infinity : data.total_pages;
@@ -230,7 +228,7 @@ export const unsplashRouter = router({
       const message = error instanceof Error ? error.message : "Unknown error";
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: `Pexels API request failed: ${message}`,
+        message: `Unsplash API request failed: ${message}`,
         cause: error,
       });
     }

@@ -134,10 +134,8 @@ export const pexelsRouter = router({
       input.type === "photos"
         ? "https://api.pexels.com/v1/search"
         : "https://api.pexels.com/videos/search";
-
     const url = new URL(baseUrl);
     const params = url.searchParams;
-
     params.set("query", input.query);
     params.set("page", input.page.toString());
     params.set("per_page", input.perPage.toString());
@@ -150,11 +148,12 @@ export const pexelsRouter = router({
       const response = await fetch(url.toString(), {
         headers: { Authorization: input.apiKey },
       });
-      if (!response.ok)
+      if (!response.ok) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Pexels API request failed: ${response.statusText}`,
         });
+      }
 
       const data: PexelsSearchResponse<PexelsPhoto | PexelsVideo> = await response.json();
       const numberOfPages = Math.ceil(data.total_results / input.perPage);

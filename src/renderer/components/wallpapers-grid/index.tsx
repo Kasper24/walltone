@@ -85,7 +85,7 @@ const WallpaperGridControls = <TSorting extends string>({
 };
 
 const WallpapersGrid = <
-  T extends BaseWallpaper,
+  TWallpaper extends BaseWallpaper,
   TSorting extends string,
   TConfigKey extends SettingKey,
 >({
@@ -99,7 +99,7 @@ const WallpapersGrid = <
   onWallpaperDownload,
   requiresConfiguration,
   controlDefinitions,
-}: WallpapersGridProps<T, TSorting, TConfigKey>) => {
+}: WallpapersGridProps<TWallpaper, TSorting, TConfigKey>) => {
   const { debouncedInputValue, handleSearch, clearSearch } = useWallpaperSearch();
   const { sorting, setSorting, appliedFilters, setAppliedFilters } =
     useWallpaperFilters(sortingOptions);

@@ -13,6 +13,7 @@
   cage,
   grim,
   ffmpeg,
+  steamcmd,
   vips,
   lib,
 }:
@@ -40,7 +41,7 @@ buildNpmPackage rec {
 
   src = ../../.;
 
-  npmDepsHash = "sha256-pE6e/FPyall5hSMn1+9OS/ibPhLcmzWUdLer3yqn6tU=";
+  npmDepsHash = "sha256-dryMm7BhFtFVsYZ9bI5uiwyrxvXfNcLDwx59zjRE24s=";
 
   dontNpmBuild = true;
   makeCacheWritable = true;
@@ -83,6 +84,7 @@ buildNpmPackage rec {
           cage
           grim
           ffmpeg
+          steamcmd
         ]
       }
 

@@ -1,14 +1,15 @@
 import { parentPort } from "worker_threads";
-import os from "os";
 import path from "path";
 import crypto from "crypto";
 import { promises as fs } from "fs";
 import sharp from "sharp";
 import { encode } from "blurhash";
 import { execute } from "@electron/main/lib/index.js";
-import { LibraryWallpaper, WallpaperData } from "./types.js";
+import { logger } from "@electron/main/lib/logger.js";
 
-const THUMB_CACHE_DIR = path.join(os.homedir(), ".cache", "walltone", "thumbnails");
+import { type LibraryWallpaper, type WallpaperData } from "./types.js";
+import { thumbnailDir } from "@electron/main/lib/paths.js";
+
 const THUMBNAIL_WIDTH = 640;
 
 const getFileHash = async (filePath: string): Promise<string> => {
@@ -24,58 +25,66 @@ const getOrCreateThumbnail = async (wallpaper: LibraryWallpaper) => {
   }
 
   const fullSizePath = wallpaper.fullSizePath.replace("image://", "").replace("video://", "");
-  await fs.mkdir(THUMB_CACHE_DIR, { recursive: true });
+  await fs.mkdir(thumbnailDir, { recursive: true });
 
   const hash = await getFileHash(fullSizePath);
-  const thumbPath = path.join(THUMB_CACHE_DIR, `${hash}.jpeg`);
+  const thumbPath = path.join(thumbnailDir, `${hash}.jpeg`);
 
   try {
     await fs.access(thumbPath);
-    console.log("Cache hit: ", wallpaper.fullSizePath);
+    logger.debug(
+      { fullSizePath: wallpaper.fullSizePath, thumbPath },
+      "Thumbnail cache hit for wallpaper"
+    );
   } catch {
-    console.log("Cache miss: ", wallpaper.fullSizePath);
-
     if (wallpaper.type === "image" || wallpaper.type === "wallpaper-engine")
-      await sharp(fullSizePath)
-        .rotate()
-        .resize(THUMBNAIL_WIDTH, null, {
-          withoutEnlargement: true,
-        })
-        .jpeg({
-          quality: 80,
-          mozjpeg: true,
-        })
-        .toFile(thumbPath);
+      try {
+        await sharp(fullSizePath)
+          .rotate()
+          .resize(THUMBNAIL_WIDTH, null, {
+            withoutEnlargement: true,
+          })
+          .jpeg({
+            quality: 80,
+            mozjpeg: true,
+          })
+          .toFile(thumbPath);
+        logger.info({ fullSizePath, thumbPath }, "Successfully generated image thumbnail");
+      } catch (err) {
+        logger.error({ err, fullSizePath, thumbPath }, "Failed to generate image thumbnail");
+      }
     else if (wallpaper.type === "video")
-      await execute({
-        ignoreErrors: true,
-        logStdout: false,
-        logStderr: false,
-        command: "ffmpeg",
-        args: [
-          "-y",
-          "-ss",
-          "1", // seek to 1s
-          "-i",
-          fullSizePath,
-          "-frames:v",
-          "1", // grab one frame
-          "-vf",
-          `scale='if(gt(iw,${THUMBNAIL_WIDTH}),${THUMBNAIL_WIDTH},iw)':-1`,
-          "-q:v",
-          "1", // quality (1 = best, 31 = worst)
-          thumbPath, // save directly to file
-        ],
-      });
+      try {
+        await execute({
+          command: "ffmpeg",
+          args: [
+            "-y",
+            "-ss",
+            "1", // seek to 1s
+            "-i",
+            fullSizePath,
+            "-frames:v",
+            "1", // grab one frame
+            "-vf",
+            `scale='if(gt(iw,${THUMBNAIL_WIDTH}),${THUMBNAIL_WIDTH},iw)':-1`,
+            "-q:v",
+            "1", // quality (1 = best, 31 = worst)
+            thumbPath, // save directly to file
+          ],
+        });
+        logger.info({ fullSizePath, thumbPath }, "Successfully generated video thumbnail");
+      } catch (err) {
+        logger.error({ err, fullSizePath, thumbPath }, "Failed to generate video thumbnail");
+      }
   }
 
   return `image://${thumbPath}`;
 };
 
 const generateBlurHash = async (wallpaper: LibraryWallpaper) => {
-  const fullSizePath = wallpaper.thumbnailPath.replace("image://", "").replace("video://", "");
+  const thumbnailPath = wallpaper.thumbnailPath.replace("image://", "").replace("video://", "");
   try {
-    const buf = await sharp(fullSizePath).resize(32, 32).ensureAlpha().raw().toBuffer();
+    const buf = await sharp(thumbnailPath).resize(32, 32).ensureAlpha().raw().toBuffer();
     return encode(Uint8ClampedArray.from(buf), 32, 32, 4, 4);
   } catch {
     return undefined;
