@@ -1,6 +1,8 @@
 import path from "path";
 import { app, BrowserWindow } from "electron";
 
+const isProduction = process.env.NODE_ENV === "production" || app.isPackaged;
+
 const createWindow = () => {
   const iconPath = path.join(import.meta.dirname, "..", "..", "assets", "icon.png");
   const mainWindow = new BrowserWindow({
@@ -12,7 +14,7 @@ const createWindow = () => {
     show: false,
     titleBarStyle: "hidden",
     webPreferences: {
-      devTools: !app.isPackaged,
+      devTools: !isProduction,
       contextIsolation: true,
       sandbox: true,
       allowRunningInsecureContent: false,
