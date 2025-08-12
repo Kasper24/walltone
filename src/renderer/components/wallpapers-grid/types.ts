@@ -21,20 +21,25 @@ export type OnWallpaperDownload<TWallpaper extends BaseWallpaper> = (
 ) => Promise<void>;
 
 export interface FilterDefinition {
-  type: "single" | "multiple" | "boolean";
+  type: "single" | "multiple" | "boolean" | "range";
   key: string;
   title: string;
   values?: string[];
+  min?: number;
+  max?: number;
+  step?: number;
 }
 
 export type ArrayFilters = Record<string, string[]>;
 export type StringFilters = Record<string, string>;
 export type BooleanFilters = Record<string, boolean>;
+export type RangeFilters = Record<string, number>;
 
 export interface AppliedFilters {
   arrays: ArrayFilters;
   strings: StringFilters;
   booleans: BooleanFilters;
+  ranges: RangeFilters;
 }
 
 export type SetAppliedFilters = React.Dispatch<React.SetStateAction<AppliedFilters>>;

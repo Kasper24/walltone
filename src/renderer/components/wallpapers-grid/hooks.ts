@@ -42,6 +42,7 @@ export const useWallpaperFilters = <TSorting extends string>(
     arrays: {},
     strings: {},
     booleans: {},
+    ranges: {},
   });
 
   return {

@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@renderer/components/ui/select.js";
+import { Slider } from "@renderer/components/ui/slider.js";
 import { Button } from "@renderer/components/ui/button.js";
 import { Label } from "@renderer/components/ui/label.js";
 import { Badge } from "@renderer/components/ui/badge.js";
@@ -42,24 +43,28 @@ export const FilterSheet = ({
   const singleSelectFilters = filterDefinitions.filter((filter) => filter.type === "single");
   const multipleSelectFilters = filterDefinitions.filter((filter) => filter.type === "multiple");
   const booleanSelectFilters = filterDefinitions.filter((filter) => filter.type === "boolean");
+  const rangeSelectFilters = filterDefinitions.filter((filter) => filter.type === "range");
 
   const clearAllFilters = () => {
     setAppliedFilters({
       arrays: {},
       strings: {},
       booleans: {},
+      ranges: {},
     });
   };
 
   const hasActiveFilters =
     Object.keys(appliedFilters.arrays).some((key) => appliedFilters.arrays[key].length > 0) ||
     Object.keys(appliedFilters.strings).some((key) => appliedFilters.strings[key]) ||
-    Object.keys(appliedFilters.booleans).some((key) => appliedFilters.booleans[key] === true);
+    Object.keys(appliedFilters.booleans).some((key) => appliedFilters.booleans[key] === true) ||
+    Object.keys(appliedFilters.ranges).some((key) => appliedFilters.ranges[key]);
 
   const activeFilterCount =
     Object.values(appliedFilters.arrays).reduce((total, values) => total + values.length, 0) +
     Object.values(appliedFilters.strings).filter((value) => value).length +
-    Object.values(appliedFilters.booleans).filter((value) => value === true).length;
+    Object.values(appliedFilters.booleans).filter((value) => value === true).length +
+    Object.values(appliedFilters.ranges).filter((value) => value).length;
 
   return (
     <Sheet>
@@ -144,6 +149,21 @@ export const FilterSheet = ({
                 <div className="space-y-6">
                   {multipleSelectFilters.map((filter) => (
                     <MultiSelectFilter
+                      key={filter.key}
+                      filter={filter}
+                      appliedFilters={appliedFilters}
+                      setAppliedFilters={setAppliedFilters}
+                    />
+                  ))}
+                </div>
+              </FilterSection>
+            )}
+
+            {rangeSelectFilters.length > 0 && (
+              <FilterSection title="Ranges">
+                <div className="space-y-6">
+                  {rangeSelectFilters.map((filter) => (
+                    <RangeSelectFilter
                       key={filter.key}
                       filter={filter}
                       appliedFilters={appliedFilters}
@@ -243,6 +263,27 @@ const ActiveFiltersSection = ({
                     ...prev,
                     booleans: Object.fromEntries(
                       Object.entries(prev.booleans).filter(([key]) => key !== filterKey)
+                    ),
+                  }));
+                }}
+              />
+            );
+          })}
+        {/* Range filters */}
+        {Object.entries(appliedFilters.ranges)
+          .filter(([_, value]) => value)
+          .map(([filterKey, value]) => {
+            const filterDef = filterDefinitions.find((f) => f.key === filterKey);
+            return (
+              <ActiveFilterBadge
+                key={filterKey}
+                label={filterDef?.title}
+                value={value.toString()}
+                onRemove={() => {
+                  setAppliedFilters((prev) => ({
+                    ...prev,
+                    ranges: Object.fromEntries(
+                      Object.entries(prev.ranges).filter(([key]) => key !== filterKey)
                     ),
                   }));
                 }}
@@ -516,6 +557,67 @@ const BooleanSelectFilter = ({
         <Label className="cursor-pointer text-sm font-medium">{filter.title}</Label>
       </div>
       <Switch checked={isEnabled} onCheckedChange={handleToggle} />
+    </div>
+  );
+};
+
+const RangeSelectFilter = ({
+  filter,
+  appliedFilters,
+  setAppliedFilters,
+}: {
+  filter: FilterDefinition;
+  appliedFilters: AppliedFilters;
+  setAppliedFilters: SetAppliedFilters;
+}) => {
+  const filterKey = filter.key;
+  const min = filter.min ?? 0;
+  const max = filter.max ?? 100;
+  const step = filter.step ?? 1;
+  const value = appliedFilters.ranges?.[filterKey] ?? 0;
+
+  const handleChange = (newValue: number) => {
+    setAppliedFilters((prev) => ({
+      ...prev,
+      ranges: {
+        ...prev.ranges,
+        [filterKey]: newValue,
+      },
+    }));
+  };
+
+  const clearValue = () => {
+    setAppliedFilters((prev) => ({
+      ...prev,
+      ranges: Object.fromEntries(
+        Object.entries(prev.ranges ?? {}).filter(([key]) => key !== filterKey)
+      ),
+    }));
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium">{filter.title}</Label>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearValue}
+          className="text-muted-foreground hover:text-foreground h-auto p-0 text-xs"
+        >
+          Clear
+        </Button>
+      </div>
+      <div className="flex items-center gap-2">
+        <Slider
+          min={min}
+          max={max}
+          step={step}
+          value={[value]}
+          onValueChange={(value) => handleChange(value[0])}
+        />
+        <span className="text-muted-foreground text-xs">{value}</span>
+      </div>
     </div>
   );
 };

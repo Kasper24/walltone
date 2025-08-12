@@ -55,6 +55,7 @@ const DiscoverPixabayVideosTab = () => {
           query,
           ...appliedFilters?.booleans,
           ...appliedFilters?.strings,
+          ...appliedFilters?.ranges,
         })
       }
       filterDefinitions={[
@@ -133,6 +134,22 @@ const DiscoverPixabayVideosTab = () => {
           key: "order",
           title: "Order",
           values: ["popular", "latest"],
+        },
+        {
+          type: "range",
+          key: "minWidth",
+          title: "Minimum Width",
+          min: 0,
+          max: 10000,
+          step: 100,
+        },
+        {
+          type: "range",
+          key: "minHeight",
+          title: "Minimum Height",
+          min: 0,
+          max: 10000,
+          step: 100,
         },
       ]}
       scalingOptions={[
