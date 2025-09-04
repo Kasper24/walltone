@@ -54,7 +54,7 @@
     "@types/react-dom": "^19.1.7",
     "@types/react-virtualized": "^9.22.2",
     "@vitejs/plugin-react": "^4.7.0",
-    "electron": "~37.2.5",
+    "electron": "~37.4.0",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
