@@ -15,11 +15,13 @@ export const monitorRouter = router({
   search: publicProcedure.query(async () => {
     const displays = screen.getAllDisplays();
     const monitors: Monitor[] = displays.map((display) => {
-      const id = display.label.match(/\((.*?)\)/)?.[1] || "";
-      const name = display.label.replace(/\(.*?\)/, "").trim();
+      const idMatch = display.label.match(/\(([^)]+)\)$|-\s*([A-Za-z]+-\d+)$/);
+      const id = idMatch?.[1] || idMatch?.[2] || "";
+      const name = display.label.replace(/\s*\(([^)]+)\)$|\s*-\s*[A-Za-z]+-\d+$/, "").trim();
+
       return {
         id,
-        name: name,
+        name,
         x: display.bounds.x,
         y: display.bounds.y,
         width: display.size.width * display.scaleFactor,
