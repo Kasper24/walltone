@@ -220,7 +220,7 @@ const setWallpaperEngineWallpaper = async (
   }
 
   if (options?.clamping) {
-    args.push("--clamping", options.clamping);
+    args.push("--clamp", options.clamping);
   }
 
   if (options?.disableMouse) {
