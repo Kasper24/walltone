@@ -14,7 +14,7 @@ type ExecuteParams = {
   onStderr?: (text: string) => void;
 };
 
-const execute = (params: ExecuteParams): Promise<{ stdout: string; stderr: string }> => {
+const execute = (params: ExecuteParams) => {
   const {
     command,
     args = [],
@@ -39,12 +39,8 @@ const execute = (params: ExecuteParams): Promise<{ stdout: string; stderr: strin
       shell,
     });
 
-    let stdout = "";
-    let stderr = "";
-
     child.stdout.on("data", (data) => {
       const text = data.toString();
-      stdout += text;
       if (onStdout) onStdout(text);
 
       if (logStdout)
@@ -59,7 +55,6 @@ const execute = (params: ExecuteParams): Promise<{ stdout: string; stderr: strin
 
     child.stderr.on("data", (data) => {
       const text = data.toString();
-      stderr += text;
       if (onStderr) onStderr(text);
 
       if (logStderr)
@@ -83,7 +78,7 @@ const execute = (params: ExecuteParams): Promise<{ stdout: string; stderr: strin
           "Process completed successfully"
         );
 
-        resolve({ stdout, stderr });
+        resolve({});
       } else {
         logger.error(
           {
