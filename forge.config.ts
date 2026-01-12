@@ -6,14 +6,13 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
 
-import * as fs from "fs";
-import * as path from "path";
-import { spawn } from "child_process";
-
 const config: ForgeConfig = {
   packagerConfig: {
     executableName: "walltone",
-    asar: true,
+    ignore: [],
+    asar: {
+      unpack: "**/node_modules/{sharp,@img,keytar,conf}/**/*"
+    },
     icon: "assets/icon",
     electronZipDir: process.env.ELECTRON_FORGE_ELECTRON_ZIP_DIR,
   },
@@ -85,44 +84,6 @@ const config: ForgeConfig = {
       [FuseV1Options.OnlyLoadAppFromAsar]: true,
     }),
   ],
-  hooks: {
-    // Workaround for https://github.com/serialport/node-serialport/issues/2464
-    packageAfterPrune: async (_, buildPath) => {
-      if (process.env.NIX_BUILD_TOP) {
-        // Skip in Nix builds
-        return;
-      }
-
-      const packageJson = JSON.parse(
-        fs.readFileSync(path.resolve(buildPath, "package.json")).toString()
-      );
-      packageJson.dependencies = {
-        conf: "^14.0.0",
-        keytar: "^7.9.0",
-        sharp: "^0.34.3",
-      };
-      fs.writeFileSync(path.resolve(buildPath, "package.json"), JSON.stringify(packageJson));
-
-      return new Promise((resolve, reject) => {
-        const npm = spawn("npm", ["install"], {
-          cwd: buildPath,
-          stdio: "inherit",
-          shell: true,
-        });
-
-        npm.on("close", (code) => {
-          if (0 === code) {
-            resolve();
-            return;
-          }
-
-          reject(`Process exited with code: ${code}`);
-        });
-
-        npm.on("error", reject);
-      });
-    },
-  },
 };
 
 export default config;
